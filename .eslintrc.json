@@ -1,0 +1,64 @@
+{
+    "extends": "eslint:recommended",
+    "env": {
+        "node" : true,
+		"es6" : true
+	},
+    "parserOptions": {
+        "ecmaVersion": 8,
+        "sourceType": "module",
+        "ecmaFeatures": {
+			"impliedStrict": true
+        }      
+    },
+    "rules": {
+        "no-await-in-loop": "error",
+        "no-dupe-else-if" : "error",
+        "no-template-curly-in-string":"error",
+
+        "array-callback-return": "error",
+        "block-scoped-var": "error",
+        "curly": ["error", "multi-line"],
+        "class-methods-use-this": "error",
+        "consistent-return": "error",
+        "default-case":"error",
+        "eqeqeq": "error",
+        "no-caller": "error",
+        "no-case-declarations": "error",
+        "no-constructor-return": "error",
+        "no-empty-function": "error",
+        "no-eq-null": "error",
+        "no-eval": "error",
+        "no-extend-native": "error",
+        "no-extra-label": "error",
+        "no-implied-eval": "error",
+        "no-iterator": "error",
+        "no-lone-blocks": "error",
+        "no-loop-func": "error",
+        "no-multi-spaces": "error",
+        "no-multi-str": "error",
+        "no-new": "error",
+        "no-new-func": "error",
+        "no-new-wrappers": "error",
+        "no-octal-escape": "error",
+        "no-proto": "error",
+        "no-return-assign": "error",
+        "no-return-await": "error",
+        "no-script-url": "error",
+        "no-self-compare": "error",
+        "no-sequences": "error",
+        "no-throw-literal": "error",
+        "no-unmodified-loop-condition": "error",
+        "wrap-iife": ["error", "inside"],
+        "vars-on-top": "error",
+
+        "no-undef":"error",
+        
+        "indent" : ["error", "tab", {
+            "SwitchCase": 1
+        }],
+        "key-spacing": ["error",{"beforeColon":false, "afterColon": true}],
+        "semi": "error",
+        "yoda": "error"
+    }
+}
