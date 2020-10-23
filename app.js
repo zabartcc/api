@@ -9,9 +9,8 @@ import body from 'body-parser';
 // Controllers
 // import StaticController from './controllers/StaticController.js';
 import UserController from './controllers/UserController.js';
-// import ControllerController from './controllers/ControllerController.js';
-import PilotOnlineController from './controllers/PilotOnlineController.js';
-import AtcOnlineController from './controllers/AtcOnlineController.js';
+import ControllerController from './controllers/ControllerController.js';
+import OnlineController from './controllers/OnlineController.js';
 // import HelperController from './controllers/HelperController.js';
 // import ControllerHoursController from './controllers/ControllerHoursController.js';
 // import AjaxController from './controllers/AjaxController.js';
@@ -49,9 +48,9 @@ db.once('open', () => console.log('Successfully connected to MongoDB'));
 
 env.config();
 
-app.use('/pilotonline', PilotOnlineController);
-app.use('/atconline', AtcOnlineController);
+app.use('/online', OnlineController);
 app.use('/user', UserController);
+app.use('/controller', ControllerController);
 
 
 app.listen('3000', () =>{
