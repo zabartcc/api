@@ -11,6 +11,7 @@ import body from 'body-parser';
 import UserController from './controllers/UserController.js';
 import ControllerController from './controllers/ControllerController.js';
 import OnlineController from './controllers/OnlineController.js';
+import EventController from './controllers/EventController.js';
 // import HelperController from './controllers/HelperController.js';
 // import ControllerHoursController from './controllers/ControllerHoursController.js';
 // import AjaxController from './controllers/AjaxController.js';
@@ -51,6 +52,7 @@ env.config();
 app.use('/online', OnlineController);
 app.use('/user', UserController);
 app.use('/controller', ControllerController);
+app.use('/event', EventController);
 
 
 app.listen('3000', () =>{
