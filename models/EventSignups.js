@@ -5,7 +5,7 @@ const signups = new m.Schema({
 	user: {
 		type: m.Schema.Types.ObjectId, ref: 'User'
 	},
-	preferences: [{
+	requests: [{
 		type: String
 	}]
 },{
