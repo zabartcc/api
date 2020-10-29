@@ -2,6 +2,7 @@ import e from 'express';
 import m from 'mongoose';
 const router = e.Router();
 import Event from '../models/Event.js';
+import User from '../models/User.js';
 
 
 router.get('/', async ({res}) => {
@@ -23,38 +24,53 @@ router.get('/archive', async({res}) => {
 
 });
 
-router.get('/id/:id', async(req, res) => {
-    var id = req.params.id;
-    const event = await Event.find({
-        url: id
-    }).select(['-positions']);
-    res.json(event);
+router.get('/:slug', async(req, res) => {
+	const slug = req.params.slug;
+	const event = await Event.findOne({
+		url: slug
+	});
+	res.json(event);
 });
 
-router.get('/assignments/:id', async(req, res) => {
-    var id = req.params.id;
-    const assignments = await Event.find({
-        url: id
-    }).select(['open', 'positions', 'signups']).populate('positions.taken', 'cid fname lname').populate('signups.user', 'cid');
-    res.json(assignments);
+router.get('/:slug/positions', async(req, res) => {
+	const slug = req.params.slug;
+	const event = await Event.findOne({
+		url: slug
+	}).select(['open', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate('signups.user', 'cid requests');
+	res.json(event);
 });
 
-router.put('/assignments/:id/user/:uid', async(req, res) => {
-	var id = req.params.id.toString();
-	var uid = req.params.uid.toString();
-	const deleteSignup = await Event.updateOne({url: id}, {
+router.put('/:slug/signup/:cid', async (req, res) => {
+	const user = await User.findOne({cid: req.params.cid});
+	const addSignup = await Event.updateOne({url: req.params.slug}, {
+		$push: {
+			signups: {
+				user: m.Types.ObjectId(user.id),
+				requests: req.body.requests
+			} 
+		}
+	});
+	if(addSignup.ok) {
+		res.sendStatus(200);
+	} else {
+		res.sendStatus(500);
+	}
+});
+
+router.delete('/:slug/signup/:cid', async (req, res) => {
+	const user = await User.findOne({cid: req.params.cid});
+	const deleteSignup = await Event.updateOne({url: req.params.slug}, {
 		$pull: {
 			signups: {
-				user: m.Types.ObjectId(uid)
+				user: m.Types.ObjectId(user.id)
 			}
 		}
 	});
-	const deletePositionTaken = await Event.updateOne({"url": id, "positions.taken": m.Types.ObjectId(uid)}, {
-		"$set": {
-			"positions.$.taken": undefined
-		}
-	});
-	res.json({signup: deleteSignup, position: deletePositionTaken});
-})
+	if(deleteSignup.ok) {
+		res.sendStatus(200);
+	} else {
+		res.sendStatus(500);
+	}
+});
 
 export default router;
