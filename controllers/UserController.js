@@ -10,8 +10,7 @@ import axios from 'axios';
 dotenv.config();
 
 router.get('/', (req, res) => {
-	const userToken = req.query.token;
-
+	const userToken = req.headers['authorization'].split(' ')[1];
 	if(!userToken) {
 		res.sendStatus(401);
 	} else {
