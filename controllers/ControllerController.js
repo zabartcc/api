@@ -9,7 +9,7 @@ router.get('/', async ({res}) => {
 		lname: 'asc',
 		fname: 'asc'
 	}).populate({
-		path: 'certs',
+		path: 'certifications',
 		options: {
 			sort: {order: 'desc'}
 		}
