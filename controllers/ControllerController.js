@@ -24,10 +24,14 @@ router.get('/', async ({res}) => {
 	res.json(users);
 });
 
-router.get('/:cid', async (req, res) => {
+router.get('/find/:cid', async (req, res) => {
 	const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications');
-	console.log(user);
 	res.json(user);
+});
+
+router.get('/oi', async (req, res) => {
+	const oi = await User.find().select('oi');
+	res.json(oi);
 });
 
 export default router;
