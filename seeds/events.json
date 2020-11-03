@@ -1,0 +1,93 @@
+[{
+  "_id": {
+    "$oid": "5f94bfe1c2bec34a13360f66"
+  },
+  "name": "ZAB/ZFW/ZME Trifire FNO",
+  "description": "The smell of turkey wafting through the air has long passed. You’re waking up from your food coma, in-fact you woke up so early that you were enjoying the post-turkey day retail sales.  After a long day of shopping its time to fly!  Join the Albuquerque controller team while we carry on our tradition of the annual Stuff the Albu-Turkey event! From the top-down, we will be providing outstanding ATC service at both Phoenix Sky Harbor (KPHX) and Albuquerque International Sunport (KABQ) for a fun evening of Black Friday flying!  Friday, November 29, 2019 – 2359z – 0400z.",
+  "url": "zab-zfw-zme-trifire-fno",
+  "bannerUrl": "https://cdn.discordapp.com/attachments/729323860025016340/750479644398190623/trifire.png",
+  "eventStart": {
+    "$date": "2020-11-29T12:30:00Z"
+  },
+  "eventEnd": {
+    "$date": "2020-11-29T21:00:00Z"
+  },
+  "createdBy": {
+    "$oid": "5f9303ddda3a6e0f54ed56a9"
+  },
+  "signups": [
+    {
+      "requests": [
+        "ABQ_NW_CTR",
+        "PHX_T_TWR"
+      ],
+      "_id": {
+        "$oid": "5fa1b34ec0e1150f782ad610"
+      },
+      "user": {
+        "$oid": "5f9303ddda3a6e0f54ed56a9"
+      },
+      "updatedAt": {
+        "$date": "2020-11-03T19:45:18.073Z"
+      },
+      "createdAt": {
+        "$date": "2020-11-03T19:45:18.073Z"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "pos": "ABQ_NW_CTR",
+      "type": "CTR",
+      "major": true,
+      "minRating": 10,
+      "order": 1,
+      "takenBy": null
+    },
+    {
+      "pos": "PHX_DEL",
+      "type": "DEL",
+      "major": false,
+      "minRating": 2,
+      "order": 5,
+      "taken": null
+    },
+    {
+      "pos": "ABQ_SW_CTR",
+      "type": "CTR",
+      "major": true,
+      "minRating": 10,
+      "order": "2",
+      "takenBy": null
+    },
+    {
+      "pos": "ABQ_NE_CTR",
+      "type": "CTR",
+      "major": true,
+      "minRating": 10,
+      "order": 3,
+      "takenBy": null
+    },
+    {
+      "pos": "PHX_T_TWR",
+      "type": "TWR",
+      "major": true,
+      "minRating": 3,
+      "order": 4,
+      "takenBy": null
+    },
+    {
+      "pos": "ABQ_GND",
+      "type": "GND",
+      "major": false,
+      "minRating": 2,
+      "order": 6,
+      "takenBy": null
+    }
+  ],
+  "open": true,
+  "submitted": false,
+  "updatedAt": {
+    "$date": "2020-11-03T19:45:18.073Z"
+  }
+}]

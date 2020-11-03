@@ -1,0 +1,65 @@
+[{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115bf"
+  },
+  "name": "Air Traffic Manager",
+  "code": "atm",
+  "order": 1,
+  "class": "senior"
+},{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115c0"
+  },
+  "name": "Deputy Air Traffic Manager",
+  "code": "datm",
+  "order": 2,
+  "class": "senior"
+},{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115c1"
+  },
+  "name": "Training Administrator",
+  "code": "ta",
+  "order": 3,
+  "class": "senior"
+},{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115c2"
+  },
+  "name": "Events Coordinator",
+  "code": "ec",
+  "order": 4,
+  "class": "junior"
+},{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115c3"
+  },
+  "name": "Webmaster",
+  "code": "wm",
+  "order": 5,
+  "class": "junior"
+},{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115c4"
+  },
+  "name": "Facilities Engineer",
+  "code": "fe",
+  "order": 6,
+  "class": "junior"
+},{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115c5"
+  },
+  "name": "Instructor",
+  "code": "ins",
+  "order": 7,
+  "class": "training"
+},{
+  "_id": {
+    "$oid": "5f30bd6129eb3d5ab86115c6"
+  },
+  "name": "Mentor",
+  "code": "mtr",
+  "order": 8,
+  "class": "training"
+}]
