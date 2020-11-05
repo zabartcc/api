@@ -36,7 +36,7 @@ router.get('/:slug/positions', async(req, res) => {
 	const slug = req.params.slug;
 	const event = await Event.findOne({
 		url: slug
-	}).select(['open', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate('signups.user', 'cid requests');
+	}).sort({'positions.order': -1}).select(['open', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate('signups.user', 'cid requests');
 	res.json(event);
 });
 
