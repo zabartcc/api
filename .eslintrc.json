@@ -12,7 +12,6 @@
         }      
     },
     "rules": {
-        "no-await-in-loop": "error",
         "no-dupe-else-if" : "error",
         "no-template-curly-in-string":"error",
 

@@ -43,7 +43,7 @@ app.use(({res, next}) => {
 // Connect to MongoDB
 mongoose.set('toJSON', {virtuals: true});
 mongoose.set('toObject', {virtuals: true});
-mongoose.connect('mongodb://localhost:27017/zab', { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/zab', { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true, useFindAndModify: false });
 const db = mongoose.connection;
 db.once('open', () => console.log('Successfully connected to MongoDB'));
 
