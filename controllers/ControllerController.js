@@ -23,7 +23,6 @@ router.get('/', async ({res}) => {
 		}
 	}).lean({virtuals: true});
 
-
 	res.json(users);
 });
 
@@ -59,7 +58,7 @@ router.post('/:cid', isStaff, async (req, res) => {
 		}
 	}
 
-	const updated = await User.findOneAndUpdate({cid: req.params.cid}, {
+	const updated = await User.updateOne({cid: req.params.cid}, {
 		fname,
 		lname, 
 		email,
@@ -67,7 +66,7 @@ router.post('/:cid', isStaff, async (req, res) => {
 		roles: toApply.roles,
 		certifications: toApply.certifications,
 	});
-	
+
 	if(updated.ok) {
 		res.sendStatus(200);
 	} else {
