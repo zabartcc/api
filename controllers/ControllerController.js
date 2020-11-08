@@ -42,7 +42,7 @@ router.get('/staff', async (req, res) => {
 		}
 	}).lean({virtuals: true});
 
-	users = users.filter(user => user.roles.length);
+	users = users.filter(user => "roles" in user);
 
 	const staff = {
 		atm: {

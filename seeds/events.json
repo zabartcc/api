@@ -15,26 +15,7 @@
   "createdBy": {
     "$oid": "5f9303ddda3a6e0f54ed56a9"
   },
-  "signups": [
-    {
-      "requests": [
-        "ABQ_NW_CTR",
-        "PHX_T_TWR"
-      ],
-      "_id": {
-        "$oid": "5fa1b34ec0e1150f782ad610"
-      },
-      "user": {
-        "$oid": "5f9303ddda3a6e0f54ed56a9"
-      },
-      "updatedAt": {
-        "$date": "2020-11-03T19:45:18.073Z"
-      },
-      "createdAt": {
-        "$date": "2020-11-03T19:45:18.073Z"
-      }
-    }
-  ],
+  "signups": [],
   "positions": [
     {
       "pos": "ABQ_NW_CTR",
