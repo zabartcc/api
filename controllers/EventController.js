@@ -19,7 +19,7 @@ const multerConf = multer({
 	}),
 	fileFilter: (req, file, callback) => {
 		if(file.mimetype === "image/png" || file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/gif") {
-			callback(null, true);
+			return callback(null, true);
 		} else {
 			callback(null, false);
 			return callback(new Error('File format now allowed.'));
@@ -34,7 +34,8 @@ router.get('/', async ({res}) => {
 	const events = await Event.find({
 		eventEnd: {
 			$gt: new Date() // event starts in the future
-		}
+		},
+		deleted: false
 	}).sort({eventStart: 'ascending'});
 	res.json(events);
 });
@@ -43,7 +44,8 @@ router.get('/archive', async({res}) => {
 	const events = await Event.find({
 		eventStart: {
 			$lt: new Date()
-		}
+		},
+		deleted: false
 	}).limit(10);
 	res.json(events);
 
@@ -52,7 +54,8 @@ router.get('/archive', async({res}) => {
 router.get('/:slug', async(req, res) => {
 	const slug = req.params.slug;
 	const event = await Event.findOne({
-		url: slug
+		url: slug,
+		deleted: false
 	});
 	res.json(event);
 });
@@ -60,7 +63,8 @@ router.get('/:slug', async(req, res) => {
 router.get('/:slug/positions', async(req, res) => {
 	const slug = req.params.slug;
 	const event = await Event.findOne({
-		url: slug
+		url: slug,
+		deleted: false
 	}).sort({'positions.order': -1}).select(['open', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate('signups.user', 'cid requests');
 	res.json(event);
 });
@@ -129,6 +133,12 @@ router.post('/new', isStaff, async (req, res) => {
 			}
 		}
 	});
+});
+
+router.delete('/:slug', isStaff, async (req, res) => {
+	const deleteEvent = await Event.findOne({url: req.params.slug});
+	await deleteEvent.delete();
+	res.sendStatus(200);
 });
 
 export default router;

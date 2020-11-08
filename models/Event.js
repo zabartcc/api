@@ -1,7 +1,8 @@
 import m from 'mongoose';
 import './User.js';
 import positions from './EventPositions.js';
-import signups from './EventSignups.js'
+import signups from './EventSignups.js';
+import softDelete from 'mongoose-delete';
 
 const eventSchema = new m.Schema({
 	name: String,
@@ -20,6 +21,11 @@ const eventSchema = new m.Schema({
 
 }, {
 	timestamps: true,
+});
+
+
+eventSchema.plugin(softDelete, {
+	deletedAt: true
 });
 
 export default m.model('Event', eventSchema);
