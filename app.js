@@ -24,7 +24,6 @@ import EventController from './controllers/EventController.js';
 const app = express();
 app.use(cookie());
 app.use(express.json());
-
 app.use(body.json());
 
 app.use(cors({
