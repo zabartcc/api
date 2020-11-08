@@ -26,6 +26,72 @@ router.get('/', async ({res}) => {
 	res.json(users);
 });
 
+router.get('/staff', async (req, res) => {
+	let users = await User.find().sort({
+		lname: 'asc',
+		fname: 'asc'
+	}).populate({
+		path: 'certifications',
+		options: {
+			sort: {order: 'desc'}
+		}
+	}).populate({
+		path: 'roles',
+		options: {
+			sort: {order: 'asc'}
+		}
+	}).lean({virtuals: true});
+
+	users = users.filter(user => user.roles.length);
+
+	const staff = {
+		atm: {
+			title: "Air Traffic Manager",
+			code: "atm",
+			users: []
+		},
+		datm: {
+			title: "Deputy Air Traffic Manager",
+			code: "datm",
+			users: []
+		},
+		ta: {
+			title: "Training Administrator",
+			code: "ta",
+			users: []
+		},
+		ec: {
+			title: "Events Coordinator",
+			code: "ec",
+			users: []
+		},
+		wm: {
+			title: "Web Team",
+			code: "wm",
+			users: []
+		},
+		fe: {
+			title: "Facility Engineer",
+			code: "fe",
+			users: []
+		},
+		ins: {
+			title: "Instructors",
+			code: "instructors",
+			users: []
+		},
+		mtr: {
+			title: "Mentors",
+			code: "instructors",
+			users: []
+		},
+	};
+
+	users.forEach(user => user.roles.forEach(role => staff[role.code].users.push(user)));
+
+	res.json(staff);
+});
+
 router.get('/oi', async (req, res) => {
 	const oi = await User.find().select('oi').lean();
 	res.json(oi);
