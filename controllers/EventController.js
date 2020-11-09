@@ -35,7 +35,7 @@ router.get('/', async ({res}) => {
 		eventEnd: {
 			$gt: new Date() // event starts in the future
 		},
-		deleted: false
+		deletedAt: null
 	}).sort({eventStart: 'ascending'});
 	res.json(events);
 });
@@ -45,7 +45,7 @@ router.get('/archive', async({res}) => {
 		eventStart: {
 			$lt: new Date()
 		},
-		deleted: false
+		deletedAt: null
 	}).limit(10);
 	res.json(events);
 
@@ -55,7 +55,7 @@ router.get('/:slug', async(req, res) => {
 	const slug = req.params.slug;
 	const event = await Event.findOne({
 		url: slug,
-		deleted: false
+		deletedAt: null
 	});
 	res.json(event);
 });
@@ -64,8 +64,8 @@ router.get('/:slug/positions', async(req, res) => {
 	const slug = req.params.slug;
 	const event = await Event.findOne({
 		url: slug,
-		deleted: false
-	}).sort({'positions.order': -1}).select(['open', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate('signups.user', 'cid requests');
+		deletedAt: null
+	}).sort({'positions.order': -1}).select(['open', 'eventStart', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate('signups.user', 'cid requests');
 	res.json(event);
 });
 
