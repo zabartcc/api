@@ -4,8 +4,7 @@ import './User.js';
 const positions = new m.Schema({
 	pos: String,
 	type: String,
-	major: Boolean,
-	minRating: Number,
+	code: String,
 	takenBy: {
 		type: m.Schema.Types.ObjectId, ref: 'User'
 	}
