@@ -1,6 +1,7 @@
 import e from 'express';
 import m from 'mongoose';
 import dotenv from 'dotenv';
+import transporter from '../config/mailer.js';
 const router = e.Router();
 import Event from '../models/Event.js';
 import User from '../models/User.js';
@@ -65,7 +66,7 @@ router.get('/:slug/positions', async(req, res) => {
 	const event = await Event.findOne({
 		url: slug,
 		deletedAt: null
-	}).sort({'positions.order': -1}).select(['open', 'eventStart', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate({path: 'signups.user', select: 'cid fname lname certifications requests', populate: {path: 'certifications', select: 'class facility'}});
+	}).sort({'positions.order': -1}).select(['open', 'submitted', 'eventStart', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate({path: 'signups.user', select: 'cid fname lname rating certifications requests', populate: {path: 'certifications', select: 'code'}});
 	res.json(event);
 });
 
@@ -113,24 +114,23 @@ router.post('/new', isStaff, async (req, res) => {
 			positionsJSON.center.forEach((obj) => positions.push(obj));
 			positionsJSON.tracon.forEach((obj) => positions.push(obj));
 			positionsJSON.local.forEach((obj) => positions.push(obj));
-			try {
-				await Event.create({
-					name: req.body.name,
-					description: req.body.description,
-					url: url,
-					bannerUrl: req.file.filename,
-					eventStart: req.body.startTime,
-					eventEnd: req.body.endTime,
-					createdBy: req.body.createdBy,
-					positions: positions,
-					open: true,
-					submitted: false
-				});
-				res.status(200).send('Event succesfully created!');
-			} catch (err) {
+			Event.create({
+				name: req.body.name,
+				description: req.body.description,
+				url: url,
+				bannerUrl: req.file.filename,
+				eventStart: req.body.startTime,
+				eventEnd: req.body.endTime,
+				createdBy: req.body.createdBy,
+				positions: positions,
+				open: true,
+				submitted: false
+			}).then(() => {
+				res.sendStatus(200);
+			}).catch((err) => {
 				console.log(err);
-				res.status(500).send('Something went wrong, please try again.');
-			}
+				res.sendStatus(500);
+			});
 		}
 	});
 });
@@ -139,6 +139,55 @@ router.delete('/:slug', isStaff, async (req, res) => {
 	const deleteEvent = await Event.findOne({url: req.params.slug});
 	await deleteEvent.delete();
 	res.sendStatus(200);
+});
+
+router.put('/:slug/assign', isStaff, async (req, res) => {
+	const assignments = req.body.assignment;
+	const setAssignments = await Event.updateOne({url: req.params.slug}, {
+		$set: {
+			positions: assignments
+		}
+	});
+	if(setAssignments.ok) {
+		res.sendStatus(200);
+	} else {
+		res.sendStatus(500);
+	}
+});
+
+router.put('/:slug/finalize', isStaff, async (req, res) => {
+	const assignments = req.body.assignment;
+	Event.updateOne({url: req.params.slug}, {
+		$set: {
+			positions: assignments,
+			open: false,
+			submitted: true
+		}
+	}).then(async () => {
+	//send email;
+		const getSignups = await Event.findOne({url: req.params.slug }, 'name url signups').populate('signups.user', 'fname lname email').lean();
+		try {
+			getSignups.signups.forEach((signup) => {
+				transporter.sendMail({
+					to: signup.user.email,
+					subject: `Position Assignments for ${getSignups.name} | Albuquerque ARTCC`,
+					template: 'event',
+					context: {
+						eventTitle: getSignups.name,
+						name: `${signup.user.fname} ${signup.user.lname}`,
+						slug: getSignups.url
+					}
+				});
+			});
+			return res.sendStatus(200);
+		} catch(e) {
+			console.log(e);
+			return res.sendStatus(500);
+		}
+	}).catch((err) => {
+		console.log(err);
+		return res.sendStatus(500);
+	});
 });
 
 export default router;
