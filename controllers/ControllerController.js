@@ -3,6 +3,8 @@ const router = e.Router();
 import User from '../models/User.js';
 import Role from '../models/Role.js';
 import Certification from '../models/Certification.js';
+import VisitApplications from '../models/VisitApplications.js';
+import transporter from '../config/mailer.js';
 
 import isStaff from '../middleware/isStaff.js';
 
@@ -23,7 +25,7 @@ router.get('/', async ({res}) => {
 		}
 	}).lean({virtuals: true});
 
-	res.json(users);
+	return res.json(users);
 });
 
 router.get('/staff', async (req, res) => {
@@ -89,21 +91,49 @@ router.get('/staff', async (req, res) => {
 
 	users.forEach(user => user.roles.forEach(role => staff[role.code].users.push(user)));
 
-	res.json(staff);
+	return res.json(staff);
 });
 
 router.get('/oi', async (req, res) => {
 	const oi = await User.find().select('oi').lean();
-	res.json(oi);
+	return res.json(oi);
 });
 
 router.get('/:cid', async (req, res) => {
 	const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications');
-	res.json(user);
+	return res.json(user);
+});
+
+router.post('/visit', async (req, res) => {
+	if(!req.body.cid) return res.sendStatus(400);
+	VisitApplications.create({
+		cid: req.body.cid,
+		fname: req.body.fname,
+		lname: req.body.lname,
+		rating: req.body.rating,
+		email: req.body.email,
+		home: req.body.home,
+		reason: req.body.reason,
+		submittedAt: Date.now()
+	}).then(() =>{
+		transporter.sendMail({
+			to: req.body.email,
+			subject: `Visiting Application Received | Albuquerque ARTCC`,
+			template: 'visitReceived',
+			context: {
+				name: `${ req.body.fname} ${ req.body.lname}`,
+			}
+		});
+		return res.sendStatus(200);
+	}).catch((err) => {
+		console.log(err);
+		return res.sendStatus(500);
+	});
+	
 });
 
 router.post('/:cid', isStaff, async (req, res) => {
-	if(!req.body.form) res.sendStatus(400);
+	if(!req.body.form) return res.sendStatus(400);
 	const {fname, lname, email, oi, roles, certs} = req.body.form;
 	const toApply = {
 		roles: [],
@@ -134,9 +164,9 @@ router.post('/:cid', isStaff, async (req, res) => {
 	});
 
 	if(updated.ok) {
-		res.sendStatus(200);
+		return res.sendStatus(200);
 	} else {
-		res.sendStatus(500);
+		return res.sendStatus(500);
 	}
 });
 
