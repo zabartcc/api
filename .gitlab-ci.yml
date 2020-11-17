@@ -21,7 +21,7 @@ stages:
   environment:
     name: deploy
   script:
-    - kubectl set image deployment/$K8S_IMAGE $K8S_IMAGE=$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --record -n api
+    - kubectl set image deployment/$K8S_IMAGE $K8S_IMAGE=$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --record -n zab-web-stack
 
 build dev image:
   <<: *build_image
