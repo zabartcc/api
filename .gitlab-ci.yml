@@ -1,5 +1,6 @@
 stages:
   - build
+  - staging
 
 build:
   stage: build
@@ -18,6 +19,6 @@ staging:
   stage: staging
   image: dtzar/helm-kubectl
   before_script:
-    kubectl get node
+    - kubectl get node
   script:
-    kubectl get pod -A
+    - kubectl get pod -A
