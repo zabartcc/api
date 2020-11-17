@@ -19,9 +19,11 @@ staging:
   stage: staging
   image: dtzar/helm-kubectl
   before_script:
+    - echo $SERVER
     - kubectl config set-cluster k8s --server="$SERVER"
     - kubectl config set-credentials gitlab --token="$USER_TOKEN"
     - kubectl config set-context default --cluster=k8s --user=gitlab
     - kubectl config use-context default
+    - kubectl config view
   script:
     - kubectl get pod -A -o wide
