@@ -1,26 +1,24 @@
 stages:
-  # - build
+  - build
   - dev
 
-# build:
-#   stage: build
-#   image: docker:latest
-#   services:
-#     - docker:dind
-#   before_script:
-#     - docker info
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#   script:
-#     - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --tag $CI_REGISTRY_IMAGE:latest .
-#     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
-#     - docker push $CI_REGISTRY_IMAGE:latest
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
 
 deploy to dev:
   stage: dev
   image: dtzar/helm-kubectl
   environment:
     name: dev
-  before_script:
-    - kubectl config view
   script:
-    - kubectl get pod -A -o wide
+    - kubectl set image deployment/devapi devapi=$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --record -n api
