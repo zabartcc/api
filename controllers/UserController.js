@@ -30,7 +30,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-	const ulsJWK = JSON.parse(process.env.VATUSA_ULS_JWK);
+	const ulsJWK = JSON.parse(process.env.VATUSA_ULS_JWT);
 	const loginTokenParts = req.body.token.split('.');
 
 	const sig = Buffer.from(
@@ -84,7 +84,7 @@ router.get('/visit', (req, res) => {
 });
 
 router.post('/visit/login', async (req, res) => {
-	const ulsJWK = JSON.parse(process.env.VATUSA_ULS_JWK);
+	const ulsJWK = JSON.parse(process.env.VATUSA_ULS_JWT);
 	const loginTokenParts = req.body.token.split('.');
 
 	const sig = Buffer.from(
