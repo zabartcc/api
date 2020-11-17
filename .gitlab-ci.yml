@@ -50,5 +50,4 @@ deploy prod image:
   variables:
     K8S_IMAGE: api
   only:
-    - development
-    - k8s_testing
+    - master
