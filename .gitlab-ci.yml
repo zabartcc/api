@@ -1,6 +1,6 @@
 stages:
   # - build
-  - staging
+  - dev
 
 # build:
 #   stage: build
@@ -15,9 +15,11 @@ stages:
 #     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
 #     - docker push $CI_REGISTRY_IMAGE:latest
 
-staging:
-  stage: staging
+deploy to dev:
+  stage: dev
   image: dtzar/helm-kubectl
+  environment:
+    name: dev
   before_script:
     - echo $SERVER
     - kubectl config set-cluster k8s --server="$SERVER"
