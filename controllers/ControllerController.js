@@ -9,7 +9,7 @@ import transporter from '../config/mailer.js';
 import isStaff from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
-	const users = await User.find().sort({
+	const users = await User.find({deletedAt: null}).sort({
 		rating: 'desc',
 		lname: 'asc',
 		fname: 'asc'
