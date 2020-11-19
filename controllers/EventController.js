@@ -188,4 +188,20 @@ router.put('/:slug/finalize', isStaff, async (req, res) => {
 	});
 });
 
+router.put('/:slug/mansignup/:user', isStaff, async (req, res) => {
+	const user = await User.findOne({cid: req.params.user});
+	if(user !== null) {
+		await Event.updateOne({url: req.params.slug}, {
+			$push: {
+				signups: {
+					user: m.Types.ObjectId(user.id),
+				} 
+			}
+		});
+		return res.sendStatus(200);
+	} else {
+		return res.status(500).send('Controller not found.');
+	}
+});
+
 export default router;
