@@ -93,7 +93,24 @@ router.delete('/:slug/signup/:cid', async (req, res) => {
 	}
 });
 
-router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), async (req, res) => { // 6 MB max
+router.put('/:slug/mansignup/:user', isStaff, async (req, res) => {
+	console.log(req.header);
+	const user = await User.findOne({cid: req.params.user});
+	if(user !== null) {
+		await Event.updateOne({url: req.params.slug}, {
+			$push: {
+				signups: {
+					user: m.Types.ObjectId(user.id),
+				} 
+			}
+		});
+		return res.sendStatus(200);
+	} else {
+		return res.status(500).send('Controller not found.');
+	}
+});
+
+router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => { // 6 MB max
 	const stamp = Date.now();
 	const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
 	const positions = [];
@@ -153,12 +170,11 @@ router.put('/:slug/assign', isStaff, async (req, res) => {
 	}
 });
 
-router.put('/:slug/finalize', isStaff, async (req, res) => {
+router.put('/:slug/notify', isStaff, async (req, res) => {
 	const assignments = req.body.assignment;
 	Event.updateOne({url: req.params.slug}, {
 		$set: {
 			positions: assignments,
-			open: false,
 			submitted: true
 		}
 	}).then(async () => {
@@ -186,22 +202,6 @@ router.put('/:slug/finalize', isStaff, async (req, res) => {
 		console.log(err);
 		return res.sendStatus(500);
 	});
-});
-
-router.put('/:slug/mansignup/:user', isStaff, async (req, res) => {
-	const user = await User.findOne({cid: req.params.user});
-	if(user !== null) {
-		await Event.updateOne({url: req.params.slug}, {
-			$push: {
-				signups: {
-					user: m.Types.ObjectId(user.id),
-				} 
-			}
-		});
-		return res.sendStatus(200);
-	} else {
-		return res.status(500).send('Controller not found.');
-	}
 });
 
 export default router;
