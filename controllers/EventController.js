@@ -194,13 +194,26 @@ router.put('/:slug/notify', isStaff, async (req, res) => {
 				});
 			});
 			return res.sendStatus(200);
-		} catch(e) {
-			console.log(e);
+		} catch(err) {
+			console.log(err);
 			return res.sendStatus(500);
 		}
 	}).catch((err) => {
 		console.log(err);
 		return res.sendStatus(500);
+	});
+});
+
+router.put('/:slug/close', isStaff, async (req, res) => {
+	Event.updateOne({url: req.params.slug}, {
+		$set: {
+			open: false
+		}
+	}).then(() => {
+		res.sendStatus(200);
+	}).catch((err) => {
+		console.log(err);
+		res.sendStatus(500);
 	});
 });
 
