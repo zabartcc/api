@@ -20,18 +20,21 @@ app.use(cookie());
 app.use(express.json());
 app.use(body.json());
 
+const origins = process.env.CORS_ORIGIN.split('|');
+
 app.use(cors({
-	origin: process.env.CORS_ORIGIN,
+	origin: origins,
 	credentials: true,
 }));
 
-app.use(({res, next}) => {
-	res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN);
-	res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-	res.setHeader('Access-Control-Allow-Credentials', true);
-	next();
-});
+// app.use((req, res, next) => {
+// 	console.log(req.headers.host);
+// 	res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN);
+// 	res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+// 	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+// 	res.setHeader('Access-Control-Allow-Credentials', true);
+// 	next();
+// });
 
 // Connect to MongoDB
 mongoose.set('toJSON', {virtuals: true});
