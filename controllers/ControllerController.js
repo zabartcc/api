@@ -114,7 +114,7 @@ router.get('/staff', async (req, res) => {
 });
 
 router.get('/oi', async (req, res) => {
-	const oi = await User.find().select('oi').lean();
+	const oi = await User.find({deletedAt: null}).select('oi').lean();
 	return res.json(oi);
 });
 
