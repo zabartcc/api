@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
 		jwt.verify(userToken, process.env.JWT_SECRET, async (err, decoded) => {
 			if(err) {
 				console.log(`Unable to verify token: ${err}`);
-				res.sendStatus(401);
+				res.sendStatus(500);
 			} else {
 				const user = await User.findOne({
 					cid: decoded.cid
@@ -48,8 +48,6 @@ router.post('/login', async (req, res) => {
 
 		
 		if(!userData) return res.sendStatus(500);
-		if(userData.facility.id !== "ZAB") return res.sendStatus(500);
-
 		const user = User.findOne({cid: userData.cid});
 
 		if(!user) return res.sendStatus(401);

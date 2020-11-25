@@ -15,7 +15,7 @@ const userSchema = new m.Schema({
 	rating: Number,
 	oi: String,
 	broadcast: Boolean,
-	vis: Number,
+	vis: Boolean,
 	certifications: [{
 		type: m.Schema.Types.ObjectId, ref: 'Certification'
 	}],
