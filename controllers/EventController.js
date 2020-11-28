@@ -4,6 +4,10 @@ import transporter from '../config/mailer.js';
 import multer from 'multer';
 import minio from 'minio';
 import FileType from 'file-type';
+const router = e.Router();
+import Event from '../models/Event.js';
+import User from '../models/User.js';
+import isStaff from '../middleware/isStaff.js';
 
 const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
 const minioClient = new minio.Client({
@@ -13,13 +17,6 @@ const minioClient = new minio.Client({
 	accessKey: process.env.MINIO_ACCESS_KEY,
 	secretKey: process.env.MINIO_SECRET_KEY
 });
-
-const router = e.Router();
-import Event from '../models/Event.js';
-import User from '../models/User.js';
-import isStaff from '../middleware/isStaff.js';
-
-
 
 router.get('/', async ({res}) => {
 	const events = await Event.find({
@@ -140,10 +137,10 @@ router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize:
 			open: true,
 			submitted: false
 		}).then(() => {
-			res.sendStatus(200);
+			return res.sendStatus(200);
 		}).catch((err) => {
 			console.log(err);
-			res.sendStatus(500);
+			return res.sendStatus(500);
 		});
 	} else {
 		return res.status(500).send('File format not allowed.');
