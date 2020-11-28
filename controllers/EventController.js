@@ -146,12 +146,10 @@ router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize:
 router.put('/:slug', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => {
 	const stamp = Date.now();
 	if(!req.file) { // no updated file provided
-		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
 		const positions = JSON.parse(req.body.positions);
 		Event.findOneAndUpdate({url: req.params.slug}, {
 			name: req.body.name,
 			description: req.body.description,
-			url: url,
 			eventStart: req.body.startTime,
 			eventEnd: req.body.endTime,
 			positions: positions
