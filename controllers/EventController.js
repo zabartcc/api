@@ -110,11 +110,7 @@ router.put('/:slug/mansignup/:user', isStaff, async (req, res) => {
 router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => { // 6 MB max
 	const stamp = Date.now();
 	const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
-	const positions = [];
-	const positionsJSON = JSON.parse(req.body.positions);
-	positionsJSON.center.forEach((obj) => positions.push(obj));
-	positionsJSON.tracon.forEach((obj) => positions.push(obj));
-	positionsJSON.local.forEach((obj) => positions.push(obj));
+	const positions = JSON.parse(req.body.positions);
 	const getType = await FileType.fromBuffer(req.file.buffer);
 	if(getType !== undefined && allowedTypes.includes(getType.mime)) {
 		minioClient.putObject("events", req.file.originalname, req.file.buffer, {
