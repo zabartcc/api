@@ -18,6 +18,11 @@ router.get('/downloads', async ({res}) => {
 	return res.json(downloads);
 });
 
+router.get('/downloads/:id', async (req, res) => {
+	const download = await Downloads.findById(req.params.id).lean();
+	return res.json(download);
+});
+
 router.post('/downloads/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 25000000 }}).single("download"), isStaff, async (req, res) => {
 	minioClient.putObject("downloads", req.file.originalname, req.file.buffer, {}, (error) => {
 		if(error) {
@@ -40,7 +45,49 @@ router.post('/downloads/new', multer({storage: multer.memoryStorage(), limits: {
 	});
 });
 
-router.delete('/downloads/:id', isStaff, async(req, res) => {
+router.put('/downloads/:id', multer({storage: multer.memoryStorage(), limits: { fileSize: 25000000 }}).single("download"), isStaff, async (req, res) => {
+	if(!req.file) { // no updated file provided
+		Downloads.findByIdAndUpdate(req.params.id, {
+			name: req.body.name,
+			description: req.body.description,
+			category: req.body.category
+		}).then(() => {
+			return res.sendStatus(200);
+		}).catch((err) => {
+			console.log(err);
+			return res.sendStatus(500);
+		});
+	} else { // new updates file provided
+		const download = await Downloads.findById(req.params.id).select('fileName').lean();
+		const fileName = download.fileName;
+		minioClient.removeObject("downloads", fileName, (error) => {
+			if (error) {
+				console.log(error);
+				return res.sendStatus(500);
+			}
+		});
+		minioClient.putObject("downloads", req.file.originalname, req.file.buffer, {}, (error) => {
+			if(error) {
+				console.log(error);
+				return res.status(500).send('Something went wrong, please try again.');
+			} else {
+				Downloads.findByIdAndUpdate(req.params.id, {
+					name: req.body.name,
+					description: req.body.description,
+					category: req.body.category,
+					fileName: req.file.originalname
+				}).then(() => {
+					return res.sendStatus(200);
+				}).catch((err) => {
+					console.log(err);
+					return res.sendStatus(500);
+				});
+			}
+		});
+	}
+});
+
+router.delete('/downloads/:id', isStaff, async (req, res) => {
 	const download = await Downloads.findByIdAndDelete(req.params.id).lean();
 	const fileName = download.fileName;
 
