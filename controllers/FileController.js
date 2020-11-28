@@ -3,6 +3,7 @@ const router = e.Router();
 import multer from 'multer';
 import minio from 'minio';
 import Downloads from '../models/Downloads.js';
+import Documents from '../models/Documents.js';
 import isStaff from '../middleware/isStaff.js';
 
 const minioClient = new minio.Client({
@@ -13,6 +14,7 @@ const minioClient = new minio.Client({
 	secretKey: process.env.MINIO_SECRET_KEY
 });
 
+// Downloads
 router.get('/downloads', async ({res}) => {
 	const downloads = await Downloads.find({deletedAt: null}).sort({category: "asc"}).lean();
 	return res.json(downloads);
@@ -99,6 +101,21 @@ router.delete('/downloads/:id', isStaff, async (req, res) => {
 			return res.sendStatus(200);
 		}
 	});
+});
+
+// Documents
+router.get('/documents', async ({res}) => {
+	const documents = await Documents.find({deletedAt: null}).select('-content').sort({category: "asc"}).lean();
+	return res.json(documents);
+});
+
+router.get('/documents/:slug', async (req, res) => {
+	const document = await Documents.findOne({slug: req.params.slug, deletedAt: null}).lean();
+	if(document.length === 0) {
+		return res.sendStatus(404);
+	} else {
+		return res.json(document);
+	}
 });
 
 export default router;
