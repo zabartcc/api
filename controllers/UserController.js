@@ -50,7 +50,7 @@ router.post('/login', async (req, res) => {
 		if(!userData) return res.sendStatus(500);
 		const user = User.findOne({cid: userData.cid});
 
-		if(!user) return res.sendStatus(401);
+		if(!user) return res.sendStatus(403);
 
 		if(!user.email) {
 			await User.findOneAndUpdate({cid: userData.cid}, {email: userData.email});
