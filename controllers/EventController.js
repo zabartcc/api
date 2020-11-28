@@ -4,6 +4,10 @@ import transporter from '../config/mailer.js';
 import multer from 'multer';
 import minio from 'minio';
 import FileType from 'file-type';
+const router = e.Router();
+import Event from '../models/Event.js';
+import User from '../models/User.js';
+import isStaff from '../middleware/isStaff.js';
 
 const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
 const minioClient = new minio.Client({
@@ -13,13 +17,6 @@ const minioClient = new minio.Client({
 	accessKey: process.env.MINIO_ACCESS_KEY,
 	secretKey: process.env.MINIO_SECRET_KEY
 });
-
-const router = e.Router();
-import Event from '../models/Event.js';
-import User from '../models/User.js';
-import isStaff from '../middleware/isStaff.js';
-
-
 
 router.get('/', async ({res}) => {
 	const events = await Event.find({
@@ -113,11 +110,7 @@ router.put('/:slug/mansignup/:user', isStaff, async (req, res) => {
 router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => { // 6 MB max
 	const stamp = Date.now();
 	const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
-	const positions = [];
-	const positionsJSON = JSON.parse(req.body.positions);
-	positionsJSON.center.forEach((obj) => positions.push(obj));
-	positionsJSON.tracon.forEach((obj) => positions.push(obj));
-	positionsJSON.local.forEach((obj) => positions.push(obj));
+	const positions = JSON.parse(req.body.positions);
 	const getType = await FileType.fromBuffer(req.file.buffer);
 	if(getType !== undefined && allowedTypes.includes(getType.mime)) {
 		minioClient.putObject("events", req.file.originalname, req.file.buffer, {
@@ -140,13 +133,70 @@ router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize:
 			open: true,
 			submitted: false
 		}).then(() => {
-			res.sendStatus(200);
+			return res.sendStatus(200);
 		}).catch((err) => {
 			console.log(err);
-			res.sendStatus(500);
+			return res.sendStatus(500);
 		});
 	} else {
 		return res.status(500).send('File format not allowed.');
+	}
+});
+
+router.put('/:slug', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => {
+	const stamp = Date.now();
+	if(!req.file) { // no updated file provided
+		const positions = JSON.parse(req.body.positions);
+		Event.findOneAndUpdate({url: req.params.slug}, {
+			name: req.body.name,
+			description: req.body.description,
+			eventStart: req.body.startTime,
+			eventEnd: req.body.endTime,
+			positions: positions
+		}).then(() => {
+			return res.sendStatus(200);
+		}).catch((err) => {
+			console.log(err);
+			return res.sendStatus(500);
+		});
+	} else {
+		const banner = await Event.findOne({url: req.params.slug}).select('bannerUrl').lean();
+		const fileName = banner.bannerUrl;
+		minioClient.removeObject("events", fileName, (error) => {
+			if (error) {
+				console.log(error);
+				return res.sendStatus(500);
+			}
+		});
+		const getType = await FileType.fromBuffer(req.file.buffer);
+		if(getType !== undefined && allowedTypes.includes(getType.mime)) {
+			minioClient.putObject("events", req.file.originalname, req.file.buffer, {
+				'Content-Type': getType.mime
+			}, (error) => {
+				if(error) {
+					return res.sendStatus(500);
+				} else {
+					const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+					const positions = JSON.parse(req.body.positions);
+					Event.findOneAndUpdate({url: req.params.slug}, {
+						name: req.body.name,
+						description: req.body.description,
+						url: url,
+						bannerUrl: req.file.originalname,
+						eventStart: req.body.startTime,
+						eventEnd: req.body.endTime,
+						positions: positions
+					}).then(() => {
+						return res.sendStatus(200);
+					}).catch((err) => {
+						console.log(err);
+						return res.sendStatus(500);
+					});
+				}
+			});
+		} else {
+			return res.sendStatus(500);
+		}
 	}
 });
 

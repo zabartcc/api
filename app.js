@@ -11,6 +11,8 @@ import UserController from './controllers/UserController.js';
 import ControllerController from './controllers/ControllerController.js';
 import OnlineController from './controllers/OnlineController.js';
 import EventController from './controllers/EventController.js';
+import FileController from './controllers/FileController.js';
+import FeedbackController from './controllers/FeedbackController.js';
 
 env.config();
 
@@ -52,6 +54,8 @@ app.use('/online', OnlineController);
 app.use('/user', UserController);
 app.use('/controller', ControllerController);
 app.use('/event', EventController);
+app.use('/file', FileController);
+app.use('/feedback', FeedbackController);
 
 
 app.listen('3000', () =>{
