@@ -18,7 +18,12 @@ env.config();
 const app = express();
 app.use(cookie());
 app.use(express.json());
-app.use(body.json());
+app.use(body.json({limit: '50mb'}));
+app.use(body.urlencoded({
+	limit: '50mb',
+	extended: true,
+	parameterLimit: 50000
+}));
 
 const origins = process.env.CORS_ORIGIN.split('|');
 
