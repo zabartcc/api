@@ -9,7 +9,7 @@ router.get('/pilots', async ({res}) => {
 });
 
 router.get('/atc', async ({res}) => {
-	const atc = await AtcOnline.find().lean();
+	const atc = await AtcOnline.find().lean({virtuals: true});
 	res.json(atc);
 });
 
