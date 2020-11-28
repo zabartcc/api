@@ -147,6 +147,65 @@ router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize:
 	}
 });
 
+router.put('/:slug', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => {
+	const stamp = Date.now();
+	if(!req.file) { // no updated file provided
+		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+		const positions = JSON.parse(req.body.positions);
+		Event.findOneAndUpdate({url: req.params.slug}, {
+			name: req.body.name,
+			description: req.body.description,
+			url: url,
+			eventStart: req.body.startTime,
+			eventEnd: req.body.endTime,
+			positions: positions
+		}).then(() => {
+			return res.sendStatus(200);
+		}).catch((err) => {
+			console.log(err);
+			return res.sendStatus(500);
+		});
+	} else {
+		const banner = await Event.findOne({url: req.params.slug}).select('bannerUrl').lean();
+		const fileName = banner.bannerUrl;
+		minioClient.removeObject("events", fileName, (error) => {
+			if (error) {
+				console.log(error);
+				return res.sendStatus(500);
+			}
+		});
+		const getType = await FileType.fromBuffer(req.file.buffer);
+		if(getType !== undefined && allowedTypes.includes(getType.mime)) {
+			minioClient.putObject("events", req.file.originalname, req.file.buffer, {
+				'Content-Type': getType.mime
+			}, (error) => {
+				if(error) {
+					return res.sendStatus(500);
+				} else {
+					const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+					const positions = JSON.parse(req.body.positions);
+					Event.findOneAndUpdate({url: req.params.slug}, {
+						name: req.body.name,
+						description: req.body.description,
+						url: url,
+						bannerUrl: req.file.originalname,
+						eventStart: req.body.startTime,
+						eventEnd: req.body.endTime,
+						positions: positions
+					}).then(() => {
+						return res.sendStatus(200);
+					}).catch((err) => {
+						console.log(err);
+						return res.sendStatus(500);
+					});
+				}
+			});
+		} else {
+			return res.sendStatus(500);
+		}
+	}
+});
+
 router.delete('/:slug', isStaff, async (req, res) => {
 	const deleteEvent = await Event.findOne({url: req.params.slug});
 	await deleteEvent.delete();

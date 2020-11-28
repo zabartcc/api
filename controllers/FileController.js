@@ -71,7 +71,7 @@ router.put('/downloads/:id', multer({storage: multer.memoryStorage(), limits: { 
 		minioClient.putObject("downloads", req.file.originalname, req.file.buffer, {}, (error) => {
 			if(error) {
 				console.log(error);
-				return res.status(500).send('Something went wrong, please try again.');
+				return res.sendStatus(500);
 			} else {
 				Downloads.findByIdAndUpdate(req.params.id, {
 					name: req.body.name,
