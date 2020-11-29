@@ -7,7 +7,7 @@ import FileType from 'file-type';
 const router = e.Router();
 import Event from '../models/Event.js';
 import User from '../models/User.js';
-import isStaff from '../middleware/isStaff.js';
+import {isStaff} from '../middleware/isStaff.js';
 
 const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
 const minioClient = new minio.Client({

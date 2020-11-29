@@ -6,7 +6,7 @@ import Certification from '../models/Certification.js';
 import VisitApplications from '../models/VisitApplications.js';
 import transporter from '../config/mailer.js';
 
-import isStaff from '../middleware/isStaff.js';
+import {isStaff} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
 	const home = await User.find({deletedAt: null, vis: false}).sort({

@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import Feedback from '../models/Feedback.js';
+import {isMgt} from '../middleware/isStaff.js';
 
 router.post('/', async (req, res) => {
 	if(req.body.fname === '' || req.body.lname === '' || req.body.cid === '' || req.body.comments.length > 5000) { // Validation
@@ -23,6 +24,11 @@ router.post('/', async (req, res) => {
 			return res.status(500).send(err);
 		});
 	}
+});
+
+router.get('/unapproved', isMgt, async ({res}) => {
+	const feedback = await Feedback.find({deletedAt: null, approved: false}).lean();
+	return res.json(feedback);
 });
 
 

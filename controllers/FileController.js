@@ -2,9 +2,9 @@ import e from 'express';
 const router = e.Router();
 import multer from 'multer';
 import minio from 'minio';
-import Downloads from '../models/Downloads.js';
-import Documents from '../models/Documents.js';
-import isStaff from '../middleware/isStaff.js';
+import Downloads from '../models/Download.js';
+import Documents from '../models/Document.js';
+import {isStaff} from '../middleware/isStaff.js';
 
 const minioClient = new minio.Client({
 	endPoint: 'cdn.zabartcc.org',
