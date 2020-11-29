@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import Feedback from '../models/Feedback.js';
+import m from 'mongoose';
 import User from '../models/User.js';
 import {isMgt} from '../middleware/isStaff.js';
 
@@ -13,7 +14,7 @@ router.post('/', async (req, res) => {
 			lname: req.body.lname,
 			email: req.body.email,
 			submitter: req.body.cid,
-			controller: req.body.controller,
+			controller: m.Types.ObjectId(req.body.controller),
 			rating: req.body.rating,
 			comments: req.body.comments,
 			anonymous: req.body.anon,
