@@ -6,7 +6,7 @@ import transporter from '../config/mailer.js';
 import User from '../models/User.js';
 import {isMgt} from '../middleware/isStaff.js';
 
-router.get('/', async (req, res) => { // All feedback
+router.get('/', isMgt, async (req, res) => { // All feedback
 	const page = parseInt(req.query.page, 10);
 	const limit = parseInt(req.query.limit, 10);
 
@@ -51,7 +51,7 @@ router.get('/unapproved', isMgt, async ({res}) => { // Unapproved feedback
 	return res.json(feedback);
 });
 
-router.put('/approve/:id', async (req, res) => { // Approve feedback
+router.put('/approve/:id', isMgt, async (req, res) => { // Approve feedback
 	try {
 		const approved = await Feedback.findOneAndUpdate({_id: req.params.id}, {
 			approved: true
