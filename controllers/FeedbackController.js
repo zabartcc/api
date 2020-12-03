@@ -10,8 +10,8 @@ router.get('/', isMgt, async (req, res) => { // All feedback
 	const page = parseInt(req.query.page, 10);
 	const limit = parseInt(req.query.limit, 10);
 
-	const count = await Feedback.estimatedDocumentCount();
-	const feedback = await Feedback.find().skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
+	const count = await Feedback.countDocuments({$or: [{approved: true}, {deleted: true}]});
+	const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
 	return res.json({
 		feedback: feedback,
 		amount: count
