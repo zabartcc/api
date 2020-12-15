@@ -56,7 +56,7 @@ router.post('/login', async (req, res) => {
 		}
 
 		const apiToken = jwt.sign({cid: userData.cid}, process.env.JWT_SECRET, {expiresIn: '30d'});
-		res.cookie('token', apiToken, { httpOnly: true, secure: true});
+		res.cookie('token', apiToken, { httpOnly: true, maxAge: 2592000000, /*secure: true*/}); // Expires in 30 days
 		return res.json(apiToken);
 
 	} else {
@@ -126,7 +126,7 @@ router.post('/visit/login', async (req, res) => {
 				rating: userData.rating,
 				facility: userData.facility.id || undefined
 			}, process.env.JWT_SECRET, {expiresIn: '1d'});
-			res.cookie('visToken', token, { httpOnly: true, secure: true});
+			res.cookie('visToken', token, { httpOnly: true, maxAge: 86400000, /*secure: true*/}); // Expires in one day
 			return res.json(token);
 		}
 	} else {
