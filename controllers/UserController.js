@@ -10,20 +10,19 @@ import axios from 'axios';
 dotenv.config();
 
 router.get('/', (req, res) => {
-	if(!req.headers.authorization) {
-		res.sendStatus(401);
+	if(!req.cookies.token) {
+		return res.send('');
 	} else {
-		const userToken = req.headers.authorization.split(' ')[1];
+		const userToken = req.cookies.token;
 		jwt.verify(userToken, process.env.JWT_SECRET, async (err, decoded) => {
 			if(err) {
 				console.log(`Unable to verify token: ${err}`);
-				res.sendStatus(500);
+				return res.send(''); // In order to prevent console errors thrown from axios, return empty string.
 			} else {
 				const user = await User.findOne({
 					cid: decoded.cid
-				}).populate('roles');
-
-				res.json(user);
+				}).select('-email -createdAt -updatedAt').populate('roles');
+				return res.json(user);
 			}
 		});
 	}
@@ -57,7 +56,7 @@ router.post('/login', async (req, res) => {
 		}
 
 		const apiToken = jwt.sign({cid: userData.cid}, process.env.JWT_SECRET, {expiresIn: '30d'});
-		
+		res.cookie('token', apiToken, { httpOnly: true, secure: true});
 		return res.json(apiToken);
 
 	} else {
@@ -65,19 +64,37 @@ router.post('/login', async (req, res) => {
 	}
 });
 
-router.get('/visit', (req, res) => {
-	if(!req.headers.authorization) {
-		res.sendStatus(401);
+router.get('/logout', async (req, res) => {
+	if(!req.cookies.token) {
+		return res.sendStatus(500);
 	} else {
-		const userToken = req.headers.authorization.split(' ')[1];
-		jwt.verify(userToken, process.env.JWT_SECRET, async (err, decoded) => {
+		res.cookie('token', '', {expires: new Date(0)});
+		return res.sendStatus(200);
+	}
+});
+
+router.get('/visit', async (req, res) => {
+	if(!req.cookies.visToken) {
+		return res.send('');
+	} else {
+		const visToken = req.cookies.visToken;
+		jwt.verify(visToken, process.env.JWT_SECRET, async (err, decoded) => {
 			if(err) {
 				console.log(`Unable to verify token: ${err}`);
-				res.sendStatus(401);
+				return res.send(''); // In order to prevent console errors thrown from axios, return empty string.
 			} else {
-				res.json(decoded);
+				return res.json(decoded);
 			}
 		});
+	}
+});
+
+router.get('/visit/logout', async (req, res) => {
+	if(!req.cookies.visToken) {
+		return res.sendStatus(500);
+	} else {
+		res.cookie('visToken', '', {expires: new Date(0)});
+		return res.sendStatus(200);
 	}
 });
 
@@ -109,6 +126,7 @@ router.post('/visit/login', async (req, res) => {
 				rating: userData.rating,
 				facility: userData.facility.id || undefined
 			}, process.env.JWT_SECRET, {expiresIn: '1d'});
+			res.cookie('visToken', token, { httpOnly: true, secure: true});
 			return res.json(token);
 		}
 	} else {

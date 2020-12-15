@@ -16,16 +16,16 @@
     "express": "^4.17.1",
     "file-type": "^16.0.1",
     "jsonwebtoken": "^8.5.1",
-    "minio": "^7.0.16",
-    "mongoose": "^5.10.15",
+    "minio": "^7.0.17",
+    "mongoose": "^5.11.5",
     "mongoose-delete": "^0.5.3",
-    "mongoose-lean-virtuals": "^0.7.3",
+    "mongoose-lean-virtuals": "^0.7.5",
     "multer": "^1.4.2",
     "nodemailer": "^6.4.16",
     "nodemailer-express-handlebars": "^4.0.0",
     "nodemon": "^2.0.6"
   },
   "devDependencies": {
-    "eslint": "^7.11.0"
+    "eslint": "^7.15.0"
   }
 }
