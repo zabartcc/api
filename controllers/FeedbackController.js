@@ -5,6 +5,7 @@ import m from 'mongoose';
 import transporter from '../config/mailer.js';
 import User from '../models/User.js';
 import {isMgt} from '../middleware/isStaff.js';
+import isSelf from '../middleware/isSelf.js';
 
 router.get('/', isMgt, async (req, res) => { // All feedback
 	const page = parseInt(req.query.page, 10);
@@ -41,6 +42,20 @@ router.post('/', async (req, res) => { // Submit feedback
 	}
 });
 
+router.get('/:id', isSelf, async (req, res) => {
+	const page = parseInt(req.query.page, 10);
+	const limit = parseInt(req.query.limit, 10);
+
+	const count = await Feedback.countDocuments({approved: true, controller: req.params.id});
+	const feedback = await Feedback.find({deletedAt: null, approved: true, controller: req.params.id}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
+	// To-do: Mongo condition to hide name, email from submitter if submitter wishes to remain anonymous
+
+	return res.json({
+		feedback: feedback,
+		amount: count
+	});
+});
+
 router.get('/controllers', async ({res}) => { // Controller list on feedback page
 	const controllers = await User.find({deletedAt: null}).sort('fname').select('fname lname _id').lean();
 	return res.json(controllers);
@@ -58,7 +73,7 @@ router.put('/approve/:id', isMgt, async (req, res) => { // Approve feedback
 		}).populate('controller', 'email fname lname');
 		transporter.sendMail({
 			to: approved.controller.email,
-			subject: `You have received new feedback | Albuquerque ARTCC`,
+			subject: `New Feedback Received | Albuquerque ARTCC`,
 			template: 'newFeedback',
 			context: {
 				name: `${approved.controller.fname} ${approved.controller.lname}`,
