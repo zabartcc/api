@@ -24,12 +24,12 @@ router.post('/', async (req, res) => { // Submit feedback
 		return res.status(500).send('All form entries must be valid.');
 	} else {
 		Feedback.create({
-			fname: req.body.fname,
-			lname: req.body.lname,
+			name: req.body.name,
 			email: req.body.email,
 			submitter: req.body.cid,
 			controller: m.Types.ObjectId(req.body.controller),
 			rating: req.body.rating,
+			position: req.body.position,
 			comments: req.body.comments,
 			anonymous: req.body.anon,
 			approved: false
@@ -40,20 +40,6 @@ router.post('/', async (req, res) => { // Submit feedback
 			return res.status(500).send(err);
 		});
 	}
-});
-
-router.get('/:id', isSelf, async (req, res) => {
-	const page = parseInt(req.query.page, 10);
-	const limit = parseInt(req.query.limit, 10);
-
-	const count = await Feedback.countDocuments({approved: true, controller: req.params.id});
-	const feedback = await Feedback.find({deletedAt: null, approved: true, controller: req.params.id}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
-	// To-do: Mongo condition to hide name, email from submitter if submitter wishes to remain anonymous
-
-	return res.json({
-		feedback: feedback,
-		amount: count
-	});
 });
 
 router.get('/controllers', async ({res}) => { // Controller list on feedback page
@@ -96,5 +82,36 @@ router.put('/reject/:id', isMgt, async (req, res) => { // Reject feedback
 		}
 	});
 });
+
+router.get('/:id', isSelf, async (req, res) => {
+	const page = parseInt(req.query.page, 10);
+	const limit = parseInt(req.query.limit, 10);
+	const skip = limit * (page - 1);
+	const userId = m.Types.ObjectId(req.params.id);
+
+	const count = await Feedback.countDocuments({approved: true, controller: req.params.id});
+	const feedback = await Feedback.aggregate([
+		{$match: { 
+			controller: userId}
+		},
+		{$project: {
+			controller: 1,
+			position: 1,
+			rating: 1,
+			comments: 1,
+			createdAt: 1,
+			anonymous: 1,
+			name: { $cond: [ "$anonymous", "$$REMOVE", "$name"]} // Conditionally remove name if submitter wishes to remain anonymous
+		}},
+		{$limit: limit},
+		{$skip: skip}
+	]);
+
+	return res.json({
+		feedback: feedback,
+		amount: count
+	});
+});
+
 
 export default router;
