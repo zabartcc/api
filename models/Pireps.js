@@ -9,8 +9,7 @@ const pirepSchema = new m.Schema({
 	icing: String,
 	vis: String,
 	temp: String,
-	windDir: String,
-	windSpd: String,
+	wind: String,
 	urgent: Boolean,
 	raw: String,
 	manual: Boolean
