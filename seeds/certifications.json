@@ -13,7 +13,7 @@
   },
   "name": "Major Ground",
   "code": "p50gnd",
-  "order": 4,
+  "order": 2,
   "class": "major",
   "facility": "gnd"
 },{
@@ -22,7 +22,7 @@
   },
   "name": "Minor Tower",
   "code": "twr",
-  "order": 2,
+  "order": 3,
   "class": "minor",
   "facility": "twr"
 },{
@@ -31,7 +31,7 @@
   },
   "name": "Major Tower",
   "code": "p50twr",
-  "order": 5,
+  "order": 4,
   "class": "major",
   "facility": "twr"
 },{
@@ -40,7 +40,7 @@
   },
   "name": "Minor Approach",
   "code": "app",
-  "order": 3,
+  "order": 5,
   "class": "minor",
   "facility": "app"
 },{

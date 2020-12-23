@@ -11,6 +11,8 @@ import UserController from './controllers/UserController.js';
 import ControllerController from './controllers/ControllerController.js';
 import OnlineController from './controllers/OnlineController.js';
 import EventController from './controllers/EventController.js';
+import FileController from './controllers/FileController.js';
+import FeedbackController from './controllers/FeedbackController.js';
 
 env.config();
 
@@ -18,7 +20,14 @@ env.config();
 const app = express();
 app.use(cookie());
 app.use(express.json());
-app.use(body.json());
+app.use(body.json({limit: '50mb'}));
+app.use(body.urlencoded({
+	limit: '50mb',
+	extended: true,
+	parameterLimit: 50000
+}));
+
+const origins = process.env.CORS_ORIGIN.split('|');
 
 const origins = process.env.CORS_ORIGIN.split('|');
 
@@ -47,6 +56,8 @@ app.use('/online', OnlineController);
 app.use('/user', UserController);
 app.use('/controller', ControllerController);
 app.use('/event', EventController);
+app.use('/file', FileController);
+app.use('/feedback', FeedbackController);
 
 
 app.listen('3000', () =>{

@@ -1,35 +1,22 @@
 import e from 'express';
 import m from 'mongoose';
-import dotenv from 'dotenv';
 import transporter from '../config/mailer.js';
+import multer from 'multer';
+import minio from 'minio';
+import FileType from 'file-type';
 const router = e.Router();
 import Event from '../models/Event.js';
 import User from '../models/User.js';
-import multer from 'multer';
-import path from 'path';
-import isStaff from '../middleware/isStaff.js';
+import {isStaff} from '../middleware/isStaff.js';
 
-const multerConf = multer({
-	storage: multer.diskStorage({
-		destination: (req, file, callback) => {
-			callback(null, process.env.UPLOAD_DIR);
-		},
-		filename: (req, file, callback) => {
-			callback(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-		}
-	}),
-	fileFilter: (req, file, callback) => {
-		if(file.mimetype === "image/png" || file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/gif") {
-			return callback(null, true);
-		} else {
-			callback(null, false);
-			return callback(new Error('File format now allowed.'));
-		}
-	}
+const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
+const minioClient = new minio.Client({
+	endPoint: 'cdn.zabartcc.org',
+	port: 443,
+	useSSL: true,
+	accessKey: process.env.MINIO_ACCESS_KEY,
+	secretKey: process.env.MINIO_SECRET_KEY
 });
-
-let upload = multerConf.single('banner');
-
 
 router.get('/', async ({res}) => {
 	const events = await Event.find({
@@ -103,36 +90,114 @@ router.delete('/:slug/signup/:cid', async (req, res) => {
 	}
 });
 
-router.post('/new', isStaff, async (req, res) => {
-	upload(req, res, async function (err) {
-		if(err) {
-			res.status(500).send('File type not allowed.');
-		} else {
-			const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '');
-			const positions = [];
-			const positionsJSON = JSON.parse(req.body.positions);
-			positionsJSON.center.forEach((obj) => positions.push(obj));
-			positionsJSON.tracon.forEach((obj) => positions.push(obj));
-			positionsJSON.local.forEach((obj) => positions.push(obj));
-			Event.create({
-				name: req.body.name,
-				description: req.body.description,
-				url: url,
-				bannerUrl: req.file.filename,
-				eventStart: req.body.startTime,
-				eventEnd: req.body.endTime,
-				createdBy: req.body.createdBy,
-				positions: positions,
-				open: true,
-				submitted: false
-			}).then(() => {
-				res.sendStatus(200);
-			}).catch((err) => {
-				console.log(err);
-				res.sendStatus(500);
+router.put('/:slug/mansignup/:user', isStaff, async (req, res) => {
+	console.log(req.header);
+	const user = await User.findOne({cid: req.params.user});
+	if(user !== null) {
+		await Event.updateOne({url: req.params.slug}, {
+			$push: {
+				signups: {
+					user: m.Types.ObjectId(user.id),
+				} 
+			}
+		});
+		return res.sendStatus(200);
+	} else {
+		return res.status(500).send('Controller not found.');
+	}
+});
+
+router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => { // 6 MB max
+	const stamp = Date.now();
+	const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+	const positions = JSON.parse(req.body.positions);
+	const getType = await FileType.fromBuffer(req.file.buffer);
+	if(getType !== undefined && allowedTypes.includes(getType.mime)) {
+		minioClient.putObject("events", req.file.originalname, req.file.buffer, {
+			'Content-Type': getType.mime
+		}, (error) => {
+			if(error) {
+				console.log(error);
+				return res.status(500).send('Something went wrong, please try again.');
+			}
+		});
+		Event.create({
+			name: req.body.name,
+			description: req.body.description,
+			url: url,
+			bannerUrl: req.file.originalname,
+			eventStart: req.body.startTime,
+			eventEnd: req.body.endTime,
+			createdBy: req.body.createdBy,
+			positions: positions,
+			open: true,
+			submitted: false
+		}).then(() => {
+			return res.sendStatus(200);
+		}).catch((err) => {
+			console.log(err);
+			return res.sendStatus(500);
+		});
+	} else {
+		return res.status(500).send('File format not allowed.');
+	}
+});
+
+router.put('/:slug', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => {
+	const stamp = Date.now();
+	if(!req.file) { // no updated file provided
+		const positions = JSON.parse(req.body.positions);
+		Event.findOneAndUpdate({url: req.params.slug}, {
+			name: req.body.name,
+			description: req.body.description,
+			eventStart: req.body.startTime,
+			eventEnd: req.body.endTime,
+			positions: positions
+		}).then(() => {
+			return res.sendStatus(200);
+		}).catch((err) => {
+			console.log(err);
+			return res.sendStatus(500);
+		});
+	} else {
+		const banner = await Event.findOne({url: req.params.slug}).select('bannerUrl').lean();
+		const fileName = banner.bannerUrl;
+		minioClient.removeObject("events", fileName, (error) => {
+			if (error) {
+				console.log(error);
+				return res.sendStatus(500);
+			}
+		});
+		const getType = await FileType.fromBuffer(req.file.buffer);
+		if(getType !== undefined && allowedTypes.includes(getType.mime)) {
+			minioClient.putObject("events", req.file.originalname, req.file.buffer, {
+				'Content-Type': getType.mime
+			}, (error) => {
+				if(error) {
+					return res.sendStatus(500);
+				} else {
+					const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+					const positions = JSON.parse(req.body.positions);
+					Event.findOneAndUpdate({url: req.params.slug}, {
+						name: req.body.name,
+						description: req.body.description,
+						url: url,
+						bannerUrl: req.file.originalname,
+						eventStart: req.body.startTime,
+						eventEnd: req.body.endTime,
+						positions: positions
+					}).then(() => {
+						return res.sendStatus(200);
+					}).catch((err) => {
+						console.log(err);
+						return res.sendStatus(500);
+					});
+				}
 			});
+		} else {
+			return res.sendStatus(500);
 		}
-	});
+	}
 });
 
 router.delete('/:slug', isStaff, async (req, res) => {
@@ -155,12 +220,11 @@ router.put('/:slug/assign', isStaff, async (req, res) => {
 	}
 });
 
-router.put('/:slug/finalize', isStaff, async (req, res) => {
+router.put('/:slug/notify', isStaff, async (req, res) => {
 	const assignments = req.body.assignment;
 	Event.updateOne({url: req.params.slug}, {
 		$set: {
 			positions: assignments,
-			open: false,
 			submitted: true
 		}
 	}).then(async () => {
@@ -180,13 +244,26 @@ router.put('/:slug/finalize', isStaff, async (req, res) => {
 				});
 			});
 			return res.sendStatus(200);
-		} catch(e) {
-			console.log(e);
+		} catch(err) {
+			console.log(err);
 			return res.sendStatus(500);
 		}
 	}).catch((err) => {
 		console.log(err);
 		return res.sendStatus(500);
+	});
+});
+
+router.put('/:slug/close', isStaff, async (req, res) => {
+	Event.updateOne({url: req.params.slug}, {
+		$set: {
+			open: false
+		}
+	}).then(() => {
+		res.sendStatus(200);
+	}).catch((err) => {
+		console.log(err);
+		res.sendStatus(500);
 	});
 });
 

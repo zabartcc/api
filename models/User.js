@@ -15,7 +15,7 @@ const userSchema = new m.Schema({
 	rating: Number,
 	oi: String,
 	broadcast: Boolean,
-	vis: Number,
+	vis: Boolean,
 	certifications: [{
 		type: m.Schema.Types.ObjectId, ref: 'Certification'
 	}],
@@ -37,16 +37,17 @@ userSchema.plugin(softDelete, {
 userSchema.plugin(mlv);
 
 userSchema.virtual('isStaff').get(function() {
-	return this.roles ? !!this.roles.length : false;
+	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe'];
+	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
 });
 
 userSchema.virtual('isIns').get(function() {
-	const search = ['atm', 'datm', 'ins', 'mtr'];
+	const search = ['atm', 'datm', 'ta', 'ins', 'mtr'];
 	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
 });
 
 userSchema.virtual('isMgt').get(function() {
-	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe'];
+	const search = ['atm', 'datm', 'ta'];
 	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
 });
 

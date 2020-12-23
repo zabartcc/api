@@ -6,10 +6,10 @@ import Certification from '../models/Certification.js';
 import VisitApplications from '../models/VisitApplications.js';
 import transporter from '../config/mailer.js';
 
-import isStaff from '../middleware/isStaff.js';
+import {isStaff} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
-	const users = await User.find().sort({
+	const home = await User.find({deletedAt: null, vis: false}).sort({
 		rating: 'desc',
 		lname: 'asc',
 		fname: 'asc'
@@ -25,7 +25,26 @@ router.get('/', async ({res}) => {
 		}
 	}).lean({virtuals: true});
 
-	return res.json(users);
+	const visiting = await User.find({deletedAt: null, vis: true}).sort({
+		rating: 'desc',
+		lname: 'asc',
+		fname: 'asc'
+	}).populate({
+		path: 'certifications',
+		options: {
+			sort: {order: 'desc'}
+		}
+	}).populate({
+		path: 'roles',
+		options: {
+			sort: {order: 'asc'}
+		}
+	}).lean({virtuals: true});
+
+	return res.json({
+		"home": home,
+		"visiting": visiting
+	});
 });
 
 router.get('/staff', async (req, res) => {
@@ -95,12 +114,12 @@ router.get('/staff', async (req, res) => {
 });
 
 router.get('/oi', async (req, res) => {
-	const oi = await User.find().select('oi').lean();
+	const oi = await User.find({deletedAt: null}).select('oi').lean();
 	return res.json(oi);
 });
 
 router.get('/:cid', async (req, res) => {
-	const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications');
+	const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications').lean({virtuals: true});
 	return res.json(user);
 });
 
