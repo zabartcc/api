@@ -56,5 +56,4 @@ router.delete('/pireps/:id', async(req, res) => {
 	});
 });
 
-
 export default router;
