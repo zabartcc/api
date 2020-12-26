@@ -29,8 +29,6 @@ app.use(body.urlencoded({
 
 const origins = process.env.CORS_ORIGIN.split('|');
 
-const origins = process.env.CORS_ORIGIN.split('|');
-
 app.use(cors({
 	origin: origins,
 	credentials: true,
