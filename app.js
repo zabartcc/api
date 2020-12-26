@@ -112,10 +112,18 @@ wsserver.on('connection', (ws, req) => {
 	const sub = new Redis(process.env.REDIS_URI);
 	switch(req.url) {
 		case "/ids/aircraft": 
-			sub.subscribe('METAR:UPDATE', 'ATIS:UPDATE', 'PILOT:UPDATE');
+			sub.subscribe('PILOT:UPDATE', 'PILOT:DELETE');
 			sub.on('message', async (channel, message) => {
 				if(channel === "PILOT:UPDATE") {
-					ws.send(JSON.stringify(await redis.hgetall(`PILOT:${message}`)));
+					let res = await redis.hgetall(`PILOT:${message}`);
+					res.type = 'update';
+					ws.send(JSON.stringify(res));
+				}
+				if(channel === "PILOT:DELETE") {
+					ws.send(JSON.stringify({
+						type: 'delete',
+						callsign: message
+					}));
 				}
 			});
 			break;
