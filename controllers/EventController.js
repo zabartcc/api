@@ -24,18 +24,30 @@ router.get('/', async ({res}) => {
 			$gt: new Date() // event starts in the future
 		},
 		deletedAt: null
-	}).sort({eventStart: 'ascending'});
-	res.json(events);
+	}).sort({eventStart: 'ascending'}).lean();
+	return res.json(events);
 });
 
-router.get('/archive', async({res}) => {
+router.get('/archive', async(req, res) => {
+	const page = parseInt(req.query.page, 10);
+	const limit = parseInt(req.query.limit, 10);
+
+	const count = await Event.countDocuments({
+		eventStart: {
+			$lt: new Date()
+		},
+		deletedAt: null
+	});
 	const events = await Event.find({
 		eventStart: {
 			$lt: new Date()
 		},
 		deletedAt: null
-	}).limit(10);
-	res.json(events);
+	}).skip(limit * (page - 1)).limit(limit).sort({eventStart: "desc"}).lean();
+	return res.json({
+		amount: count,
+		events: events
+	});
 
 });
 
@@ -44,8 +56,8 @@ router.get('/:slug', async(req, res) => {
 	const event = await Event.findOne({
 		url: slug,
 		deletedAt: null
-	});
-	res.json(event);
+	}).lean();
+	return res.json(event);
 });
 
 router.get('/:slug/positions', async(req, res) => {
@@ -53,8 +65,8 @@ router.get('/:slug/positions', async(req, res) => {
 	const event = await Event.findOne({
 		url: slug,
 		deletedAt: null
-	}).sort({'positions.order': -1}).select(['open', 'submitted', 'eventStart', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate({path: 'signups.user', select: 'cid fname lname rating certifications requests', populate: {path: 'certifications', select: 'code'}});
-	res.json(event);
+	}).sort({'positions.order': -1}).select(['open', 'submitted', 'eventStart', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate({path: 'signups.user', select: 'cid fname lname rating certifications requests', populate: {path: 'certifications', select: 'code'}}).lean();
+	return res.json(event);
 });
 
 router.put('/:slug/signup/:cid', async (req, res) => {
@@ -68,9 +80,9 @@ router.put('/:slug/signup/:cid', async (req, res) => {
 		}
 	});
 	if(addSignup.ok) {
-		res.sendStatus(200);
+		return res.sendStatus(200);
 	} else {
-		res.sendStatus(500);
+		return res.sendStatus(500);
 	}
 });
 
@@ -84,9 +96,9 @@ router.delete('/:slug/signup/:cid', async (req, res) => {
 		}
 	});
 	if(deleteSignup.ok) {
-		res.sendStatus(200);
+		return res.sendStatus(200);
 	} else {
-		res.sendStatus(500);
+		return res.sendStatus(500);
 	}
 });
 
@@ -260,10 +272,10 @@ router.put('/:slug/close', isStaff, async (req, res) => {
 			open: false
 		}
 	}).then(() => {
-		res.sendStatus(200);
+		return res.sendStatus(200);
 	}).catch((err) => {
 		console.log(err);
-		res.sendStatus(500);
+		return res.sendStatus(500);
 	});
 });
 
