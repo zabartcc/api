@@ -1,4 +1,5 @@
 import m from 'mongoose';
+import softDelete from 'mongoose-delete';
 
 const visitApplicationsSchema = new m.Schema({
 	cid: Number,
@@ -8,13 +9,15 @@ const visitApplicationsSchema = new m.Schema({
 	email: String,
 	home: String,
 	reason: String,
-	submittedAt: Date,
-	acceptedBy: {
-		type: m.Schema.Types.ObjectId, ref: 'User'
-	},
 	acceptedAt: Date
 }, {
-	collection: "visitApplications"
+	collection: "visitApplications",
+	timestamps: true
 });
+
+visitApplicationsSchema.plugin(softDelete, {
+	deletedAt: true
+});
+
 
 export default m.model('VisitApplications', visitApplicationsSchema);

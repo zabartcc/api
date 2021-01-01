@@ -6,7 +6,7 @@ import Certification from '../models/Certification.js';
 import VisitApplications from '../models/VisitApplications.js';
 import transporter from '../config/mailer.js';
 
-import {isStaff} from '../middleware/isStaff.js';
+import {isStaff, isMgt} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
 	const home = await User.find({deletedAt: null, vis: false}).sort({
@@ -132,8 +132,7 @@ router.post('/visit', async (req, res) => {
 		rating: req.body.rating,
 		email: req.body.email,
 		home: req.body.home,
-		reason: req.body.reason,
-		submittedAt: Date.now()
+		reason: req.body.reason
 	}).then(() =>{
 		transporter.sendMail({
 			to: req.body.email,
@@ -149,6 +148,57 @@ router.post('/visit', async (req, res) => {
 		return res.sendStatus(500);
 	});
 	
+});
+
+router.get('/visit/applications', isMgt, async ({res}) => {
+	try {
+		const applications = await VisitApplications.find({deletedAt: null, acceptedAt: null}).lean();
+		return res.json(applications);
+	} catch(e) {
+		console.log(e);
+		return res.sendStatus(500);
+	}
+});
+
+router.put('/visit/applications/approve/:id', isMgt, async (req, res) => {
+	try {
+		const application = await VisitApplications.findByIdAndUpdate(req.params.id, {
+			acceptedAt: new Date()
+		});
+		await transporter.sendMail({
+			to: application.email,
+			subject: `Visiting Application Accepted | Albuquerque ARTCC`,
+			template: 'visitAccepted',
+			context: {
+				name: `${ application.fname} ${ application.lname}`,
+			}
+		});
+		return res.sendStatus(200);
+	} catch(e) {
+		console.log(e);
+		return res.sendStatus(500);
+	}
+});
+
+
+router.put('/visit/applications/reject/:id', isMgt, async (req, res) => {
+	try {
+		const application = await VisitApplications.findById(req.params.id).lean();
+		await VisitApplications.deleteById(req.params.id);
+		await transporter.sendMail({
+			to: application.email,
+			subject: `Visiting Application Rejected | Albuquerque ARTCC`,
+			template: 'visitRejected',
+			context: {
+				name: `${ application.fname} ${ application.lname}`,
+				reason: req.body.reason
+			}
+		});
+		return res.sendStatus(200);
+	} catch(e) {
+		console.log(e);
+		return res.sendStatus(500);
+	}
 });
 
 router.post('/:cid', isStaff, async (req, res) => {
