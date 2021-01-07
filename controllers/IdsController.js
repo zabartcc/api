@@ -3,8 +3,6 @@ import Redis from 'ioredis';
 const router = express.Router();
 
 const redis = new Redis();
-// const sub = new Redis();
-// sub.subscribe('PILOT:UPDATE', 'PILOT:DELETE', 'ATIS:UPDATE', 'ATIS:DELETE');
 
 router.get('/aircraft', async (req, res) => {
 	const pilots = await redis.get('pilots');
@@ -80,7 +78,7 @@ router.get('/atis', (req, res) => {
 	});
 })
 
-router.post('/vatis', (req, res) => {
+router.post('/vatis', async (req, res) => {
 	if(req.body.config_profile.match(/IDS:/i)) { // IDS compatible profile
 		let arr = [];
 		let dep = [];
@@ -112,6 +110,12 @@ router.post('/vatis', (req, res) => {
 			}
 		}
 
+		let redisAtis = await redis.get('atis')
+		redisAtis = (redisAtis && redisAtis.length) ? redisAtis.split('|') : [];
+		redisAtis.push(req.body.facility);
+		redis.set('atis', redisAtis.join('|'));
+		redis.expire(`atis`, 65);
+
 		redis.hmset(`ATIS:${req.body.facility}`,
 			'station', req.body.facility,
 			'letter', req.body.atis_letter,
@@ -137,4 +141,11 @@ router.get('/stations/:station', async (req, res) => {
 
 	res.json({metar, dep: atisInfo.dep || null, arr: atisInfo.arr || null, letter: atisInfo.letter || null})
 })
+
+router.get('/neighbors', async (req, res) => {
+	const neighbors = await redis.get('neighbors');
+
+	res.json(neighbors.split('|'));
+})
+
 export default router;
