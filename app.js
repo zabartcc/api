@@ -13,6 +13,7 @@ import OnlineController from './controllers/OnlineController.js';
 import EventController from './controllers/EventController.js';
 import FileController from './controllers/FileController.js';
 import FeedbackController from './controllers/FeedbackController.js';
+import IdsController from './controllers/IdsController.js';
 
 env.config();
 
@@ -34,14 +35,13 @@ app.use(cors({
 	credentials: true,
 }));
 
-// app.use((req, res, next) => {
-// 	console.log(req.headers.host);
-// 	res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN);
-// 	res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-// 	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-// 	res.setHeader('Access-Control-Allow-Credentials', true);
-// 	next();
-// });
+app.use((req, res, next) => {
+	res.setHeader('Access-Control-Allow-Origin', '*');
+	res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+	res.setHeader('Access-Control-Allow-Credentials', true);
+	next();
+});
 
 // Connect to MongoDB
 mongoose.set('toJSON', {virtuals: true});
@@ -56,7 +56,7 @@ app.use('/controller', ControllerController);
 app.use('/event', EventController);
 app.use('/file', FileController);
 app.use('/feedback', FeedbackController);
-
+app.use('/ids', IdsController);
 
 app.listen('3000', () =>{
 	console.log('Listening on port 3000');
