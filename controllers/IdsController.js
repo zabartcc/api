@@ -2,7 +2,7 @@ import express from 'express';
 import Redis from 'ioredis';
 const router = express.Router();
 
-const redis = new Redis();
+const redis = new Redis(process.env.REDIS_URI);
 
 router.get('/aircraft', async (req, res) => {
 	const pilots = await redis.get('pilots');
@@ -12,7 +12,7 @@ router.get('/aircraft', async (req, res) => {
 
 router.get('/aircraft/feed', (req, res) => {
 
-	const sub = new Redis();
+	const sub = new Redis(process.env.REDIS_URI);
 
 	res.writeHead(200, {
 		'Content-Type': 'text/event-stream',
@@ -49,7 +49,7 @@ router.get('/aircraft/:callsign', async (req, res) => {
 
 router.get('/atis', (req, res) => {
 
-	const sub = new Redis();
+	const sub = new Redis(process.env.REDIS_URI);
 
 	res.writeHead(200, {
 		'Content-Type': 'text/event-stream',
