@@ -3,7 +3,7 @@ const router = e.Router();
 import User from '../models/User.js';
 import Role from '../models/Role.js';
 import Certification from '../models/Certification.js';
-import VisitApplications from '../models/VisitApplications.js';
+import VisitApplication from '../models/VisitApplication.js';
 import transporter from '../config/mailer.js';
 
 import {isStaff, isMgt} from '../middleware/isStaff.js';
@@ -125,7 +125,7 @@ router.get('/:cid', async (req, res) => {
 
 router.post('/visit', async (req, res) => {
 	if(!req.body.cid) return res.sendStatus(400);
-	VisitApplications.create({
+	VisitApplication.create({
 		cid: req.body.cid,
 		fname: req.body.fname,
 		lname: req.body.lname,
@@ -152,7 +152,7 @@ router.post('/visit', async (req, res) => {
 
 router.get('/visit/applications', isMgt, async ({res}) => {
 	try {
-		const applications = await VisitApplications.find({deletedAt: null, acceptedAt: null}).lean();
+		const applications = await VisitApplication.find({deletedAt: null, acceptedAt: null}).lean();
 		return res.json(applications);
 	} catch(e) {
 		console.log(e);
@@ -162,7 +162,7 @@ router.get('/visit/applications', isMgt, async ({res}) => {
 
 router.put('/visit/applications/approve/:id', isMgt, async (req, res) => {
 	try {
-		const application = await VisitApplications.findByIdAndUpdate(req.params.id, {
+		const application = await VisitApplication.findByIdAndUpdate(req.params.id, {
 			acceptedAt: new Date()
 		});
 		await transporter.sendMail({
@@ -183,8 +183,8 @@ router.put('/visit/applications/approve/:id', isMgt, async (req, res) => {
 
 router.put('/visit/applications/reject/:id', isMgt, async (req, res) => {
 	try {
-		const application = await VisitApplications.findById(req.params.id).lean();
-		await VisitApplications.deleteById(req.params.id);
+		const application = await VisitApplication.findById(req.params.id).lean();
+		await VisitApplication.deleteById(req.params.id);
 		await transporter.sendMail({
 			to: application.email,
 			subject: `Visiting Application Rejected | Albuquerque ARTCC`,

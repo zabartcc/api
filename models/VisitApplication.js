@@ -1,7 +1,7 @@
 import m from 'mongoose';
 import softDelete from 'mongoose-delete';
 
-const visitApplicationsSchema = new m.Schema({
+const visitApplicationSchema = new m.Schema({
 	cid: Number,
 	fname: String,
 	lname: String,
@@ -15,9 +15,9 @@ const visitApplicationsSchema = new m.Schema({
 	timestamps: true
 });
 
-visitApplicationsSchema.plugin(softDelete, {
+visitApplicationSchema.plugin(softDelete, {
 	deletedAt: true
 });
 
 
-export default m.model('VisitApplications', visitApplicationsSchema);
+export default m.model('VisitApplication', visitApplicationSchema);

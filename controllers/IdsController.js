@@ -6,12 +6,10 @@ const redis = new Redis(process.env.REDIS_URI);
 
 router.get('/aircraft', async (req, res) => {
 	const pilots = await redis.get('pilots');
-
-	res.json(pilots.split('|'));
+	return res.json(pilots.split('|'));
 })
 
 router.get('/aircraft/feed', (req, res) => {
-
 	const sub = new Redis(process.env.REDIS_URI);
 
 	res.writeHead(200, {
@@ -42,8 +40,7 @@ router.get('/aircraft/feed', (req, res) => {
 
 router.get('/aircraft/:callsign', async (req, res) => {
 	let data = await redis.hgetall(`PILOT:${req.params.callsign}`);
-
-	res.json(data);
+	return res.json(data);
 })
 
 
@@ -125,27 +122,24 @@ router.post('/vatis', async (req, res) => {
 		redis.expire(`ATIS:${req.body.facility}`, 65)
 		redis.publish('ATIS:UPDATE', req.body.facility);
 	}
-	res.sendStatus(200);
+	return res.sendStatus(200);
 });
 
 router.get('/stations', async (req, res) => {
 	const airports = await redis.get('airports');
-
-	res.json(airports.split('|'));
+	return res.json(airports.split('|'));
 })
 
 router.get('/stations/:station', async (req, res) => {
 	const station = req.params.station;
 	const metar = await redis.get(`METAR:${station.toUpperCase()}`);
 	const atisInfo = await redis.hgetall(`ATIS:${station}`);
-
-	res.json({metar, dep: atisInfo.dep || null, arr: atisInfo.arr || null, letter: atisInfo.letter || null})
+	return res.json({metar, dep: atisInfo.dep || null, arr: atisInfo.arr || null, letter: atisInfo.letter || null})
 })
 
 router.get('/neighbors', async (req, res) => {
 	const neighbors = await redis.get('neighbors');
-
-	res.json(neighbors.split('|'));
+	return res.json(neighbors.split('|'));
 })
 
 export default router;

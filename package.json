@@ -5,7 +5,10 @@
   "main": "app.js",
   "keywords": [],
   "author": "Albuquerque ARTCC",
-  "contributors": ["Austin Robison", "Daan Janssen"],
+  "contributors": [
+    "Austin Robison",
+    "Daan Janssen"
+  ],
   "license": "CC-BY-NC-SA-4.0",
   "type": "module",
   "dependencies": {
@@ -19,7 +22,7 @@
     "ioredis": "^4.19.4",
     "jsonwebtoken": "^8.5.1",
     "minio": "^7.0.18",
-    "mongoose": "^5.11.9",
+    "mongoose": "^5.11.11",
     "mongoose-delete": "^0.5.3",
     "mongoose-lean-virtuals": "^0.7.6",
     "multer": "^1.4.2",
@@ -28,6 +31,6 @@
     "nodemon": "^2.0.6"
   },
   "devDependencies": {
-    "eslint": "^7.16.0"
+    "eslint": "^7.17.0"
   }
 }
