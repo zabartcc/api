@@ -1,61 +1,40 @@
 [{
-  "_id": {
-    "$oid": "5f30bd7a29eb3d5ab86115c7"
-  },
   "name": "Minor Ground",
   "code": "gnd",
   "order": 1,
   "class": "minor",
   "facility": "gnd"
 },{
-  "_id": {
-    "$oid": "5f30bd7a29eb3d5ab86115c8"
-  },
   "name": "Major Ground",
   "code": "p50gnd",
   "order": 2,
   "class": "major",
   "facility": "gnd"
 },{
-  "_id": {
-    "$oid": "5f30bd7a29eb3d5ab86115c9"
-  },
   "name": "Minor Tower",
   "code": "twr",
   "order": 3,
   "class": "minor",
   "facility": "twr"
 },{
-  "_id": {
-    "$oid": "5f30bd7a29eb3d5ab86115ca"
-  },
   "name": "Major Tower",
   "code": "p50twr",
   "order": 4,
   "class": "major",
   "facility": "twr"
 },{
-  "_id": {
-    "$oid": "5f30bd7a29eb3d5ab86115cb"
-  },
   "name": "Minor Approach",
   "code": "app",
   "order": 5,
   "class": "minor",
   "facility": "app"
 },{
-  "_id": {
-    "$oid": "5f30bd7a29eb3d5ab86115cc"
-  },
   "name": "Major Approach",
   "code": "p50app",
   "order": 6,
   "class": "major",
   "facility": "app"
 },{
-  "_id": {
-    "$oid": "5f30bd7a29eb3d5ab86115cd"
-  },
   "name": "Albuquerque Center",
   "code": "zab",
   "order": 7,

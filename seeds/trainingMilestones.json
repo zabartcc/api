@@ -1,0 +1,89 @@
+[{
+	"code": "GC1",
+	"name": "Basic ATC and Delta Introduction",
+	"rating": "1"
+},{
+	"code": "GC2",
+	"name": "Class C Ground Operations",
+	"rating": "1"
+},{
+	"code": "GC3",
+	"name": "Class B Ground Operations",
+	"rating": "2"
+},{
+	"code": "GC4",
+	"name": "KPHX Ground Checkout",
+	"rating": "2"
+},{
+	"code": "LC1",
+	"name": "Basic Class D/C Tower Operations",
+	"rating": "2"
+},{
+	"code": "LC2",
+	"name": "Advanced Class D/C Tower Operations",
+	"rating": "2"
+},{
+	"code": "LC3",
+	"name": "Class C Tower Live Monitoring",
+	"rating": "2"
+},{
+	"code": "LC4",
+	"name": "S2 Tower OTS",
+	"rating": "2"
+},{
+	"code": "LC5",
+	"name": "Class B Tower Operations",
+	"rating": "3"
+},{
+	"code": "LC6",
+	"name": "KPHX Tower OTS",
+	"rating": "3"
+},{
+	"code": "AD1",
+	"name": "Basic Class C TRACON Operations",
+	"rating": "3"
+},{
+	"code": "AD2",
+	"name": "Advanced Class C TRACON Operations",
+	"rating": "3"
+},{
+	"code": "AD3",
+	"name": "Class C TRACON Live Monitoring",
+	"rating": "3"
+},{
+	"code": "AD4",
+	"name": "S3 Approach OTS",
+	"rating": "3"
+},{
+	"code": "AD5",
+	"name": "P50 Departure Procedures",
+	"rating": "4"
+},{
+	"code": "AD6",
+	"name": "P50 Arrival Procedures",
+	"rating": "4"
+},{
+	"code": "AD7",
+	"name": "P50 Satellite Procedures",
+	"rating": "4"
+},{
+	"code": "AD8",
+	"name": "P50 TRACON Live Monitoring",
+	"rating": "4"
+},{
+	"code": "AD10",
+	"name": "P50 TRACON OTS",
+	"rating": "4"
+},{
+	"code": "EN1",
+	"name": "Albuquerque Center Live Monitoring",
+	"rating": "4"
+},{
+	"code": "EN3",
+	"name": "C1 Center OTS",
+	"rating": "C1"
+},{
+	"code": "EN3",
+	"name": "C1 Center OTS",
+	"rating": "4"
+  }]
