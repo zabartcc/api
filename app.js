@@ -14,6 +14,7 @@ import EventController from './controllers/EventController.js';
 import FileController from './controllers/FileController.js';
 import FeedbackController from './controllers/FeedbackController.js';
 import IdsController from './controllers/IdsController.js';
+import TrainingController from './controllers/TrainingController.js';
 
 env.config();
 
@@ -57,6 +58,7 @@ app.use('/event', EventController);
 app.use('/file', FileController);
 app.use('/feedback', FeedbackController);
 app.use('/ids', IdsController);
+app.use('/training', TrainingController);
 
 app.listen('3000', () =>{
 	console.log('Listening on port 3000');

@@ -4,6 +4,7 @@ import mlv from 'mongoose-lean-virtuals';
 import softDelete from 'mongoose-delete';
 import './Certification.js';
 import './Role.js';
+import './TrainingMilestone.js';
 
 import zab from '../config/zab.js';
 
@@ -21,6 +22,9 @@ const userSchema = new m.Schema({
 	}],
 	roles: [{
 		type: m.Schema.Types.ObjectId, ref: 'Role'
+	}],
+	trainingMilestones: [{
+		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
 	}]
 }, {
 	timestamps: true,
