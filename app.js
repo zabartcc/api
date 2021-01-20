@@ -20,6 +20,17 @@ env.config();
 
 // Setup Express
 const app = express();
+app.use((req, res, next) => {
+	res.stdRes = {
+		ret_det: {
+			code: 200,
+			message: '',
+		}, 
+		data: {}
+	};
+
+	next();
+});
 app.use(cookie());
 app.use(express.json());
 app.use(body.json({limit: '50mb'}));
@@ -43,6 +54,7 @@ app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Credentials', true);
 	next();
 });
+
 
 // Connect to MongoDB
 mongoose.set('toJSON', {virtuals: true});
