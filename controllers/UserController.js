@@ -103,7 +103,6 @@ router.post('/login', async (req, res) => {
 
 	} 
 	catch(e) {
-		console.log(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -121,7 +120,6 @@ router.get('/logout', async (req, res) => {
 		res.cookie('token', '', {expires: new Date(0)});
 	}
 	catch(e) {
-		console.log(e);
 		res.stdRes.ret_det = e;
 	}
 	
