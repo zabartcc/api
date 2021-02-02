@@ -1,17 +1,17 @@
 import e from 'express';
 const router = e.Router();
-
-import { isStaff } from '../middleware/isStaff.js';
-
+import {isStaff} from '../middleware/isStaff.js';
 import News from '../models/News.js';
 
 router.get('/', async (req, res) => {
-	const newsItems = await News.find()
-		.sort({createdAt: 'desc'})
-		.populate('createdBy', ['fname', 'lname'])
-		.lean();
-	res.stdRes.data = newsItems;
-	res.json(res.stdRes);
+	const page = parseInt(req.query.page, 10);
+	const limit = parseInt(req.query.limit, 10);
+
+	const amount = await News.countDocuments({deleted: false});
+	const news = await News.find({deleted: false}).sort({createdAt: 'desc'}).skip(limit * (page - 1)).limit(limit).populate('createdBy', ['fname', 'lname']).lean();
+	res.stdRes.amount = amount;
+	res.stdRes.data = news;
+	return res.json(res.stdRes);
 });
 
 router.post('/', isStaff, async (req, res) => {
@@ -52,7 +52,7 @@ router.post('/', isStaff, async (req, res) => {
 
 router.get('/:slug', async (req, res) =>{
 	const newsItem = await News
-		.find({uriSlug: req.params.slug})
+		.findOne({uriSlug: req.params.slug})
 		.populate('createdBy', ['fname', 'lname'])
 		.lean();
 

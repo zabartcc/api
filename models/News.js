@@ -1,4 +1,5 @@
 import m from 'mongoose';
+import softDelete from 'mongoose-delete';
 import './User.js';
 
 const newsSchema = new m.Schema({
@@ -9,7 +10,12 @@ const newsSchema = new m.Schema({
 		type: m.Schema.Types.ObjectId, ref: 'User'
 	},
 }, {
-	timestamps: true,
+	collection: "news",
+	timestamps: true
+});
+
+newsSchema.plugin(softDelete, {
+	deletedAt: true
 });
 
 export default m.model('News', newsSchema);
