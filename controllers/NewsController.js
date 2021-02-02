@@ -22,19 +22,14 @@ router.post('/', isStaff, async (req, res) => {
 				message: "One or more form fields are missing."
 			};
 		}
-
 		const {title, content, createdBy} = req.body;
-
 		const uriSlug = title.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
-	
-
 		const news = await News.create({
 			title,
 			content,
 			uriSlug,
 			createdBy
 		});
-		
 		if(!news) {
 			throw {
 				code: 500,
@@ -57,29 +52,25 @@ router.get('/:slug', async (req, res) =>{
 		.lean();
 
 	res.stdRes.data = newsItem;
-	res.json(res.stdRes);
+	return res.json(res.stdRes);
 });
 
 router.put('/:slug', isStaff, async (req, res) => {
 	try {
 		const {title, content} = req.body;
-
 		const newsItem = await News.findOne({uriSlug: req.params.slug});
-
 		if(newsItem.title !== title) {
 			newsItem.title = title;
 			newsItem.uriSlug = title.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		}
-
 		newsItem.content = content;
-
 		await newsItem.save();
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
 	}	
 
-	res.json(res.stdRes);
+	return res.json(res.stdRes);
 });
 
 router.delete('/:slug', isStaff, async (req, res) =>{
@@ -98,7 +89,7 @@ router.delete('/:slug', isStaff, async (req, res) =>{
 		res.stdRes.ret_det = e;
 	}	
 
-	res.json(res.stdRes);
+	return res.json(res.stdRes);
 });
 
 // router.get('/seed', async (req, res) => {
