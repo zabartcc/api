@@ -21,7 +21,7 @@ const minioClient = new minio.Client({
 router.get('/', async ({res}) => {
 	const events = await Event.find({
 		eventEnd: {
-			$gt: new Date() // event starts in the future
+			$gt: new Date(new Date().toUTCString()) // event starts in the future
 		},
 		deletedAt: null
 	}).sort({eventStart: 'ascending'}).lean();
@@ -34,13 +34,13 @@ router.get('/archive', async(req, res) => {
 
 	const count = await Event.countDocuments({
 		eventStart: {
-			$lt: new Date()
+			$lt: new Date(new Date().toUTCString())
 		},
 		deletedAt: null
 	});
 	const events = await Event.find({
 		eventStart: {
-			$lt: new Date()
+			$lt: new Date(new Date().toUTCString())
 		},
 		deletedAt: null
 	}).skip(limit * (page - 1)).limit(limit).sort({eventStart: "desc"}).lean();
