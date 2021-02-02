@@ -138,7 +138,7 @@ router.get('/stations/:station', async (req, res) => {
 })
 
 router.get('/neighbors', async (req, res) => {
-	const neighbors = await redis.get('neighbors');
+	const neighbors = await redis.get('neighbors') || [];
 	return res.json(neighbors.split('|'));
 })
 
