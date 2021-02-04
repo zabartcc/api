@@ -16,7 +16,15 @@ const userSchema = new m.Schema({
 	rating: Number,
 	oi: String,
 	broadcast: Boolean,
+	member: Boolean,
 	vis: Boolean,
+	discordInfo: {
+		clientId: String,
+		accessToken: String,
+		refreshToken: String,
+		tokenType: String,
+		expires: Date,
+	},
 	certifications: [{
 		type: m.Schema.Types.ObjectId, ref: 'Certification'
 	}],
@@ -39,6 +47,10 @@ userSchema.plugin(softDelete, {
 });
 
 userSchema.plugin(mlv);
+
+userSchema.virtual('isMem').get(function() {
+	return !!this.member;
+});
 
 userSchema.virtual('isStaff').get(function() {
 	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe'];

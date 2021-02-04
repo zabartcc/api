@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import axios from 'axios';
 
+import Discord from 'discord-oauth2';
+
 dotenv.config();
 
 router.get('/', async (req, res) => {
@@ -78,6 +80,8 @@ router.post('/login', async (req, res) => {
 
 		const { data: userData } = await axios.get(`https://login.vatusa.net/uls/v2/info?token=${loginTokenParts[1]}`);
 
+		console.log(userData);
+
 		if(!userData) {
 			throw {
 				code: 500,
@@ -85,17 +89,25 @@ router.post('/login', async (req, res) => {
 			};
 		}
 		
-		const user = await User.findOne({cid: userData.cid});
+		let user;
+		user = await User.findOne({cid: userData.cid});
 
 		if(!user) {
-			throw {
-				code: 403,
-				message: "User not on roster."
-			};
-		}
-
-		if(!user.email) {
-			await User.findOneAndUpdate({cid: userData.cid}, {email: userData.email});
+			user = await User.create({
+				cid: userData.cid,
+				fname: userData.firstname,
+				lname: userData.lastname,
+				email: userData.email,
+				rating: userData.intRating,
+				oi: null,
+				broadcast: false,
+				member: false,
+				vis: false,
+			});
+		} else {
+			if(!user.email) {
+				await User.findOneAndUpdate({cid: userData.cid}, {email: userData.email});
+			}
 		}
 
 		const apiToken = jwt.sign({cid: userData.cid}, process.env.JWT_SECRET, {expiresIn: '30d'});
@@ -185,6 +197,87 @@ router.post('/visit/login', async (req, res) => {
 	} else {
 		return res.sendStatus(500);
 	}
+});
+
+router.post('/discord', async (req, res) => {
+	try {
+		if(!req.body.code || !req.body.cid) {
+			throw {
+				code: 400,
+				message: "Incomplete request."
+			};
+		}
+
+		const {cid, code} = req.body;
+
+		const user = await User.findOne({cid});
+
+		if(!user) {
+			throw {
+				code: 401,
+				message: "User not found."
+			};
+		}
+
+		const oauth = new Discord();
+
+		const token = await oauth.tokenRequest({
+			clientId: process.env.DISCORD_CLIENT_ID,
+			clientSecret: process.env.DISCORD_CLIENT_SECRET,
+			redirectUri: 'http://localhost:8080/connect/discord',
+			grantType: 'authorization_code',
+			code,
+			scope: 'identify'
+
+		}).catch(err => {
+			console.log(err);
+			return false;
+		});
+
+		if(!token) {
+			throw {
+				code: 403,
+				message: "Unable to authenticate with Discord."
+			};
+
+		}
+
+		const {data: discordUser} = await axios.get('https://discord.com/api/users/@me', {
+			headers: {
+				'Authorization': `${token.token_type} ${token.access_token}`,
+				'User-Agent': 'Albuquerque ARTCC API'
+			}
+		}).catch(err => {
+			console.log(err);
+			return false;
+		});
+
+		if(!discordUser) {
+			throw {
+				code: 403,
+				message: "Unable to retrieve Discord info."
+			};
+
+		}
+
+		user.discordInfo.clientId = discordUser.id;
+		user.discordInfo.accessToken = token.access_token;
+		user.discordInfo.refreshToken = token.refresh_token;
+		user.discordInfo.tokenType = token.token_type;
+
+		let currentTime = new Date();
+		currentTime = new Date(currentTime.getTime() + (token.expires_in*1000));
+
+		user.discordInfo.expires = currentTime;
+
+		await user.save();
+
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
 });
 
 export default router;
