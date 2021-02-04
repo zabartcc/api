@@ -9,7 +9,7 @@ import transporter from '../config/mailer.js';
 import {isStaff, isMgt} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
-	const home = await User.find({deletedAt: null, vis: false}).sort({
+	const home = await User.find({deletedAt: null, vis: false, member: true}).sort({
 		rating: 'desc',
 		lname: 'asc',
 		fname: 'asc'
@@ -25,7 +25,7 @@ router.get('/', async ({res}) => {
 		}
 	}).lean({virtuals: true});
 
-	const visiting = await User.find({deletedAt: null, vis: true}).sort({
+	const visiting = await User.find({deletedAt: null, vis: true, member: true}).sort({
 		rating: 'desc',
 		lname: 'asc',
 		fname: 'asc'
