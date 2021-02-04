@@ -224,7 +224,7 @@ router.post('/discord', async (req, res) => {
 		const token = await oauth.tokenRequest({
 			clientId: process.env.DISCORD_CLIENT_ID,
 			clientSecret: process.env.DISCORD_CLIENT_SECRET,
-			redirectUri: 'http://localhost:8080/connect/discord',
+			redirectUri: process.env.DISCORD_REDIRECT_URI,
 			grantType: 'authorization_code',
 			code,
 			scope: 'identify'
