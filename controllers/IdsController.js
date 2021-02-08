@@ -5,38 +5,37 @@ const router = express.Router();
 
 const redis = new Redis(process.env.REDIS_URI);
 
-router.post('/user', async (req, res) => {
-	const token = req.body.token;
-	
+router.post('/checktoken', async (req, res) => {
+	const idsToken = req.cookies.idsToken;
 	try {
-		if(!token) {
+		if(!idsToken) {
 			throw {
 				code: 401,
-				message: "Token not found."
+				message: "Invalid IDS token"
 			};
+		} else {
+			const user = await User.findOne({idsToken: idsToken}).select('-email -idsToken').lean();
+			if(!user) {
+				throw {
+					code: 404,
+					message: "Invalid IDS token"
+				};
+			} else {
+				res.stdRes.data = user;
+			}
 		}
-		const user = await User.findOne({idsToken: token}).select('-email -idsToken').lean();
-
-		if(!user) {
-			throw {
-				code: 403,
-				message: "User not found."
-			};
-		}
-
-		res.stdRes.data = user;
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
 	}
 	
 	return res.json(res.stdRes);
-})
+});
 
 router.get('/aircraft', async (req, res) => {
 	const pilots = await redis.get('pilots') || '';
 	return res.json(pilots.split('|'));
-})
+});
 
 router.get('/aircraft/feed', (req, res) => {
 	const sub = new Redis(process.env.REDIS_URI);
@@ -70,8 +69,7 @@ router.get('/aircraft/feed', (req, res) => {
 router.get('/aircraft/:callsign', async (req, res) => {
 	let data = await redis.hgetall(`PILOT:${req.params.callsign}`);
 	return res.json(data);
-})
-
+});
 
 router.get('/atis', (req, res) => {
 
@@ -102,7 +100,7 @@ router.get('/atis', (req, res) => {
 		// sub.unsubscribe('ATIS:UPDATE', 'ATIS:DELETE');
 		sub.disconnect();
 	});
-})
+});
 
 router.post('/vatis', async (req, res) => {
 	if(req.body.config_profile.match(/IDS:/i)) { // IDS compatible profile
@@ -157,18 +155,18 @@ router.post('/vatis', async (req, res) => {
 router.get('/stations', async (req, res) => {
 	const airports = await redis.get('airports');
 	return res.json(airports.split('|'));
-})
+});
 
 router.get('/stations/:station', async (req, res) => {
 	const station = req.params.station;
 	const metar = await redis.get(`METAR:${station.toUpperCase()}`);
 	const atisInfo = await redis.hgetall(`ATIS:${station}`);
 	return res.json({metar, dep: atisInfo.dep || null, arr: atisInfo.arr || null, letter: atisInfo.letter || null})
-})
+});
 
 router.get('/neighbors', async (req, res) => {
 	const neighbors = await redis.get('neighbors');
 	return res.json((neighbors.length) ? neighbors.split('|') : []);
-})
+});
 
 export default router;
