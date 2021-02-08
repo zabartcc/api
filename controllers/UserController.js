@@ -8,10 +8,18 @@ import crypto from 'crypto';
 import axios from 'axios';
 import {v4} from 'uuid';
 import getUser from '../middleware/getUser.js';
-
 import Discord from 'discord-oauth2';
+import minio from 'minio';
 
 dotenv.config();
+
+const minioClient = new minio.Client({
+	endPoint: 'cdn.zabartcc.org',
+	port: 443,
+	useSSL: true,
+	accessKey: process.env.MINIO_ACCESS_KEY,
+	secretKey: process.env.MINIO_SECRET_KEY
+});
 
 router.get('/', async (req, res) => {
 	try {
@@ -104,8 +112,6 @@ router.post('/login', async (req, res) => {
 
 		const { data: userData } = await axios.get(`https://login.vatusa.net/uls/v2/info?token=${loginTokenParts[1]}`);
 
-		console.log(userData);
-
 		if(!userData) {
 			throw {
 				code: 500,
@@ -115,6 +121,15 @@ router.post('/login', async (req, res) => {
 		
 		let user;
 		user = await User.findOne({cid: userData.cid});
+
+		
+		if(user.oi) {
+			const {data} = await axios.get(`https://ui-avatars.com/api/?name=${user.oi}&size=512&background=122049&color=ffffff&format=png`, {
+				responseType: 'arraybuffer'
+			});
+
+			await minioClient.putObject('avatars', `${user.cid}_default.png`, data).catch(console.log);
+		}
 
 		if(!user) {
 			user = await User.create({
@@ -127,12 +142,18 @@ router.post('/login', async (req, res) => {
 				broadcast: false,
 				member: false,
 				vis: false,
+				image: {
+					custom: false,
+					filename: `${userData.cid}_default.png`
+				}
 			});
 		} else {
 			if(!user.email) {
 				await User.findOneAndUpdate({cid: userData.cid}, {email: userData.email});
 			}
 		}
+
+
 
 		const apiToken = jwt.sign({cid: userData.cid}, process.env.JWT_SECRET, {expiresIn: '30d'});
 		res.cookie('token', apiToken, { httpOnly: true, maxAge: 2592000000, sameSite: true}); // Expires in 30 days

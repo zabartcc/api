@@ -18,6 +18,10 @@ const userSchema = new m.Schema({
 	broadcast: Boolean,
 	member: Boolean,
 	vis: Boolean,
+	image: {
+		custom: Boolean,
+		filename: String	
+	},
 	discordInfo: {
 		clientId: String,
 		accessToken: String,
@@ -53,6 +57,16 @@ userSchema.virtual('isMem').get(function() {
 	return !!this.member;
 });
 
+userSchema.virtual('isMgt').get(function() {
+	const search = ['atm', 'datm'];
+	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
+});
+
+userSchema.virtual('isSenior').get(function() {
+	const search = ['atm', 'datm', 'ta'];
+	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
+});
+
 userSchema.virtual('isStaff').get(function() {
 	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe'];
 	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
@@ -60,11 +74,6 @@ userSchema.virtual('isStaff').get(function() {
 
 userSchema.virtual('isIns').get(function() {
 	const search = ['atm', 'datm', 'ta', 'ins', 'mtr'];
-	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
-});
-
-userSchema.virtual('isMgt').get(function() {
-	const search = ['atm', 'datm', 'ta'];
 	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
 });
 

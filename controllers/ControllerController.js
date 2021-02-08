@@ -5,136 +5,210 @@ import Role from '../models/Role.js';
 import Certification from '../models/Certification.js';
 import VisitApplication from '../models/VisitApplication.js';
 import transporter from '../config/mailer.js';
+import getUser from '../middleware/getUser.js';
+import {management} from '../middleware/auth.js';
 
 import {isStaff, isMgt} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
-	const home = await User.find({deletedAt: null, vis: false, member: true}).sort({
-		rating: 'desc',
-		lname: 'asc',
-		fname: 'asc'
-	}).populate({
-		path: 'certifications',
-		options: {
-			sort: {order: 'desc'}
+	try {
+		const home = await User.find({deletedAt: null, vis: false, member: true}).select('-email -idsToken').sort({
+			rating: 'desc',
+			lname: 'asc',
+			fname: 'asc'
+		}).populate({
+			path: 'certifications',
+			options: {
+				sort: {order: 'desc'}
+			}
+		}).populate({
+			path: 'roles',
+			options: {
+				sort: {order: 'asc'}
+			}
+		}).lean({virtuals: true});
+	
+		const visiting = await User.find({deletedAt: null, vis: true, member: true}).sort({
+			rating: 'desc',
+			lname: 'asc',
+			fname: 'asc'
+		}).populate({
+			path: 'certifications',
+			options: {
+				sort: {order: 'desc'}
+			}
+		}).populate({
+			path: 'roles',
+			options: {
+				sort: {order: 'asc'}
+			}
+		}).lean({virtuals: true});
+	
+		if(!home || !visiting) {
+			throw {
+				code: 503,
+				message: "Unable to retrieve controllers."
+			};
 		}
-	}).populate({
-		path: 'roles',
-		options: {
-			sort: {order: 'asc'}
-		}
-	}).lean({virtuals: true});
 
-	const visiting = await User.find({deletedAt: null, vis: true, member: true}).sort({
-		rating: 'desc',
-		lname: 'asc',
-		fname: 'asc'
-	}).populate({
-		path: 'certifications',
-		options: {
-			sort: {order: 'desc'}
-		}
-	}).populate({
-		path: 'roles',
-		options: {
-			sort: {order: 'asc'}
-		}
-	}).lean({virtuals: true});
-
-	return res.json({
-		"home": home,
-		"visiting": visiting
-	});
+		res.stdRes.data = {home, visiting};
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
 });
 
 router.get('/staff', async (req, res) => {
-	let users = await User.find().sort({
-		lname: 'asc',
-		fname: 'asc'
-	}).populate({
-		path: 'certifications',
-		options: {
-			sort: {order: 'desc'}
+	try {
+		const users = await User.find().select('fname lname cid').sort({
+			lname: 'asc',
+			fname: 'asc'
+		}).populate({
+			path: 'roles',
+			options: {
+				sort: {order: 'asc'}
+			}
+		}).lean();
+
+		if(!users) {
+			throw {
+				code: 503,
+				message: "Unable to retrieve staff members."
+			};
 		}
-	}).populate({
-		path: 'roles',
-		options: {
-			sort: {order: 'asc'}
-		}
-	}).lean({virtuals: true});
 
-	users = users.filter(user => "roles" in user);
+		const staff = {
+			atm: {
+				title: "Air Traffic Manager",
+				code: "atm",
+				users: []
+			},
+			datm: {
+				title: "Deputy Air Traffic Manager",
+				code: "datm",
+				users: []
+			},
+			ta: {
+				title: "Training Administrator",
+				code: "ta",
+				users: []
+			},
+			ec: {
+				title: "Events Coordinator",
+				code: "ec",
+				users: []
+			},
+			wm: {
+				title: "Web Team",
+				code: "wm",
+				users: []
+			},
+			fe: {
+				title: "Facility Engineer",
+				code: "fe",
+				users: []
+			},
+			ins: {
+				title: "Instructors",
+				code: "instructors",
+				users: []
+			},
+			mtr: {
+				title: "Mentors",
+				code: "instructors",
+				users: []
+			},
+		};
 
-	const staff = {
-		atm: {
-			title: "Air Traffic Manager",
-			code: "atm",
-			users: []
-		},
-		datm: {
-			title: "Deputy Air Traffic Manager",
-			code: "datm",
-			users: []
-		},
-		ta: {
-			title: "Training Administrator",
-			code: "ta",
-			users: []
-		},
-		ec: {
-			title: "Events Coordinator",
-			code: "ec",
-			users: []
-		},
-		wm: {
-			title: "Web Team",
-			code: "wm",
-			users: []
-		},
-		fe: {
-			title: "Facility Engineer",
-			code: "fe",
-			users: []
-		},
-		ins: {
-			title: "Instructors",
-			code: "instructors",
-			users: []
-		},
-		mtr: {
-			title: "Mentors",
-			code: "instructors",
-			users: []
-		},
-	};
+		users.forEach(user => user.roles.forEach(role => staff[role.code].users.push(user)));
 
-	users.forEach(user => user.roles.forEach(role => staff[role.code].users.push(user)));
-
-	return res.json(staff);
+		res.stdRes.data = staff;
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
 });
 
 router.get('/oi', async (req, res) => {
-	const oi = await User.find({deletedAt: null}).select('oi').lean();
-	return res.json(oi);
+	try {
+		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
+		
+		if(!oi) {
+			throw {
+				code: 503,
+				message: "Unable to retrieve operating initials."
+			};
+		}
+
+		res.stdRes.data = oi.map(oi => oi.oi);
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
 });
 
-router.get('/:cid', async (req, res) => {
-	const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications').lean({virtuals: true});
-	return res.json(user);
+router.get('/visit', getUser, management, async ({res}) => {
+	try {
+		const applications = await VisitApplication.find({deletedAt: null, acceptedAt: null}).lean();
+		res.stdRes.data = applications;
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);	
 });
 
-router.post('/visit', async (req, res) => {
-	if(!req.body.cid) return res.sendStatus(400);
-	VisitApplication.create({
-		cid: req.body.cid,
-		fname: req.body.fname,
-		lname: req.body.lname,
-		rating: req.body.rating,
-		email: req.body.email,
-		home: req.body.home,
-		reason: req.body.reason
-	}).then(() =>{
-		transporter.sendMail({
+router.get('/:cid', getUser, async (req, res) => {
+	try {
+		const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications').lean({virtuals: true});
+		if(!user) {
+			throw {
+				code: 503,
+				message: "Unable to find controller."
+			};
+		}
+
+		if(!res.user || !res.user.isStaff) {
+			delete user.email;
+		}
+
+		res.stdRes.data = user;
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+});
+
+router.post('/visit', getUser, async (req, res) => {
+	try {
+		if(!res.user) {
+			throw {
+				code: 401,
+				message: "Unable to verify user."
+			};
+		}
+
+		const data = {
+			cid: res.user.cid,
+			fname: res.user.fname,
+			lname: res.user.lname,
+			rating: res.user.ratingLong,
+			email: res.user.email,
+			home: req.body.home,
+			reason: req.body.reason
+		};
+
+		await VisitApplication.create(data);
+		
+		await transporter.sendMail({
 			to: req.body.email,
 			subject: `Visiting Application Received | Albuquerque ARTCC`,
 			template: 'visitReceived',
@@ -142,68 +216,71 @@ router.post('/visit', async (req, res) => {
 				name: `${ req.body.fname} ${ req.body.lname}`,
 			}
 		});
-		return res.sendStatus(200);
-	}).catch((err) => {
-		console.log(err);
-		return res.sendStatus(500);
-	});
-	
-});
-
-router.get('/visit/applications', isMgt, async ({res}) => {
-	try {
-		const applications = await VisitApplication.find({deletedAt: null, acceptedAt: null}).lean();
-		return res.json(applications);
-	} catch(e) {
-		console.log(e);
-		return res.sendStatus(500);
-	}
-});
-
-router.put('/visit/applications/approve/:id', isMgt, async (req, res) => {
-	try {
-		const application = await VisitApplication.findByIdAndUpdate(req.params.id, {
-			acceptedAt: new Date()
-		});
 		await transporter.sendMail({
-			to: application.email,
+			to: 'atm@zabartcc.org; datm@zabartcc.org',
+			subject: `New Visiting Application: ${req.body.fname} ${req.body.lname} | Albuquerque ARTCC`,
+			template: 'staffNewVisit',
+			context: {
+				user: data
+			}
+		});
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);	
+});
+
+router.put('/visit/:cid', getUser, management, async (req, res) => {
+	try {
+		await VisitApplication.delete({cid: req.params.cid});
+
+		const user = await User.findOneAndUpdate({cid: req.params.cid}, {member: true, vis: true});
+
+		await transporter.sendMail({
+			to: user.email,
 			subject: `Visiting Application Accepted | Albuquerque ARTCC`,
 			template: 'visitAccepted',
 			context: {
-				name: `${ application.fname} ${ application.lname}`,
+				name: `${user.fname} ${user.lname}`,
 			}
 		});
-		return res.sendStatus(200);
-	} catch(e) {
-		console.log(e);
-		return res.sendStatus(500);
+	} 
+	catch(e) {
+		res.stdRes.ret_det = e;
 	}
+	
+	return res.json(res.stdRes);
 });
 
 
-router.put('/visit/applications/reject/:id', isMgt, async (req, res) => {
+router.delete('/visit/:cid', getUser, management, async (req, res) => {
 	try {
-		const application = await VisitApplication.findById(req.params.id).lean();
-		await VisitApplication.deleteById(req.params.id);
+		await VisitApplication.delete({cid: req.params.cid});
+
+		const user = await User.findOne({cid: req.params.cid});
+
 		await transporter.sendMail({
-			to: application.email,
+			to: user.email,
 			subject: `Visiting Application Rejected | Albuquerque ARTCC`,
 			template: 'visitRejected',
 			context: {
-				name: `${ application.fname} ${ application.lname}`,
+				name: `${user.fname} ${user.lname}`,
 				reason: req.body.reason
 			}
 		});
-		return res.sendStatus(200);
-	} catch(e) {
-		console.log(e);
-		return res.sendStatus(500);
+	} 
+	catch(e) {
+		res.stdRes.ret_det = e;
 	}
+	
+	return res.json(res.stdRes);
 });
 
 router.post('/:cid', isStaff, async (req, res) => {
 	if(!req.body.form) return res.sendStatus(400);
-	const {fname, lname, email, oi, roles, certs} = req.body.form;
+	const {fname, lname, email, oi, roles, certs, vis} = req.body.form;
 	const toApply = {
 		roles: [],
 		certifications: []
@@ -228,6 +305,7 @@ router.post('/:cid', isStaff, async (req, res) => {
 		lname, 
 		email,
 		oi,
+		vis,
 		roles: toApply.roles,
 		certifications: toApply.certifications,
 	});
