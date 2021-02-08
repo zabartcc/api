@@ -1,11 +1,40 @@
 import express from 'express';
 import Redis from 'ioredis';
+import User from '../models/User.js';
 const router = express.Router();
 
 const redis = new Redis(process.env.REDIS_URI);
 
+router.post('/user', async (req, res) => {
+	const token = req.body.token;
+	
+	try {
+		if(!token) {
+			throw {
+				code: 401,
+				message: "Token not found."
+			};
+		}
+		const user = await User.findOne({idsToken: token}).select('-email -idsToken').lean();
+
+		if(!user) {
+			throw {
+				code: 403,
+				message: "User not found."
+			};
+		}
+
+		res.stdRes.data = user;
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+})
+
 router.get('/aircraft', async (req, res) => {
-	const pilots = await redis.get('pilots');
+	const pilots = await redis.get('pilots') || '';
 	return res.json(pilots.split('|'));
 })
 
@@ -138,8 +167,8 @@ router.get('/stations/:station', async (req, res) => {
 })
 
 router.get('/neighbors', async (req, res) => {
-	const neighbors = await redis.get('neighbors') || [];
-	return res.json(neighbors.split('|'));
+	const neighbors = await redis.get('neighbors');
+	return res.json((neighbors.length) ? neighbors.split('|') : []);
 })
 
 export default router;

@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import axios from 'axios';
+import {v4} from 'uuid';
+import getUser from '../middleware/getUser.js';
 
 import Discord from 'discord-oauth2';
 
@@ -37,6 +39,28 @@ router.get('/', async (req, res) => {
 			});
 		});
 		
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+});
+
+router.post('/idsToken', getUser, async (req, res) => {
+	try {
+		if(!req.cookies.token) {
+			throw {
+				code: 401,
+				message: "Not logged in."
+			};
+		}
+
+		res.user.idsToken = v4();
+
+		await res.user.save();
+
+		res.stdRes.data = res.user.idsToken;
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;

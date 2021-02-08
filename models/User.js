@@ -25,6 +25,7 @@ const userSchema = new m.Schema({
 		tokenType: String,
 		expires: Date,
 	},
+	idsToken: String,
 	certifications: [{
 		type: m.Schema.Types.ObjectId, ref: 'Certification'
 	}],
