@@ -104,8 +104,6 @@ router.post('/login', async (req, res) => {
 
 		const { data: userData } = await axios.get(`https://login.vatusa.net/uls/v2/info?token=${loginTokenParts[1]}`);
 
-		console.log(userData);
-
 		if(!userData) {
 			throw {
 				code: 500,
