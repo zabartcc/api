@@ -4,11 +4,12 @@ import {isStaff} from '../middleware/isStaff.js';
 import News from '../models/News.js';
 
 router.get('/', async (req, res) => {
+
 	const page = parseInt(req.query.page, 10);
 	const limit = parseInt(req.query.limit, 10);
 
 	const amount = await News.countDocuments({deleted: false});
-	const news = await News.find({deleted: false}).sort({createdAt: 'desc'}).skip(limit * (page - 1)).limit(limit).populate('createdBy', ['fname', 'lname']).lean();
+	const news = await News.find({deleted: false}).sort({createdAt: 'desc'}).skip(limit * (page - 1)).limit(limit).populate('user', ['fname', 'lname']).lean();
 	res.stdRes.amount = amount;
 	res.stdRes.data = news;
 	return res.json(res.stdRes);

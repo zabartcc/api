@@ -6,12 +6,17 @@ const newsSchema = new m.Schema({
 	title: String,
 	content: String,
 	uriSlug: String,
-	createdBy: {
-		type: m.Schema.Types.ObjectId, ref: 'User'
-	},
+	createdBy: Number
 }, {
 	collection: "news",
 	timestamps: true
+});
+
+newsSchema.virtual('user', {
+	ref: 'User',
+	localField: 'createdBy',
+	foreignField: 'cid',
+	justOne: true
 });
 
 newsSchema.plugin(softDelete, {
