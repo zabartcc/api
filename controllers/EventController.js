@@ -23,7 +23,7 @@ router.get('/', async ({res}) => {
 		eventEnd: {
 			$gt: new Date(new Date().toUTCString()) // event starts in the future
 		},
-		deletedAt: null
+		deleted: false
 	}).sort({eventStart: 'ascending'}).lean();
 	return res.json(events);
 });
@@ -36,13 +36,13 @@ router.get('/archive', async(req, res) => {
 		eventStart: {
 			$lt: new Date(new Date().toUTCString())
 		},
-		deletedAt: null
+		deleted: false
 	});
 	const events = await Event.find({
 		eventStart: {
 			$lt: new Date(new Date().toUTCString())
 		},
-		deletedAt: null
+		deleted: false
 	}).skip(limit * (page - 1)).limit(limit).sort({eventStart: "desc"}).lean();
 	return res.json({
 		amount: count,
@@ -55,7 +55,7 @@ router.get('/:slug', async(req, res) => {
 	const slug = req.params.slug;
 	const event = await Event.findOne({
 		url: slug,
-		deletedAt: null
+		deleted: false
 	}).lean();
 	return res.json(event);
 });
@@ -64,7 +64,7 @@ router.get('/:slug/positions', async(req, res) => {
 	const slug = req.params.slug;
 	const event = await Event.findOne({
 		url: slug,
-		deletedAt: null
+		deleted: false
 	}).sort({'positions.order': -1}).select(['open', 'submitted', 'eventStart', 'positions', 'signups']).populate('positions.takenBy', 'cid fname lname').populate({path: 'signups.user', select: 'cid fname lname rating certifications requests', populate: {path: 'certifications', select: 'code'}}).lean();
 	return res.json(event);
 });

@@ -2,10 +2,10 @@ import express from 'express';
 const router = express.Router();
 import Feedback from '../models/Feedback.js';
 import m from 'mongoose';
-import transporter from '../config/mailer.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import {isMgt} from '../middleware/isStaff.js';
-import isSelf from '../middleware/isSelf.js';
+import {isSelf} from '../middleware/isSelf.js';
 
 router.get('/', isMgt, async (req, res) => { // All feedback
 	const page = parseInt(req.query.page, 10);
@@ -56,14 +56,14 @@ router.put('/approve/:id', isMgt, async (req, res) => { // Approve feedback
 	try {
 		const approved = await Feedback.findOneAndUpdate({_id: req.params.id}, {
 			approved: true
-		}).populate('controller', 'email fname lname');
-		transporter.sendMail({
-			to: approved.controller.email,
-			subject: `New Feedback Received | Albuquerque ARTCC`,
-			template: 'newFeedback',
-			context: {
-				name: `${approved.controller.fname} ${approved.controller.lname}`,
-			}
+		}).populate('controller', '_id');
+	
+		await Notification.create({
+			recipient: approved.controller._id,
+			read: false,
+			title: 'New Feedback Received',
+			content: `You have received new feedback from ${approved.anonymous ? '<b>Anonymous</b>' : '<b>' + approved.name + '</b>'}.`,
+			link: '/dash/feedback'
 		});
 		return res.sendStatus(200);
 	} catch (err) {
@@ -86,7 +86,6 @@ router.put('/reject/:id', isMgt, async (req, res) => { // Reject feedback
 router.get('/:id', isSelf, async (req, res) => {
 	const page = parseInt(req.query.page, 10);
 	const limit = parseInt(req.query.limit, 10);
-	const skip = limit * (page - 1);
 	const userId = m.Types.ObjectId(req.params.id);
 
 	const count = await Feedback.countDocuments({approved: true, controller: req.params.id});
@@ -104,7 +103,7 @@ router.get('/:id', isSelf, async (req, res) => {
 			name: { $cond: [ "$anonymous", "$$REMOVE", "$name"]} // Conditionally remove name if submitter wishes to remain anonymous
 		}},
 		{$limit: limit},
-		{$skip: skip}
+		{$skip: limit * (page - 1)}
 	]);
 
 	return res.json({

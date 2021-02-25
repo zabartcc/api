@@ -1,7 +1,7 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
-export default function (req, res, next) {
+export function isSelf (req, res, next) {
 	if(!req.cookies.token) {
 		return res.sendStatus(401);
 	} else {
