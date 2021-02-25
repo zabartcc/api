@@ -32,14 +32,15 @@ router.post('/new', async (req, res) => {
 			student: req.body.submitter,
 			startTime: req.body.startTime,
 			endTime: req.body.endTime,
-			milestone: req.body.milestone
+			milestone: req.body.milestone,
+			remarks: req.body.remarks,
 		});
 
 		const student = await User.findById(req.body.submitter).select('fname lname').lean();
 
 		transporter.sendMail({
 			to: 'instructors@zabartcc.org',
-			subject: `New Training Request | Albuquerque ARTCC`,
+			subject: 'New Training Request | Albuquerque ARTCC',
 			template: 'newRequest',
 			context: {
 				student: student.fname + ' ' + student.lname,
@@ -71,5 +72,3 @@ router.get('/milestones/:id', async (req, res) => {
 });
 
 export default router;
-
-['Unknown', 'Observer', 'S1', 'S2', 'S3', 'C1', 'C2', 'C3', 'I1', 'I2', 'I3', 'SUP', 'ADM'];

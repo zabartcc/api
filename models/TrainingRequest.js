@@ -12,7 +12,8 @@ const trainingRequestSchema = new m.Schema({
 	endTime: Date,
 	milestone: {
 		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
-	}
+	},
+	remarks: String
 }, {
 	collection: "trainingRequests",
 	timestamps: true
