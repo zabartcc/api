@@ -55,7 +55,7 @@ router.post('/', async (req, res) => { // Submit feedback
 
 router.get('/controllers', async ({res}) => { // Controller list on feedback page
 	try {
-		const controllers = await User.find({deletedAt: null}).sort('fname').select('fname lname cid _id').lean();
+		const controllers = await User.find({deletedAt: null}).sort('fname').select('fname lname cid rating vis _id').lean();
 		res.stdRes.data = controllers;
 	} catch(e) {
 		res.stdRes.ret_det = e;
