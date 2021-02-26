@@ -8,22 +8,34 @@ import {isMgt} from '../middleware/isStaff.js';
 import {isSelf} from '../middleware/isSelf.js';
 
 router.get('/', isMgt, async (req, res) => { // All feedback
-	const page = parseInt(req.query.page, 10);
-	const limit = parseInt(req.query.limit, 10);
+	try {
+		const page = parseInt(req.query.page, 10);
+		const limit = parseInt(req.query.limit, 10);
 
-	const count = await Feedback.countDocuments({$or: [{approved: true}, {deleted: true}]});
-	const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
-	return res.json({
-		feedback: feedback,
-		amount: count
-	});
+		const amount = await Feedback.countDocuments({$or: [{approved: true}, {deleted: true}]});
+		const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
+		res.stdRes.data = {
+			amount,
+			feedback
+		};
+
+	} catch (e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
 });
 
 router.post('/', async (req, res) => { // Submit feedback
-	if(req.body.fname === '' || req.body.lname === '' || req.body.cid === '' || req.body.comments.length > 5000) { // Validation
-		return res.status(500).send('All form entries must be valid.');
-	} else {
-		Feedback.create({
+	try {
+		if(req.body.name === '' || req.body.email === '' || req.body.cid === null || req.body.controller === null || req.body.rating === null || req.body.position === null || req.body.comments.length > 5000) { // Validation
+			throw {
+				code: 400,
+				message: `You must fill out all required forms`
+			};
+		}
+
+		await Feedback.create({
 			name: req.body.name,
 			email: req.body.email,
 			submitter: req.body.cid,
@@ -33,23 +45,33 @@ router.post('/', async (req, res) => { // Submit feedback
 			comments: req.body.comments,
 			anonymous: req.body.anon,
 			approved: false
-		}).then(async () => {
-			return res.sendStatus(200);
-		}).catch((err) => {
-			console.log(err);
-			return res.status(500).send(err);
 		});
+	} catch(e) {
+		res.stdRes.ret_det = e;
 	}
+	
+	return res.json(res.stdRes);
 });
 
 router.get('/controllers', async ({res}) => { // Controller list on feedback page
-	const controllers = await User.find({deletedAt: null}).sort('fname').select('fname lname cid _id').lean();
-	return res.json(controllers);
+	try {
+		const controllers = await User.find({deletedAt: null}).sort('fname').select('fname lname cid _id').lean();
+		res.stdRes.data = controllers;
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
 });
 
 router.get('/unapproved', isMgt, async ({res}) => { // Unapproved feedback
-	const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').lean();
-	return res.json(feedback);
+	try {
+		const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').lean();
+		res.stdRes.data = feedback;
+	} catch (e) {
+		res.stdRes.ret_det = e;
+	}
+	return res.json(res.stdRes);
 });
 
 router.put('/approve/:id', isMgt, async (req, res) => { // Approve feedback
@@ -65,51 +87,56 @@ router.put('/approve/:id', isMgt, async (req, res) => { // Approve feedback
 			content: `You have received new feedback from ${approved.anonymous ? '<b>Anonymous</b>' : '<b>' + approved.name + '</b>'}.`,
 			link: '/dash/feedback'
 		});
-		return res.sendStatus(200);
-	} catch (err) {
-		console.log(err);
-		return res.sendStatus(500);
+	} catch (e) {
+		res.stdRes.ret_det = e;
 	}
+
+	return res.json(res.stdRes);
 });
 
 router.put('/reject/:id', isMgt, async (req, res) => { // Reject feedback
-	Feedback.delete({_id: req.params.id}, (err) => {
-		if(err) {
-			console.log(err);
-			return res.sendStatus(500);
-		} else {
-			return res.sendStatus(200);
-		}
-	});
+	try {
+		await Feedback.delete({_id: req.params.id});
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
 });
 
 router.get('/:id', isSelf, async (req, res) => {
-	const page = parseInt(req.query.page, 10);
-	const limit = parseInt(req.query.limit, 10);
-	const userId = m.Types.ObjectId(req.params.id);
+	try {
+		const page = parseInt(req.query.page, 10);
+		const limit = parseInt(req.query.limit, 10);
+		const userId = m.Types.ObjectId(req.params.id);
 
-	const count = await Feedback.countDocuments({approved: true, controller: req.params.id});
-	const feedback = await Feedback.aggregate([
-		{$match: { 
-			controller: userId}
-		},
-		{$project: {
-			controller: 1,
-			position: 1,
-			rating: 1,
-			comments: 1,
-			createdAt: 1,
-			anonymous: 1,
-			name: { $cond: [ "$anonymous", "$$REMOVE", "$name"]} // Conditionally remove name if submitter wishes to remain anonymous
-		}},
-		{$limit: limit},
-		{$skip: limit * (page - 1)}
-	]);
+		const amount = await Feedback.countDocuments({approved: true, controller: req.params.id});
+		const feedback = await Feedback.aggregate([
+			{$match: { 
+				controller: userId}
+			},
+			{$project: {
+				controller: 1,
+				position: 1,
+				rating: 1,
+				comments: 1,
+				createdAt: 1,
+				anonymous: 1,
+				name: { $cond: [ "$anonymous", "$$REMOVE", "$name"]} // Conditionally remove name if submitter wishes to remain anonymous
+			}},
+			{$limit: limit},
+			{$skip: limit * (page - 1)}
+		]);
 
-	return res.json({
-		feedback: feedback,
-		amount: count
-	});
+		res.stdRes.data = {
+			feedback,
+			amount
+		};
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
 });
 
 
