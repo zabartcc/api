@@ -113,8 +113,9 @@ router.get('/:id', isSelf, async (req, res) => {
 		const amount = await Feedback.countDocuments({approved: true, controller: req.params.id});
 		const feedback = await Feedback.aggregate([
 			{$match: { 
-				controller: userId}
-			},
+				controller: userId,
+				deleted: false
+			}},
 			{$project: {
 				controller: 1,
 				position: 1,
@@ -124,8 +125,8 @@ router.get('/:id', isSelf, async (req, res) => {
 				anonymous: 1,
 				name: { $cond: [ "$anonymous", "$$REMOVE", "$name"]} // Conditionally remove name if submitter wishes to remain anonymous
 			}},
-			{$limit: limit},
-			{$skip: limit * (page - 1)}
+			{$skip: limit * (page - 1)},
+			{$limit: limit}
 		]);
 
 		res.stdRes.data = {
