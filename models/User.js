@@ -42,11 +42,6 @@ const userSchema = new m.Schema({
 }, {
 	timestamps: true,
 });
-
-// userSchema.index({
-//     '$**': 'text',
-// });
-
 userSchema.plugin(softDelete, {
 	deletedAt: true
 });
@@ -84,7 +79,6 @@ userSchema.virtual('ratingShort').get(function() {
 userSchema.virtual('ratingLong').get(function() {
 	return zab.ratingsLong[this.rating];
 });
-
 
 // userSchema.methods.getControllerHours = async function() {
 // 	return ControllerHours.find({

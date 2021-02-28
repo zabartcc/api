@@ -5,9 +5,7 @@ const feedbackSchema = new m.Schema({
 	name: String,
 	email: String,
 	submitter: Number,
-	controller: {
-		type: m.Schema.Types.ObjectId, ref: 'User'
-	},
+	cid: Number,
 	rating: Number,
 	position: String,
 	comments: String,
@@ -22,5 +20,11 @@ feedbackSchema.plugin(softDelete, {
 	deletedAt: true
 });
 
+feedbackSchema.virtual('controller', {
+	ref: 'User',
+	localField: 'cid',
+	foreignField: 'cid',
+	justOne: true
+});
 
 export default m.model('feedback', feedbackSchema);

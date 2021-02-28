@@ -8,8 +8,6 @@ import transporter from '../config/mailer.js';
 import getUser from '../middleware/getUser.js';
 import {management} from '../middleware/auth.js';
 
-import {isStaff, isMgt} from '../middleware/isStaff.js';
-
 router.get('/', async ({res}) => {
 	try {
 		const home = await User.find({deletedAt: null, vis: false, member: true}).select('-email -idsToken').sort({
@@ -166,7 +164,7 @@ router.get('/visit', getUser, management, async ({res}) => {
 
 router.get('/:cid', getUser, async (req, res) => {
 	try {
-		const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications').lean({virtuals: true});
+		const user = await User.findOne({cid: req.params.cid}).select('-idsToken').populate('roles').populate('certifications').lean({virtuals: true});
 		if(!user) {
 			throw {
 				code: 503,
@@ -278,43 +276,57 @@ router.delete('/visit/:cid', getUser, management, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/:cid', isStaff, async (req, res) => {
-	if(!req.body.form) return res.sendStatus(400);
-	const {fname, lname, email, oi, roles, certs, vis} = req.body.form;
-	const toApply = {
-		roles: [],
-		certifications: []
-	};
+router.post('/:cid', getUser, management, async (req, res) => {
+	try {
+		if(!req.body.form) {
+			throw {
+				code: 400,
+				message: "No user data included."
+			};
+		}
+		
+		const {fname, lname, email, oi, roles, certs, vis} = req.body.form;
+		const toApply = {
+			roles: [],
+			certifications: []
+		};
 
-	for(const [code, set] of Object.entries(roles)) {
-		if(set) {
-			const theRole = await Role.findOne({code}, 'id');
-			toApply.roles.push(theRole.id);
+		for(const [code, set] of Object.entries(roles)) {
+			if(set) {
+				const theRole = await Role.findOne({code}, 'id');
+				toApply.roles.push(theRole.id);
+			}
+		}
+
+		for(const [code, set] of Object.entries(certs)) {
+			if(set) {
+				const theCert = await Certification.findOne({code}, 'id');
+				toApply.certifications.push(theCert.id);
+			}
+		}
+
+		const updated = await User.updateOne({cid: req.params.cid}, {
+			fname,
+			lname, 
+			email,
+			oi,
+			vis,
+			roles: toApply.roles,
+			certifications: toApply.certifications,
+		});
+
+		if(!updated.ok) {
+			throw {
+				code: 500,
+				message: "Unable to update user."
+			};
 		}
 	}
-
-	for(const [code, set] of Object.entries(certs)) {
-		if(set) {
-			const theCert = await Certification.findOne({code}, 'id');
-			toApply.certifications.push(theCert.id);
-		}
+	catch(e) {
+		res.stdRes.ret_det = e;
 	}
-
-	const updated = await User.updateOne({cid: req.params.cid}, {
-		fname,
-		lname, 
-		email,
-		oi,
-		vis,
-		roles: toApply.roles,
-		certifications: toApply.certifications,
-	});
-
-	if(updated.ok) {
-		return res.sendStatus(200);
-	} else {
-		return res.sendStatus(500);
-	}
+	
+	return res.json(res.stdRes);
 });
 
 export default router;
