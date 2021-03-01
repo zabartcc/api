@@ -23,7 +23,7 @@ router.get('/', async ({res}) => {
 		options: {
 			sort: {order: 'asc'}
 		}
-	}).lean({virtuals: true});
+	}).select('fname lname rating oi cid').lean({virtuals: true});
 
 	const visiting = await User.find({deletedAt: null, vis: true, member: true}).sort({
 		rating: 'desc',
@@ -39,7 +39,7 @@ router.get('/', async ({res}) => {
 		options: {
 			sort: {order: 'asc'}
 		}
-	}).lean({virtuals: true});
+	}).select('fname lname rating oi cid').lean({virtuals: true});
 
 	return res.json({
 		"home": home,
@@ -52,16 +52,11 @@ router.get('/staff', async (req, res) => {
 		lname: 'asc',
 		fname: 'asc'
 	}).populate({
-		path: 'certifications',
-		options: {
-			sort: {order: 'desc'}
-		}
-	}).populate({
 		path: 'roles',
 		options: {
 			sort: {order: 'asc'}
 		}
-	}).lean({virtuals: true});
+	}).select('fname lname rating cid').lean({virtuals: true});
 
 	users = users.filter(user => "roles" in user);
 
@@ -119,7 +114,7 @@ router.get('/oi', async (req, res) => {
 });
 
 router.get('/:cid', async (req, res) => {
-	const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications').lean({virtuals: true});
+	const user = await User.findOne({cid: req.params.cid}).populate('roles').populate('certifications').select('fname lname rating oi').lean({virtuals: true});
 	return res.json(user);
 });
 

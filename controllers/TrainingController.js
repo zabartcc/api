@@ -6,7 +6,7 @@ import TrainingRequest from '../models/TrainingRequest.js';
 import TrainingMilestone from '../models/TrainingMilestone.js';
 import User from '../models/User.js';
 
-router.get('/upcoming/:id', async (req, res) => {
+router.get('/request/upcoming/:id', async (req, res) => {
 	try {
 		const upcoming = await TrainingRequest.find({
 			student: req.params.id, 
@@ -23,7 +23,7 @@ router.get('/upcoming/:id', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/past/:id', async (req, res) => {
+router.get('/request/past/:id', async (req, res) => {
 	try {
 		const past = await TrainingSession.find({student: req.params.id}).populate('instructor', 'fname lname cid').lean();
 		res.stdRes.data = past;
@@ -34,7 +34,7 @@ router.get('/past/:id', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/new', async (req, res) => {
+router.post('/request/new', async (req, res) => {
 	try {
 		await TrainingRequest.create({
 			student: req.body.submitter,
@@ -78,7 +78,7 @@ router.get('/milestones/:id', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/open', async (req, res) => {
+router.get('/request/open', async (req, res) => {
 	try {
 		const days = req.query.period; // days from start of CURRENT week
 		const d = new Date(Date.now()),
@@ -103,7 +103,7 @@ router.get('/open', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/take/:id', async (req, res) => {
+router.post('/request/take/:id', async (req, res) => {
 	try {
 		console.log(req.body);
 
@@ -115,7 +115,9 @@ router.post('/take/:id', async (req, res) => {
 			student: request.student,
 			instructor: req.body.instructor,
 			startTime: req.body.startTime,
-			endTime: req.body.endTime
+			endTime: req.body.endTime,
+			milestone: request.milestone,
+			submitted: false
 		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -124,7 +126,7 @@ router.post('/take/:id', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/:date', async (req, res) => {
+router.get('/request/:date', async (req, res) => {
 	try {
 		const d = new Date(`${req.params.date.slice(0,4)}-${req.params.date.slice(4,6)}-${req.params.date.slice(6,8)}`);
 		const dayAfter = new Date(d);
@@ -138,6 +140,24 @@ router.get('/:date', async (req, res) => {
 		}).populate('student', 'fname lname rating vis').populate('milestone', 'name code').lean();
 
 		res.stdRes.data = requests;
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
+router.get('/session/open/:id', async (req, res) => {
+	try {
+		const sessions = await TrainingSession.find({
+			instructor: req.params.id,
+			$or: [
+				{submitted: false},
+				{synced: false}
+			]
+		}).populate('student', 'fname lname cid vis').populate('milestone', 'name code').lean();
+
+		res.stdRes.data = sessions;
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}

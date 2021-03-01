@@ -8,6 +8,9 @@ const trainingSessionSchema = new m.Schema({
 	instructor: {
 		type: m.Schema.Types.ObjectId, ref: 'User'
 	},
+	milestone: {
+		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
+	},
 	position: String,
 	startTime: Date,
 	endTime: Date,
@@ -19,7 +22,9 @@ const trainingSessionSchema = new m.Schema({
 	soloGranted: Boolean,
 	studentNotes: String,
 	insNotes: String,
-	noShow: Boolean
+	noShow: Boolean,
+	submitted: Boolean,
+	synced: Boolean
 }, {
 	collection: "trainingSessions",
 	timestamps: true
