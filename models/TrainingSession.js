@@ -9,11 +9,14 @@ const trainingSessionSchema = new m.Schema({
 		type: m.Schema.Types.ObjectId, ref: 'User'
 	},
 	position: String,
+	startTime: Date,
+	endTime: Date,
 	progress: Number,
 	duration: Number,
 	movements: Number,
 	location: String,
 	ots: String,
+	soloGranted: Boolean,
 	studentNotes: String,
 	insNotes: String,
 	noShow: Boolean

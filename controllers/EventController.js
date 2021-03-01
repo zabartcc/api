@@ -7,6 +7,7 @@ import FileType from 'file-type';
 const router = e.Router();
 import Event from '../models/Event.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import {isStaff} from '../middleware/isStaff.js';
 
 const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
@@ -120,39 +121,50 @@ router.put('/:slug/mansignup/:user', isStaff, async (req, res) => {
 });
 
 router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => { // 6 MB max
-	const stamp = Date.now();
-	const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
-	const positions = JSON.parse(req.body.positions);
-	const getType = await FileType.fromBuffer(req.file.buffer);
-	if(getType !== undefined && allowedTypes.includes(getType.mime)) {
-		minioClient.putObject("events", req.file.originalname, req.file.buffer, {
-			'Content-Type': getType.mime
-		}, (error) => {
-			if(error) {
-				console.log(error);
-				return res.status(500).send('Something went wrong, please try again.');
-			}
-		});
-		Event.create({
-			name: req.body.name,
-			description: req.body.description,
-			url: url,
-			bannerUrl: req.file.originalname,
-			eventStart: req.body.startTime,
-			eventEnd: req.body.endTime,
-			createdBy: req.body.createdBy,
-			positions: positions,
-			open: true,
-			submitted: false
-		}).then(() => {
-			return res.sendStatus(200);
-		}).catch((err) => {
-			console.log(err);
-			return res.sendStatus(500);
-		});
-	} else {
-		return res.status(500).send('File format not allowed.');
+	try {
+		const stamp = Date.now();
+		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+		const positions = JSON.parse(req.body.positions);
+		const getType = await FileType.fromBuffer(req.file.buffer);
+
+		if(getType !== undefined && allowedTypes.includes(getType.mime)) {
+			minioClient.putObject("events", req.file.originalname, req.file.buffer, {
+				'Content-Type': getType.mime
+			}, (error) => {
+				if(error) {
+					console.log(error);
+					throw {
+						code: 500,
+						message: "Could not upload file to server"
+					};
+				}
+			});
+			await Event.create({
+				name: req.body.name,
+				description: req.body.description,
+				url: url,
+				bannerUrl: req.file.originalname,
+				eventStart: req.body.startTime,
+				eventEnd: req.body.endTime,
+				createdBy: req.body.createdBy,
+				positions: positions,
+				open: true,
+				submitted: false
+			});
+
+			await Notification.create({
+				
+			})
+		} else {
+			throw {
+				code: 400,
+				message: "File type not allowed"
+			};
+		}
+	} catch(e) {
+		res.stdRes.ret_det = e;
 	}
+	return res.json(res.stdRes);
 });
 
 router.put('/:slug', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => {
