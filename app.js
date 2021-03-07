@@ -6,6 +6,7 @@ import env from 'dotenv';
 import mongoose from 'mongoose';
 import body from 'body-parser';
 import aws from 'aws-sdk';
+import Redis from 'ioredis';
 
 // Route Controllers
 import UserController from './controllers/UserController.js';
@@ -51,6 +52,10 @@ const s3 = new aws.S3({
 app.s3 = {
 	instance: s3,
 };
+
+app.redis = new Redis(process.env.REDIS_URI);
+
+app.redis.on('error', err => { throw new Error(`Failed to connect to Redis: ${err}`); });
 
 const origins = process.env.CORS_ORIGIN.split('|');
 
