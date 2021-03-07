@@ -8,6 +8,10 @@ import crypto from 'crypto';
 import axios from 'axios';
 import {v4} from 'uuid';
 import getUser from '../middleware/getUser.js';
+import {isSelf} from '../middleware/isSelf.js';
+import Notification from '../models/Notification.js';
+import m from 'mongoose';
+
 import Discord from 'discord-oauth2';
 import minio from 'minio';
 
@@ -80,7 +84,6 @@ router.post('/idsToken', getUser, async (req, res) => {
 router.post('/login', async (req, res) => {
 	const ulsJWK = JSON.parse(process.env.VATUSA_ULS_JWT);
 	const loginTokenParts = req.body.token.split('.');
-
 	const sig = Buffer.from(
 		crypto.createHmac('sha256', new Buffer.from(ulsJWK.k, 'base64'))
 			.update(`${loginTokenParts[0]}.${loginTokenParts[1]}`)
@@ -152,12 +155,8 @@ router.post('/login', async (req, res) => {
 				await User.findOneAndUpdate({cid: userData.cid}, {email: userData.email});
 			}
 		}
-
-
-
 		const apiToken = jwt.sign({cid: userData.cid}, process.env.JWT_SECRET, {expiresIn: '30d'});
 		res.cookie('token', apiToken, { httpOnly: true, maxAge: 2592000000, sameSite: true}); // Expires in 30 days
-
 	} 
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -224,7 +223,6 @@ router.post('/visit/login', async (req, res) => {
 		if(loginTokenData.aud !== 'ZAB') return res.sendStatus(500);
 
 		const { data: userData } = await axios.get(`https://login.vatusa.net/uls/v2/info?token=${loginTokenParts[1]}`);
-
 		
 		if(!userData) return res.sendStatus(500);
 		else {
@@ -254,7 +252,6 @@ router.post('/discord', async (req, res) => {
 		}
 
 		const {cid, code} = req.body;
-
 		const user = await User.findOne({cid});
 
 		if(!user) {
@@ -265,7 +262,6 @@ router.post('/discord', async (req, res) => {
 		}
 
 		const oauth = new Discord();
-
 		const token = await oauth.tokenRequest({
 			clientId: process.env.DISCORD_CLIENT_ID,
 			clientSecret: process.env.DISCORD_CLIENT_SECRET,
@@ -312,13 +308,90 @@ router.post('/discord', async (req, res) => {
 
 		let currentTime = new Date();
 		currentTime = new Date(currentTime.getTime() + (token.expires_in*1000));
-
 		user.discordInfo.expires = currentTime;
 
 		await user.save();
-
 	}
 	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
+router.get('/notifications/:id', isSelf, async(req, res) => {
+	try {
+		if(!req.params.id) {
+			throw {
+				code: 400,
+				message: "Incomplete request."
+			};
+		}
+		const page = parseInt(req.query.page, 10);
+		const limit = parseInt(req.query.limit, 10);
+
+		const unread = await Notification.countDocuments({deleted: false, recipient: req.params.id, read: false});
+		const amount = await Notification.countDocuments({deleted: false, recipient: req.params.id});
+		const notif = await Notification.find({recipient: req.params.id, deleted: false}).skip(limit * (page - 1)).limit(limit).sort({createdAt: "desc"}).lean();
+
+		res.stdRes.data = {
+			unread,
+			amount,
+			notif
+		};
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
+router.put('/notifications/read/all/:id', async(req, res) => {
+	try {
+		if(!req.params.id) {
+			throw {
+				code: 400,
+				message: "Incomplete request."
+			};
+		}
+		await Notification.updateMany({recipient: req.params.id}, {
+			read: true
+		});
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+});
+
+router.put('/notifications/read/:id', async(req, res) => {
+	try {
+		if(!req.params.id) {
+			throw {
+				code: 400,
+				message: "Incomplete request."
+			};
+		}
+		await Notification.findByIdAndUpdate(req.params.id, {
+			read: true
+		});
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
+router.delete('/notifications/:id', async(req, res) => {
+	try {
+		if(!req.params.id) {
+			throw {
+				code: 400,
+				message: "Incomplete request."
+			};
+		}
+		await Notification.delete({recipient: req.params.id});
+	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
 
