@@ -6,11 +6,12 @@ import Certification from '../models/Certification.js';
 import VisitApplication from '../models/VisitApplication.js';
 import transporter from '../config/mailer.js';
 import getUser from '../middleware/getUser.js';
+import microAuth from '../middleware/microAuth.js';
 import {management} from '../middleware/auth.js';
 
 router.get('/', async ({res}) => {
 	try {
-		const home = await User.find({deletedAt: null, vis: false, member: true}).select('-email -idsToken').sort({
+		const home = await User.find({vis: false}).select('-email -idsToken').sort({
 			rating: 'desc',
 			lname: 'asc',
 			fname: 'asc'
@@ -26,7 +27,7 @@ router.get('/', async ({res}) => {
 			}
 		}).lean({virtuals: true});
 	
-		const visiting = await User.find({deletedAt: null, vis: true, member: true}).select('-email -idsToken').sort({
+		const visiting = await User.find({vis: true}).select('-email -idsToken').sort({
 			rating: 'desc',
 			lname: 'asc',
 			fname: 'asc'
@@ -60,15 +61,15 @@ router.get('/', async ({res}) => {
 
 router.get('/staff', async (req, res) => {
 	try {
-		const users = await User.find().select('fname lname cid').sort({
+		const users = await User.find().select('fname lname cid roleCodes').sort({
 			lname: 'asc',
 			fname: 'asc'
-		}).populate({
+		})/*.populate({
 			path: 'roles',
 			options: {
 				sort: {order: 'asc'}
 			}
-		}).lean();
+		})*/.lean();
 
 		if(!users) {
 			throw {
@@ -120,7 +121,7 @@ router.get('/staff', async (req, res) => {
 			},
 		};
 
-		users.forEach(user => user.roles.forEach(role => staff[role.code].users.push(user)));
+		users.forEach(user => user.roleCodes.forEach(role => staff[role].users.push(user)));
 
 		res.stdRes.data = staff;
 	}
@@ -288,7 +289,86 @@ router.delete('/visit/:cid', getUser, management, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/:cid', getUser, management, async (req, res) => {
+router.post('/:cid', microAuth, async (req, res) => {
+	try {
+		const user = await User.findOne({cid: req.params.cid});
+
+		if(user) {
+			throw {
+				code: 409,
+				message: "This user already exists"
+			};
+		}
+		
+		if(!req.body) {
+			throw {
+				code: 400,
+				message: "No user data provided"
+			};
+		}
+
+		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
+
+		await User.create({
+			...req.body,
+			oi: generateOperatingInitials(req.body.fname, req.body.lname, oi.map(oi => oi.oi))
+		});
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+		
+	return res.json(res.stdRes);
+});
+
+router.put('/:cid/member', microAuth, async (req, res) => {
+	try {
+		const user = await User.findOne({cid: req.params.cid});
+
+		if(!user) {
+			throw {
+				code: 400,
+				message: "Unable to find user."
+			};
+		}
+
+		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
+
+		user.member = req.body.member,
+		user.oi = (req.body.member) ? generateOperatingInitials(user.fname, user.lname, oi.map(oi => oi.oi)) : null
+
+		await user.save();
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+		
+	return res.json(res.stdRes);
+})
+
+router.put('/:cid/visit', microAuth, async (req, res) => {
+	try {
+		const user = await User.findOne({cid: req.params.cid});
+
+		if(!user) {
+			throw {
+				code: 400,
+				message: "Unable to find user."
+			};
+		}
+
+		user.vis = req.body.vis,
+
+		await user.save();
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+		
+	return res.json(res.stdRes);
+})
+
+router.put('/:cid', getUser, management, async (req, res) => {
 	try {
 		if(!req.body.form) {
 			throw {
@@ -340,5 +420,82 @@ router.post('/:cid', getUser, management, async (req, res) => {
 	
 	return res.json(res.stdRes);
 });
+
+router.delete('/:cid', async (req, res) => {
+	try {
+		const user = await User.findOne({cid: req.params.cid});
+		user.member = false;
+		await user.save();
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+});
+
+/**
+ * Generates a pair of operating initials for a new controller.
+ * @param fname User's first name.
+ * @param lname User's last name.
+ * @param usedOi Array of currently used OI
+ * @return A two character set of operating initials (e.g. RA).
+ */
+const generateOperatingInitials = (fname, lname, usedOi) => {
+	let operatingInitials;
+	const MAX_TRIES = 10;
+
+	operatingInitials = `${fname.charAt(0).toUpperCase()}${lname.charAt(0).toUpperCase()}`;
+	
+	if(!usedOi.includes(operatingInitials)) {
+		return operatingInitials;
+	}
+	
+	operatingInitials = `${lname.charAt(0).toUpperCase()}${fname.charAt(0).toUpperCase()}`;
+	
+	if(!usedOi.includes(operatingInitials)) {
+		return operatingInitials;
+	}
+
+	const chars = `${lname.toUpperCase()}${fname.toUpperCase()}`;
+
+	let tries = 0;
+
+	do {
+		operatingInitials = random(chars, 2);
+		tries++;
+	} while(usedOi.includes(operatingInitials) || tries > MAX_TRIES);
+
+	if(!usedOi.includes(operatingInitials)) {
+		return operatingInitials;
+	}
+
+	tries = 0;
+
+	do {
+		operatingInitials = random('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 2);
+		tries++;
+	} while(usedOi.includes(operatingInitials) || tries > MAX_TRIES);
+
+	if(!usedOi.includes(operatingInitials)) {
+		return operatingInitials;
+	}
+
+	return false;
+};
+
+/**
+ * Selects a number of random characters from a given string.
+ * @param str String of characters to select from.
+ * @param len Number of characters to select.
+ * @return String of selected characters.
+ */
+const random = (str, len) => {
+	let ret = '';
+	for (let i = 0; i < len; i++) {
+		ret = `${ret}${str.charAt(Math.floor(Math.random() * str.length))}`;
+	}
+	return ret;
+};
 
 export default router;

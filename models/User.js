@@ -18,6 +18,7 @@ const userSchema = new m.Schema({
 	broadcast: Boolean,
 	member: Boolean,
 	vis: Boolean,
+	homeFacility: String,
 	image: {
 		custom: Boolean,
 		filename: String	
@@ -33,9 +34,7 @@ const userSchema = new m.Schema({
 	certifications: [{
 		type: m.Schema.Types.ObjectId, ref: 'Certification'
 	}],
-	roles: [{
-		type: m.Schema.Types.ObjectId, ref: 'Role'
-	}],
+	roleCodes: [],
 	trainingMilestones: [{
 		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
 	}]
@@ -79,6 +78,12 @@ userSchema.virtual('ratingShort').get(function() {
 userSchema.virtual('ratingLong').get(function() {
 	return zab.ratingsLong[this.rating];
 });
+
+userSchema.virtual('roles', {
+	ref: 'Role',
+	localField: 'roleCodes',
+	foreignField: 'code'
+})
 
 // userSchema.methods.getControllerHours = async function() {
 // 	return ControllerHours.find({
