@@ -26,7 +26,7 @@ router.get('/', async ({res}) => {
 			}
 		}).lean({virtuals: true});
 	
-		const visiting = await User.find({deletedAt: null, vis: true, member: true}).sort({
+		const visiting = await User.find({deletedAt: null, vis: true, member: true}).select('-email -idsToken').sort({
 			rating: 'desc',
 			lname: 'asc',
 			fname: 'asc'
@@ -123,6 +123,18 @@ router.get('/staff', async (req, res) => {
 		users.forEach(user => user.roles.forEach(role => staff[role.code].users.push(user)));
 
 		res.stdRes.data = staff;
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+});
+
+router.get('/role', async (req, res) => {
+	try {
+		const roles = await Role.find().lean();
+		res.stdRes.data = roles;
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
