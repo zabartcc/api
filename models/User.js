@@ -51,22 +51,22 @@ userSchema.virtual('isMem').get(function() {
 
 userSchema.virtual('isMgt').get(function() {
 	const search = ['atm', 'datm'];
-	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
+	return this.roleCodes.some(r => search.includes(r));
 });
 
 userSchema.virtual('isSenior').get(function() {
 	const search = ['atm', 'datm', 'ta'];
-	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
+	return this.roleCodes.some(r => search.includes(r));
 });
 
 userSchema.virtual('isStaff').get(function() {
 	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe'];
-	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
+	return this.roleCodes.some(r => search.includes(r));
 });
 
 userSchema.virtual('isIns').get(function() {
 	const search = ['atm', 'datm', 'ta', 'ins', 'mtr'];
-	return this.roles ? !!this.roles.filter(r => search.includes(r.code)).length : false;
+	return this.roleCodes.some(r => search.includes(r));
 });
 
 userSchema.virtual('ratingShort').get(function() {
