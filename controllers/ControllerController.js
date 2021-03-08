@@ -385,15 +385,13 @@ router.put('/:cid', getUser, management, async (req, res) => {
 
 		for(const [code, set] of Object.entries(roles)) {
 			if(set) {
-				const theRole = await Role.findOne({code}, 'id');
-				toApply.roles.push(theRole.id);
+				toApply.roles.push(code);
 			}
 		}
 
 		for(const [code, set] of Object.entries(certs)) {
 			if(set) {
-				const theCert = await Certification.findOne({code}, 'id');
-				toApply.certifications.push(theCert.id);
+				toApply.certifications.push(code);
 			}
 		}
 
@@ -403,8 +401,8 @@ router.put('/:cid', getUser, management, async (req, res) => {
 			email,
 			oi,
 			vis,
-			roles: toApply.roles,
-			certifications: toApply.certifications,
+			roleCodes: toApply.roles,
+			certCodes: toApply.certifications,
 		});
 
 		if(!updated.ok) {

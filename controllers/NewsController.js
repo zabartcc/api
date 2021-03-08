@@ -49,7 +49,7 @@ router.post('/', isStaff, async (req, res) => {
 router.get('/:slug', async (req, res) =>{
 	const newsItem = await News
 		.findOne({uriSlug: req.params.slug})
-		.populate('createdBy', ['fname', 'lname'])
+		.populate('user')
 		.lean();
 
 	res.stdRes.data = newsItem;

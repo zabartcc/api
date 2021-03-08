@@ -31,9 +31,7 @@ const userSchema = new m.Schema({
 		expires: Date,
 	},
 	idsToken: String,
-	certifications: [{
-		type: m.Schema.Types.ObjectId, ref: 'Certification'
-	}],
+	certCodes: [],
 	roleCodes: [],
 	trainingMilestones: [{
 		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
@@ -82,6 +80,12 @@ userSchema.virtual('ratingLong').get(function() {
 userSchema.virtual('roles', {
 	ref: 'Role',
 	localField: 'roleCodes',
+	foreignField: 'code'
+})
+
+userSchema.virtual('certifications', {
+	ref: 'Certification',
+	localField: 'certCodes',
 	foreignField: 'code'
 })
 
