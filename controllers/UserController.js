@@ -37,6 +37,7 @@ router.get('/', async (req, res) => {
 		await new Promise(resolve => {
 			jwt.verify(req.cookies.token, process.env.JWT_SECRET, async (err, decoded) => {
 				if(err) {
+					res.cookie('token', '', {expires: new Date(0)});
 					throw {
 						code: 403,
 						message: `Unable to verify token: ${err}`
