@@ -6,7 +6,7 @@ import VisitApplication from '../models/VisitApplication.js';
 import transporter from '../config/mailer.js';
 import getUser from '../middleware/getUser.js';
 import microAuth from '../middleware/microAuth.js';
-import {isMgt} from '../middleware/isStaff.js';
+import {isSenior, isMgt} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
 	try {
@@ -366,7 +366,7 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 	return res.json(res.stdRes);
 })
 
-router.put('/:cid', isMgt, async (req, res) => {
+router.put('/:cid', isSenior, async (req, res) => {
 	try {
 		if(!req.body.form) {
 			throw {
