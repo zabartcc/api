@@ -2,12 +2,11 @@ import e from 'express';
 const router = e.Router();
 import User from '../models/User.js';
 import Role from '../models/Role.js';
-import Certification from '../models/Certification.js';
 import VisitApplication from '../models/VisitApplication.js';
 import transporter from '../config/mailer.js';
 import getUser from '../middleware/getUser.js';
 import microAuth from '../middleware/microAuth.js';
-import {management} from '../middleware/auth.js';
+import {isMgt} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
 	try {
@@ -120,7 +119,6 @@ router.get('/staff', async (req, res) => {
 				users: []
 			},
 		};
-
 		users.forEach(user => user.roleCodes.forEach(role => staff[role].users.push(user)));
 
 		res.stdRes.data = staff;
@@ -164,7 +162,7 @@ router.get('/oi', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/visit', getUser, management, async ({res}) => {
+router.get('/visit', isMgt, async ({res}) => {
 	try {
 		const applications = await VisitApplication.find({deletedAt: null, acceptedAt: null}).lean();
 		res.stdRes.data = applications;
@@ -243,7 +241,7 @@ router.post('/visit', getUser, async (req, res) => {
 	return res.json(res.stdRes);	
 });
 
-router.put('/visit/:cid', getUser, management, async (req, res) => {
+router.put('/visit/:cid', isMgt, async (req, res) => {
 	try {
 		await VisitApplication.delete({cid: req.params.cid});
 
@@ -266,7 +264,7 @@ router.put('/visit/:cid', getUser, management, async (req, res) => {
 });
 
 
-router.delete('/visit/:cid', getUser, management, async (req, res) => {
+router.delete('/visit/:cid', isMgt, async (req, res) => {
 	try {
 		await VisitApplication.delete({cid: req.params.cid});
 
@@ -368,7 +366,7 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 	return res.json(res.stdRes);
 })
 
-router.put('/:cid', getUser, management, async (req, res) => {
+router.put('/:cid', isMgt, async (req, res) => {
 	try {
 		if(!req.body.form) {
 			throw {
@@ -419,7 +417,7 @@ router.put('/:cid', getUser, management, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/:cid', async (req, res) => {
+router.delete('/:cid', isMgt, async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid});
 		user.member = false;

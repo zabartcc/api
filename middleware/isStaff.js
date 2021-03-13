@@ -24,6 +24,29 @@ export function isStaff(req, res, next) {
 	}
 }
 
+export function isSenior(req, res, next) {
+	if(!req.cookies.token) {
+		return res.sendStatus(401);
+	} else {
+		const userToken = req.cookies.token;
+		jwt.verify(userToken, process.env.JWT_SECRET, async (err, decoded) => {
+			if(err) {
+				console.log(`Unable to verify token: ${err}`);
+				return res.sendStatus(401);
+			} else {
+				const user = await User.findOne({
+					cid: decoded.cid
+				}).populate('roles').lean({virtuals: true});	
+				if(user.isSenior) {
+					next();
+				} else {
+					return res.sendStatus(403);
+				}
+			}
+		});
+	}
+}
+
 export function isMgt(req, res, next) {
 	if(!req.cookies.token) {
 		return res.sendStatus(401);

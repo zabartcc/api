@@ -4,10 +4,10 @@ import Feedback from '../models/Feedback.js';
 import m from 'mongoose';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
-import {isMgt} from '../middleware/isStaff.js';
+import {isSenior} from '../middleware/isStaff.js';
 import {isSelf} from '../middleware/isSelf.js';
 
-router.get('/', isMgt, async (req, res) => { // All feedback
+router.get('/', isSenior, async (req, res) => { // All feedback
 	try {
 		const page = parseInt(req.query.page, 10);
 		const limit = parseInt(req.query.limit, 10);
@@ -64,7 +64,7 @@ router.get('/controllers', async ({res}) => { // Controller list on feedback pag
 	return res.json(res.stdRes);
 });
 
-router.get('/unapproved', isMgt, async ({res}) => { // Unapproved feedback
+router.get('/unapproved', isSenior, async ({res}) => { // Unapproved feedback
 	try {
 		const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').lean();
 		res.stdRes.data = feedback;
@@ -74,7 +74,7 @@ router.get('/unapproved', isMgt, async ({res}) => { // Unapproved feedback
 	return res.json(res.stdRes);
 });
 
-router.put('/approve/:id', isMgt, async (req, res) => { // Approve feedback
+router.put('/approve/:id', isSenior, async (req, res) => { // Approve feedback
 	try {
 		const approved = await Feedback.findOneAndUpdate({_id: req.params.id}, {
 			approved: true
@@ -94,7 +94,7 @@ router.put('/approve/:id', isMgt, async (req, res) => { // Approve feedback
 	return res.json(res.stdRes);
 });
 
-router.put('/reject/:id', isMgt, async (req, res) => { // Reject feedback
+router.put('/reject/:id', isSenior, async (req, res) => { // Reject feedback
 	try {
 		await Feedback.delete({_id: req.params.id});
 	} catch(e) {
