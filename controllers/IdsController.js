@@ -1,6 +1,8 @@
 import express from 'express';
 import Redis from 'ioredis';
 import User from '../models/User.js';
+import Pireps from '../models/Pireps.js';
+
 const router = express.Router();
 
 router.post('/checktoken', async (req, res) => {
@@ -165,6 +167,41 @@ router.get('/stations/:station', async (req, res) => {
 router.get('/neighbors', async (req, res) => {
 	const neighbors = await req.app.redis.get('neighbors') || '';
 	return res.json((neighbors.length) ? neighbors.split('|') : '');
+});
+
+router.get('/pireps', async({res}) => {
+	const pirep = await Pireps.find().sort('-reportTime').lean();
+	return res.json(pirep);
+});
+
+router.post('/pireps', async(req, res) => {
+	if(req.body.ua === undefined || req.body.ov === undefined) {
+		return res.status(500).send('Missing UA or OV');
+	} else {
+		await Pireps.create({
+			reportTime: new Date().getTime(),
+			aircraft: req.body.tp,
+			flightLevel: req.body.fl,
+			skyCond: req.body.sk,
+			turbulence: req.body.tb,
+			icing: req.body.ic,
+			vis: req.body.wx,
+			temp: req.body.ta,
+			wind: req.body.wv,
+			urgent: req.body.ua === 'UUA' ? true : false,
+			manual: true
+		});
+		return res.sendStatus(200);
+	}
+});
+
+router.delete('/pireps/:id', async(req, res) => {
+	Pireps.findByIdAndDelete(req.params.id).then(() => {
+		return res.sendStatus(200);
+	}).catch((err) => {
+		console.log(err);
+		return res.sendStatus(500);
+	});
 });
 
 export default router;
