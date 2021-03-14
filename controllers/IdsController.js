@@ -6,18 +6,18 @@ import Pireps from '../models/Pireps.js';
 const router = express.Router();
 
 router.post('/checktoken', async (req, res) => {
-	const idsToken = req.cookies.idsToken;
+	const idsToken = req.body.token;
 	try {
 		if(!idsToken) {
 			throw {
-				code: 401,
-				message: "Invalid IDS token"
+				code: 400,
+				message: "No IDS token specified"
 			};
 		} else {
 			const user = await User.findOne({idsToken: idsToken}).select('-email -idsToken').lean();
 			if(!user) {
 				throw {
-					code: 404,
+					code: 403,
 					message: "Invalid IDS token"
 				};
 			} else {
