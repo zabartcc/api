@@ -4,6 +4,7 @@ import transporter from '../config/mailer.js';
 import TrainingSession from '../models/TrainingSession.js';
 import TrainingRequest from '../models/TrainingRequest.js';
 import TrainingMilestone from '../models/TrainingMilestone.js';
+import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import getUser from '../middleware/getUser.js';
 import {isIns} from '../middleware/isStaff.js';
@@ -266,7 +267,7 @@ router.put('/session/submit/:id', isIns, async(req, res) => {
 
 		const duration = `${('00' + hours).slice(-2)}:${('00' + minutes).slice(-2)}`;
 
-		await TrainingSession.findOneAndUpdate(req.params.id, {
+		const session = await TrainingSession.findOneAndUpdate(req.params.id, {
 			position: req.body.position,
 			progress: req.body.progress,
 			duration: duration,
@@ -276,6 +277,16 @@ router.put('/session/submit/:id', isIns, async(req, res) => {
 			studentNotes: req.body.studentNotes,
 			insNotes: req.body.insNotes,
 			submitted: true
+		});
+
+		const instructor = await User.findById(session.instructor).select('fname lname').lean();
+
+		await Notification.create({
+			recipient: session.student,
+			read: false,
+			title: 'Training Notes Submitted',
+			content: `The training notes from your session with <b>${instructor.fname + ' ' + instructor.lname}</b> have been submitted.`,
+			link: '/dash/training'
 		});
 	} catch(e) {
 		console.log(e);
