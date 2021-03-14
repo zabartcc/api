@@ -15,14 +15,12 @@ const trainingSessionSchema = new m.Schema({
 	startTime: Date,
 	endTime: Date,
 	progress: Number,
-	duration: Number,
+	duration: String,
 	movements: Number,
-	location: String,
-	ots: String,
-	soloGranted: Boolean,
+	location: Number,
+	ots: Number,
 	studentNotes: String,
 	insNotes: String,
-	noShow: Boolean,
 	submitted: Boolean,
 	synced: Boolean
 }, {

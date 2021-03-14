@@ -89,7 +89,7 @@ router.get('/:slug/positions', async(req, res) => {
 		}).sort({
 			'positions.order': -1
 		}).select(
-			'open submitted eventStart positions signups'
+			'open submitted eventStart positions signups name'
 		).populate(
 			'positions.takenBy', 'cid fname lname'
 		).populate({
