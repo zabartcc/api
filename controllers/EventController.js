@@ -1,8 +1,10 @@
 import e from 'express';
 import m from 'mongoose';
 import transporter from '../config/mailer.js';
+import aws from 'aws-sdk';
 import multer from 'multer';
-import minio from 'minio';
+import multers3 from 'multer-s3';
+// import minio from 'minio';
 import FileType from 'file-type';
 const router = e.Router();
 import Event from '../models/Event.js';
@@ -10,15 +12,44 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import {isStaff} from '../middleware/isStaff.js';
 import getUser from '../middleware/getUser.js';
+<<<<<<< Updated upstream
+=======
+import {management} from '../middleware/auth.js';
+>>>>>>> Stashed changes
 
 const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
-const minioClient = new minio.Client({
-	endPoint: 'cdn.zabartcc.org',
-	port: 443,
-	useSSL: true,
-	accessKey: process.env.MINIO_ACCESS_KEY,
-	secretKey: process.env.MINIO_SECRET_KEY
+const checkFileType = (file, types) => {
+	
+}
+
+
+const s3 = new aws.S3({
+	endpoint: new aws.Endpoint('sfo3.digitaloceanspaces.com'),
+	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
+
+const upload = multer({
+	storage: multers3({
+		s3,
+		bucket: 'zabartcc/events',
+		acl: 'public-read',
+		contentType: multers3.AUTO_CONTENT_TYPE,
+		contentDisposition: 'inline',
+        key: function (req, file, cb) {
+            console.log(file);
+            cb(null, file.originalname);
+        }
+	})
+})
+
+// const minioClient = new minio.Client({
+// 	endPoint: 'cdn.zabartcc.org',
+// 	port: 443,
+// 	useSSL: true,
+// 	accessKey: process.env.MINIO_ACCESS_KEY,
+// 	secretKey: process.env.MINIO_SECRET_KEY
+// });
 
 router.get('/', async ({res}) => {
 	try {
@@ -180,7 +211,7 @@ router.put('/:slug/mansignup/:cid', isStaff, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => { // 6 MB max
+router.post('/', getUser, management, upload.array('banner', 1), async (req, res) => { // 6 MB max
 	try {
 		const stamp = Date.now();
 		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
@@ -211,16 +242,51 @@ router.post('/new', multer({storage: multer.memoryStorage(), limits: { fileSize:
 				open: true,
 				submitted: false
 			});
+		console.log(req.body)
+		// const stamp = Date.now();
+		// const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+		// const positions = JSON.parse(req.body.positions);
+		// const getType = await FileType.fromBuffer(req.file.buffer);
 
-			await Notification.create({
-				
-			})
+		// if(getType !== undefined && allowedTypes.includes(getType.mime)) {
+		// 	minioClient.putObject("events", req.file.originalname, req.file.buffer, {
+		// 		'Content-Type': getType.mime
+		// 	}, (error) => {
+		// 		if(error) {
+		// 			console.log(error);
+		// 			throw {
+		// 				code: 500,
+		// 				message: "Could not upload file to server"
+		// 			};
+		// 		}
+		// 	});
+		// 	await Event.create({
+		// 		name: req.body.name,
+		// 		description: req.body.description,
+		// 		url: url,
+		// 		bannerUrl: req.file.originalname,
+		// 		eventStart: req.body.startTime,
+		// 		eventEnd: req.body.endTime,
+		// 		createdBy: req.body.createdBy,
+		// 		positions: positions,
+		// 		open: true,
+		// 		submitted: false
+		// 	});
+
+		// 	// await Notification.create({
 		/*} else {
 			throw {
 				code: 400,
 				message: "File type not allowed"
 			};
 		}*/
+		// 	// })
+		// } else {
+		// 	throw {
+		// 		code: 400,
+		// 		message: "File type not allowed"
+		// 	};
+		// }
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}

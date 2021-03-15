@@ -5,7 +5,6 @@ import cors from 'cors';
 import env from 'dotenv';
 import mongoose from 'mongoose';
 import body from 'body-parser';
-import aws from 'aws-sdk';
 import Redis from 'ioredis';
 
 // Route Controllers
@@ -42,16 +41,6 @@ app.use(body.urlencoded({
 	extended: true,
 	parameterLimit: 50000
 }));
-
-const s3 = new aws.S3({
-	endpoint: new aws.Endpoint('sfo3.digitaloceanspaces.com'),
-	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-});
-
-app.s3 = {
-	instance: s3,
-};
 
 app.redis = new Redis(process.env.REDIS_URI);
 
