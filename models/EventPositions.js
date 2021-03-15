@@ -5,9 +5,14 @@ const positions = new m.Schema({
 	pos: String,
 	type: String,
 	code: String,
-	takenBy: {
-		type: m.Schema.Types.ObjectId, ref: 'User'
-	}
+	takenBy: Number
 });
+
+positions.virtual('user', {
+	ref: 'User',
+	localField: 'takenBy',
+	foreignField: 'cid'
+})
+
 
 export default positions;

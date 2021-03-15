@@ -3,24 +3,15 @@ import m from 'mongoose';
 import transporter from '../config/mailer.js';
 import aws from 'aws-sdk';
 import multer from 'multer';
-import multers3 from 'multer-s3';
-// import minio from 'minio';
 import FileType from 'file-type';
+import fs from 'fs/promises';
 const router = e.Router();
 import Event from '../models/Event.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import {isStaff} from '../middleware/isStaff.js';
 import getUser from '../middleware/getUser.js';
-<<<<<<< Updated upstream
-=======
 import {management} from '../middleware/auth.js';
->>>>>>> Stashed changes
-
-const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
-const checkFileType = (file, types) => {
-	
-}
 
 
 const s3 = new aws.S3({
@@ -30,26 +21,15 @@ const s3 = new aws.S3({
 });
 
 const upload = multer({
-	storage: multers3({
-		s3,
-		bucket: 'zabartcc/events',
-		acl: 'public-read',
-		contentType: multers3.AUTO_CONTENT_TYPE,
-		contentDisposition: 'inline',
-        key: function (req, file, cb) {
-            console.log(file);
-            cb(null, file.originalname);
-        }
+	storage: multer.diskStorage({
+		destination: (req, file, cb) => {
+			cb(null, '/tmp');
+		},
+		filename: (req, file, cb) => {
+			cb(null, `${Date.now()}-${file.originalname}`);
+		}
 	})
 })
-
-// const minioClient = new minio.Client({
-// 	endPoint: 'cdn.zabartcc.org',
-// 	port: 443,
-// 	useSSL: true,
-// 	accessKey: process.env.MINIO_ACCESS_KEY,
-// 	secretKey: process.env.MINIO_SECRET_KEY
-// });
 
 router.get('/', async ({res}) => {
 	try {
@@ -124,7 +104,7 @@ router.get('/:slug/positions', async(req, res) => {
 		).populate(
 			'positions.takenBy', 'cid fname lname'
 		).populate({
-			path: 'signups.user', select: 'cid fname lname rating certifications requests', populate: {path: 'certifications', select: 'code'}
+			path: 'signups.user', select: 'cid fname lname rating certCodes requests'
 		}).lean();
 
 		res.stdRes.data = event;
@@ -137,11 +117,10 @@ router.get('/:slug/positions', async(req, res) => {
 
 router.put('/:slug/signup', getUser, async (req, res) => {
 	try {
-		const user = await User.findOne({cid: res.user.cid});
 		await Event.updateOne({url: req.params.slug}, {
 			$push: {
 				signups: {
-					user: m.Types.ObjectId(user._id),
+					cid: res.user.cid,
 					requests: req.body.requests
 				} 
 			}
@@ -155,11 +134,10 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 
 router.delete('/:slug/signup', getUser, async (req, res) => {
 	try {
-		const user = await User.findOne({cid: res.user.cid});
 		await Event.updateOne({url: req.params.slug}, {
 			$pull: {
 				signups: {
-					user: m.Types.ObjectId(user._id)
+					cid: res.user.cid
 				}
 			}
 		});
@@ -211,134 +189,133 @@ router.put('/:slug/mansignup/:cid', isStaff, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/', getUser, management, upload.array('banner', 1), async (req, res) => { // 6 MB max
+router.post('/', getUser, management, upload.single('banner'), async (req, res) => {
 	try {
-		const stamp = Date.now();
-		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
-		const positions = JSON.parse(req.body.positions);
-		//const getType = await FileType.fromBuffer(req.file.buffer);
-
-		//if(getType !== undefined && allowedTypes.includes(getType.mime)) {
-			/*minioClient.putObject("events", req.file.originalname, req.file.buffer, {
-				'Content-Type': getType.mime
-			}, (error) => {
-				if(error) {
-					console.log(error);
-					throw {
-						code: 500,
-						message: "Could not upload file to server"
-					};
-				}
-			});*/
-			await Event.create({
-				name: req.body.name,
-				description: req.body.description,
-				url: url,
-				bannerUrl: req.file.originalname,
-				eventStart: req.body.startTime,
-				eventEnd: req.body.endTime,
-				createdBy: req.body.createdBy,
-				positions: positions,
-				open: true,
-				submitted: false
-			});
 		console.log(req.body)
-		// const stamp = Date.now();
-		// const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
+		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		// const positions = JSON.parse(req.body.positions);
-		// const getType = await FileType.fromBuffer(req.file.buffer);
-
-		// if(getType !== undefined && allowedTypes.includes(getType.mime)) {
-		// 	minioClient.putObject("events", req.file.originalname, req.file.buffer, {
-		// 		'Content-Type': getType.mime
-		// 	}, (error) => {
-		// 		if(error) {
-		// 			console.log(error);
-		// 			throw {
-		// 				code: 500,
-		// 				message: "Could not upload file to server"
-		// 			};
-		// 		}
-		// 	});
-		// 	await Event.create({
-		// 		name: req.body.name,
-		// 		description: req.body.description,
-		// 		url: url,
-		// 		bannerUrl: req.file.originalname,
-		// 		eventStart: req.body.startTime,
-		// 		eventEnd: req.body.endTime,
-		// 		createdBy: req.body.createdBy,
-		// 		positions: positions,
-		// 		open: true,
-		// 		submitted: false
-		// 	});
-
-		// 	// await Notification.create({
-		/*} else {
+		
+		const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
+		const fileType = await FileType.fromFile(req.file.path);
+		if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 			throw {
 				code: 400,
-				message: "File type not allowed"
-			};
-		}*/
-		// 	// })
-		// } else {
-		// 	throw {
-		// 		code: 400,
-		// 		message: "File type not allowed"
-		// 	};
-		// }
+				message: 'File type not supported.'
+			}
+		}
+		if(req.file.size > (6 * 1024 * 1024)) {	// 6MiB
+			throw {
+				code: 400,
+				message: 'File too large.'
+			}
+		}
+		const tmpFile = await fs.readFile(req.file.path);
+		await s3.putObject({
+			Bucket: 'zabartcc/events',
+			Key: req.file.filename,
+			Body: tmpFile,
+			ContentType: req.file.mimetype,
+			ACL: 'public-read',
+			ContentDisposition: 'inline',
+		}).promise();
+		await Event.create({
+			name: req.body.name,
+			description: req.body.description,
+			url: url,
+			bannerUrl: req.file.filename,
+			eventStart: `${req.body.startTime}:00.000Z`, // force Mongo to store as-is and not try to convert to UTC
+			eventEnd: `${req.body.endTime}:00.000Z`, // force Mongo to store as-is and not try to convert to UTC
+			createdBy: res.user.cid,
+			// positions: positions,
+			open: true,
+			submitted: false
+		});
 	} catch(e) {
+		console.log(e)
 		res.stdRes.ret_det = e;
 	}
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug', multer({storage: multer.memoryStorage(), limits: { fileSize: 6000000 }}).single("banner"), isStaff, async (req, res) => {
+router.put('/:slug', getUser, management, upload.single('banner'), async (req, res) => {
 	try {
-		const stamp = Date.now();
-		if(!req.file) { // no updated file provided
-			const positions = JSON.parse(req.body.positions);
-			await Event.findOneAndUpdate({url: req.params.slug}, {
-				name: req.body.name,
-				description: req.body.description,
-				eventStart: req.body.startTime,
-				eventEnd: req.body.endTime,
-				positions: positions
-			});
-		} else {
-			const banner = await Event.findOne({url: req.params.slug}).select('bannerUrl').lean();
-			const fileName = banner.bannerUrl;
-			/*minioClient.removeObject("events", fileName, (error) => {
-				if (error) {
-					console.log(error);
-					return res.sendStatus(500);
-				}
-			});
-			const getType = await FileType.fromBuffer(req.file.buffer);
-			if(getType !== undefined && allowedTypes.includes(getType.mime)) {
-				minioClient.putObject("events", req.file.originalname, req.file.buffer, {
-					'Content-Type': getType.mime
-				}, (error) => {
-					if(error) {
-						return res.sendStatus(500);
-					} else {
-						const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + stamp.toString().slice(-5);
-						const positions = JSON.parse(req.body.positions);
-						await Event.findOneAndUpdate({url: req.params.slug}, {
-							name: req.body.name,
-							description: req.body.description,
-							url: url,
-							bannerUrl: req.file.originalname,
-							eventStart: req.body.startTime,
-							eventEnd: req.body.endTime,
-							positions: positions
-						});
-					}
-				});
-			} else {
-				return res.sendStatus(500);
-			}*/
+		const event = await Event.findOne({url: req.params.slug});
+		const {name, description, startTime, endTime, positions} = req.body;
+		if(event.name !== name) {
+			event.name = name;
+			event.url = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		}
+		event.description = description;
+		event.eventStart = startTime;
+		event.eventEnd = endTime;
+		
+		const computedPositions = [];
+
+		for(const pos of JSON.parse(positions)) {
+			const thePos = pos.match(/^([A-Z]{3})_(?:[A-Z]{1,3}_)?([A-Z]{3})$/); // 🤮 so basically this extracts the first part and last part of a callsign.
+			if(['CTR'].includes(thePos[2])) {
+				computedPositions.push({
+					pos,
+					type: thePos[2],
+					code: 'zab',
+				})
+			}
+			if(['APP', 'DEP'].includes(thePos[2])) {
+				computedPositions.push({
+					pos,
+					type: thePos[2],
+					code: (thePos[1] === "PHX") ? 'p50app' : 'app',
+				})
+			}
+			if(['TWR'].includes(thePos[2])) {
+				computedPositions.push({
+					pos,
+					type: thePos[2],
+					code: (thePos[1] === "PHX") ? 'p50twr' : 'twr',
+				})
+			}
+			if(['GND', 'DEL'].includes(thePos[2])) {
+				computedPositions.push({
+					pos,
+					type: thePos[2],
+					code: (thePos[1] === "PHX") ? 'p50gnd' : 'gnd',
+				})
+			}
+		}
+		
+		event.positions = computedPositions;
+
+		console.log(computedPositions)
+
+		if(req.file) {
+			const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
+			const fileType = await FileType.fromFile(req.file.path);
+			if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
+				throw {
+					code: 400,
+					message: 'File type not supported.'
+				}
+			}
+			if(req.file.size > (6 * 1024 * 1024)) {	// 6MiB
+				throw {
+					code: 400,
+					message: 'File too large.'
+				}
+			}
+			const tmpFile = await fs.readFile(req.file.path);
+			await s3.putObject({
+				Bucket: 'zabartcc/events',
+				Key: req.file.filename,
+				Body: tmpFile,
+				ContentType: req.file.mimetype,
+				ACL: 'public-read',
+				ContentDisposition: 'inline',
+			}).promise();
+			
+			event.bannerUrl = req.file.filename;
+		}
+
+		await event.save();
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}

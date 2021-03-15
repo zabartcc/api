@@ -1,7 +1,7 @@
 import m from 'mongoose';
 import './User.js';
-import positions from './EventPositions.js';
-import signups from './EventSignups.js';
+import EventPositions from './EventPositions.js';
+import EventSignups from './EventSignups.js';
 import softDelete from 'mongoose-delete';
 
 const eventSchema = new m.Schema({
@@ -11,11 +11,9 @@ const eventSchema = new m.Schema({
 	bannerUrl: String,
 	eventStart: Date,
 	eventEnd: Date,
-	createdBy: {
-		type: m.Schema.Types.ObjectId, ref: 'User' // EC, typically
-	},
-	positions: [positions], // what positions are open, and who has been assigned what?
-	signups: [signups], // who has signed up?
+	createdBy: Number,
+	positions: [EventPositions], // what positions are open, and who has been assigned what?
+	signups: [EventSignups], // who has signed up?
 	open: Boolean, // open for sign ups
 	submitted: Boolean, // have emails etc. been sent out?
 
@@ -23,6 +21,11 @@ const eventSchema = new m.Schema({
 	timestamps: true,
 });
 
+eventSchema.virtual('user', {
+	ref: 'User',
+	localField: 'createdAt',
+	foreignField: 'cid'
+})
 
 eventSchema.plugin(softDelete, {
 	deletedAt: true
