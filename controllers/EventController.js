@@ -190,7 +190,6 @@ router.put('/:slug/mansignup/:cid', getUser, management, async (req, res) => {
 
 router.post('/', getUser, management, upload.single('banner'), async (req, res) => {
 	try {
-		console.log(req.body)
 		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		// const positions = JSON.parse(req.body.positions);
 		

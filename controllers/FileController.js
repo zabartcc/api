@@ -1,18 +1,30 @@
 import e from 'express';
 const router = e.Router();
+import aws from 'aws-sdk';
 import multer from 'multer';
-import minio from 'minio';
+import fs from 'fs/promises';
 import Downloads from '../models/Download.js';
 import Documents from '../models/Document.js';
 import {isStaff} from '../middleware/isStaff.js';
+import getUser from '../middleware/getUser.js';
+import {management} from '../middleware/auth.js';
 
-const minioClient = new minio.Client({
-	endPoint: 'cdn.zabartcc.org',
-	port: 443,
-	useSSL: true,
-	accessKey: process.env.MINIO_ACCESS_KEY,
-	secretKey: process.env.MINIO_SECRET_KEY
+const s3 = new aws.S3({
+	endpoint: new aws.Endpoint('sfo3.digitaloceanspaces.com'),
+	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
+
+const upload = multer({
+	storage: multer.diskStorage({
+		destination: (req, file, cb) => {
+			cb(null, '/tmp');
+		},
+		filename: (req, file, cb) => {
+			cb(null, `${Date.now()}-${file.originalname}`);
+		}
+	})
+})
 
 // Downloads
 router.get('/downloads', async ({res}) => {
@@ -37,19 +49,27 @@ router.get('/downloads/:id', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/downloads/new', multer({storage: multer.memoryStorage(), limits: { fileSize: 25000000 }}).single("download"), isStaff, async (req, res) => {
+router.post('/downloads', getUser, management, upload.single('download'), async (req, res) => {
 	try {
-	/*minioClient.putObject("downloads", req.file.originalname, req.file.buffer, {}, (error) => {
-		if(error) {
-			console.log(error);
-			return res.status(500).send('Something went wrong, please try again.');
+		if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
+			throw {
+				code: 400,
+				message: 'File too large.'
+			}
 		}
-	});*/
+		const tmpFile = await fs.readFile(req.file.path);
+		await s3.putObject({
+			Bucket: 'zabartcc/downloads',
+			Key: req.file.filename,
+			Body: tmpFile,
+			ContentType: req.file.mimetype,
+			ACL: 'public-read',
+		}).promise();
 
 		await Downloads.create({
 			name: req.body.name,
 			description: req.body.description,
-			fileName: req.file.originalname,
+			fileName: req.file.filename,
 			category: req.body.category,
 			author: req.body.author
 		});
