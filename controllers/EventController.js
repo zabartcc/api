@@ -102,10 +102,10 @@ router.get('/:slug/positions', async(req, res) => {
 		}).select(
 			'open submitted eventStart positions signups name'
 		).populate(
-			'positions.takenBy', 'cid fname lname'
-		).populate({
-			path: 'signups.user', select: 'cid fname lname rating certCodes requests'
-		}).lean();
+			'positions.user', 'cid fname lname'
+		).populate(
+			'signups.user', 'cid fname lname rating ratingLong certCodes requests'
+		).lean();
 
 		res.stdRes.data = event;
 	} catch(e) {
@@ -148,13 +148,12 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug/mandelete/:cid', isStaff, async(req, res) => {
+router.delete('/:slug/mandelete/:cid', getUser, management, async(req, res) => {
 	try {
-		const user = await User.findOne({cid: req.params.cid});
 		await Event.updateOne({url: req.params.slug}, {
 			$pull: {
 				signups: {
-					user: m.Types.ObjectId(user._id)
+					cid: req.params.cid
 				}
 			}
 		});
@@ -165,14 +164,14 @@ router.delete('/:slug/mandelete/:cid', isStaff, async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/mansignup/:cid', isStaff, async (req, res) => {
+router.put('/:slug/mansignup/:cid', getUser, management, async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid});
 		if(user !== null) {
 			await Event.updateOne({url: req.params.slug}, {
 				$push: {
 					signups: {
-						user: m.Types.ObjectId(user.id),
+						cid: req.params.cid,
 					} 
 				}
 			});
@@ -337,6 +336,7 @@ router.delete('/:slug', isStaff, async (req, res) => {
 
 router.put('/:slug/assign', isStaff, async (req, res) => {
 	try {
+		console.log(req.body)
 		await Event.updateOne({url: req.params.slug}, {
 			$set: {
 				positions: req.body.assignment

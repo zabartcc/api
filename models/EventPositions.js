@@ -11,7 +11,8 @@ const positions = new m.Schema({
 positions.virtual('user', {
 	ref: 'User',
 	localField: 'takenBy',
-	foreignField: 'cid'
+	foreignField: 'cid',
+	justOne: true
 })
 
 

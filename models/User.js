@@ -1,5 +1,6 @@
 import m from 'mongoose';
 import mlv from 'mongoose-lean-virtuals';
+import msv from 'mongoose-select-virtuals';
 // import ControllerHours from './ControllerHours.js';
 import softDelete from 'mongoose-delete';
 import './Certification.js';
@@ -44,6 +45,7 @@ userSchema.plugin(softDelete, {
 });
 
 userSchema.plugin(mlv);
+userSchema.plugin(msv);
 
 userSchema.virtual('isMem').get(function() {
 	return !!this.member;

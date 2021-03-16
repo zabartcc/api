@@ -13,7 +13,8 @@ const signups = new m.Schema({
 signups.virtual('user', {
 	ref: 'User',
 	localField: 'cid',
-	foreignField: 'cid'
+	foreignField: 'cid',
+	justOne: true
 })
 
 export default signups;
