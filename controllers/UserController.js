@@ -319,25 +319,14 @@ router.post('/discord', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/notifications/:cid', getUser, async(req, res) => {
+router.get('/notifications', getUser, async(req, res) => {
 	try {
-		if(!req.params.cid) {
-			throw {
-				code: 400,
-				message: "Incomplete request."
-			};
-		} else if(+req.params.cid !== res.user.cid) {
-			throw {
-				code: 403,
-				message: "Forbidden."
-			}
-		}
 		const page = parseInt(req.query.page || 1, 10);
-		const limit = parseInt(req.query.limit || 20, 10);
+		const limit = parseInt(req.query.limit || 10, 10);
 
-		const unread = await Notification.countDocuments({deleted: false, recipient: req.params.cid, read: false});
-		const amount = await Notification.countDocuments({deleted: false, recipient: req.params.cid});
-		const notif = await Notification.find({recipient: req.params.cid, deleted: false}).skip(limit * (page - 1)).limit(limit).sort({createdAt: "desc"}).lean();
+		const unread = await Notification.countDocuments({deleted: false, recipient: res.user.cid, read: false});
+		const amount = await Notification.countDocuments({deleted: false, recipient: res.user.cid});
+		const notif = await Notification.find({recipient: res.user.cid, deleted: false}).skip(limit * (page - 1)).limit(limit).sort({createdAt: "desc"}).lean();
 
 		res.stdRes.data = {
 			unread,
@@ -351,21 +340,9 @@ router.get('/notifications/:cid', getUser, async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/notifications/read/all/:cid', getUser, async(req, res) => {
+router.put('/notifications/read/all', getUser, async(req, res) => {
 	try {
-		if(!req.params.cid) {
-			throw {
-				code: 400,
-				message: "Incomplete request."
-			};
-		}
-		else if(+req.params.cid !== res.user.cid) {
-			throw {
-				code: 403,
-				message: "Forbidden."
-			};
-		}
-		await Notification.updateMany({recipient: req.params.cid}, {
+		await Notification.updateMany({recipient: res.user.cid}, {
 			read: true
 		});
 	} catch(e) {
@@ -393,20 +370,9 @@ router.put('/notifications/read/:id', async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/notifications/:cid', getUser, async(req, res) => {
+router.delete('/notifications', getUser, async(req, res) => {
 	try {
-		if(!req.params.cid) {
-			throw {
-				code: 400,
-				message: "Incomplete request."
-			};
-		} else if(+req.params.cid !== res.user.cid) {
-			throw {
-				code: 403,
-				message: "Forbidden."
-			}
-		}
-		await Notification.delete({recipient: req.params.cid});
+		await Notification.delete({recipient: res.user.cid});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
