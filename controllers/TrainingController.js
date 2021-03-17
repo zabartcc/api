@@ -277,7 +277,9 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 			submitted: true
 		});
 
-		const instructor = await User.find({cid: session.instructorCid}).select('fname lname').lean();
+		const instructor = await User.findOne({cid: session.instructorCid}).select('fname lname').lean();
+
+		console.log(instructor);
 
 		await Notification.create({
 			recipient: session.studentCid,
