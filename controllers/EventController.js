@@ -1,5 +1,4 @@
 import e from 'express';
-import m from 'mongoose';
 import transporter from '../config/mailer.js';
 import aws from 'aws-sdk';
 import multer from 'multer';
@@ -9,9 +8,8 @@ const router = e.Router();
 import Event from '../models/Event.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
-import {isStaff} from '../middleware/isStaff.js';
 import getUser from '../middleware/getUser.js';
-import {management} from '../middleware/auth.js';
+import auth from '../middleware/auth.js';
 
 
 const s3 = new aws.S3({
@@ -148,7 +146,7 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug/mandelete/:cid', getUser, management, async(req, res) => {
+router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), async(req, res) => {
 	try {
 		await Event.updateOne({url: req.params.slug}, {
 			$pull: {
@@ -164,7 +162,7 @@ router.delete('/:slug/mandelete/:cid', getUser, management, async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/mansignup/:cid', getUser, management, async (req, res) => {
+router.put('/:slug/mansignup/:cid', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid});
 		if(user !== null) {
@@ -188,7 +186,7 @@ router.put('/:slug/mansignup/:cid', getUser, management, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/', getUser, management, upload.single('banner'), async (req, res) => {
+router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), async (req, res) => {
 	try {
 		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		// const positions = JSON.parse(req.body.positions);
@@ -235,7 +233,7 @@ router.post('/', getUser, management, upload.single('banner'), async (req, res) 
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug', getUser, management, upload.single('banner'), async (req, res) => {
+router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), async (req, res) => {
 	try {
 		const event = await Event.findOne({url: req.params.slug});
 		const {name, description, startTime, endTime, positions} = req.body;
@@ -321,7 +319,7 @@ router.put('/:slug', getUser, management, upload.single('banner'), async (req, r
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug', isStaff, async (req, res) => {
+router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
 		const deleteEvent = await Event.findOne({url: req.params.slug});
 		await deleteEvent.delete();
@@ -333,7 +331,7 @@ router.delete('/:slug', isStaff, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/assign', isStaff, async (req, res) => {
+router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
 		console.log(req.body)
 		await Event.updateOne({url: req.params.slug}, {
@@ -348,7 +346,7 @@ router.put('/:slug/assign', isStaff, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/notify', isStaff, async (req, res) => {
+router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
 		await Event.updateOne({url: req.params.slug}, {
 			$set: {
@@ -377,7 +375,7 @@ router.put('/:slug/notify', isStaff, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/close', isStaff, async (req, res) => {
+router.put('/:slug/close', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
 		await Event.updateOne({url: req.params.slug}, {
 			$set: {

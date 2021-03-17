@@ -8,12 +8,11 @@ import crypto from 'crypto';
 import axios from 'axios';
 import {v4} from 'uuid';
 import getUser from '../middleware/getUser.js';
-import {isSelf} from '../middleware/isSelf.js';
 import Notification from '../models/Notification.js';
-import m from 'mongoose';
 
 import Discord from 'discord-oauth2';
 import minio from 'minio';
+import { runInNewContext } from 'vm';
 
 dotenv.config();
 
@@ -320,20 +319,25 @@ router.post('/discord', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/notifications/:id', isSelf, async(req, res) => {
+router.get('/notifications/:cid', getUser, async(req, res) => {
 	try {
-		if(!req.params.id) {
+		if(!req.params.cid) {
 			throw {
 				code: 400,
 				message: "Incomplete request."
 			};
+		} else if(+req.params.cid !== res.user.cid) {
+			throw {
+				code: 403,
+				message: "Forbidden."
+			}
 		}
-		const page = parseInt(req.query.page, 10);
-		const limit = parseInt(req.query.limit, 10);
+		const page = parseInt(req.query.page || 1, 10);
+		const limit = parseInt(req.query.limit || 20, 10);
 
-		const unread = await Notification.countDocuments({deleted: false, recipient: req.params.id, read: false});
-		const amount = await Notification.countDocuments({deleted: false, recipient: req.params.id});
-		const notif = await Notification.find({recipient: req.params.id, deleted: false}).skip(limit * (page - 1)).limit(limit).sort({createdAt: "desc"}).lean();
+		const unread = await Notification.countDocuments({deleted: false, recipient: req.params.cid, read: false});
+		const amount = await Notification.countDocuments({deleted: false, recipient: req.params.cid});
+		const notif = await Notification.find({recipient: req.params.cid, deleted: false}).skip(limit * (page - 1)).limit(limit).sort({createdAt: "desc"}).lean();
 
 		res.stdRes.data = {
 			unread,
@@ -347,15 +351,21 @@ router.get('/notifications/:id', isSelf, async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/notifications/read/all/:id', async(req, res) => {
+router.put('/notifications/read/all/:cid', getUser, async(req, res) => {
 	try {
-		if(!req.params.id) {
+		if(!req.params.cid) {
 			throw {
 				code: 400,
 				message: "Incomplete request."
 			};
 		}
-		await Notification.updateMany({recipient: req.params.id}, {
+		else if(+req.params.cid !== res.user.cid) {
+			throw {
+				code: 403,
+				message: "Forbidden."
+			};
+		}
+		await Notification.updateMany({recipient: req.params.cid}, {
 			read: true
 		});
 	} catch(e) {
@@ -383,15 +393,20 @@ router.put('/notifications/read/:id', async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/notifications/:id', async(req, res) => {
+router.delete('/notifications/:cid', getUser, async(req, res) => {
 	try {
-		if(!req.params.id) {
+		if(!req.params.cid) {
 			throw {
 				code: 400,
 				message: "Incomplete request."
 			};
+		} else if(+req.params.cid !== res.user.cid) {
+			throw {
+				code: 403,
+				message: "Forbidden."
+			}
 		}
-		await Notification.delete({recipient: req.params.id});
+		await Notification.delete({recipient: req.params.cid});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}

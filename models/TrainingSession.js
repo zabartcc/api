@@ -2,12 +2,8 @@ import m from 'mongoose';
 import softDelete from 'mongoose-delete';
 
 const trainingSessionSchema = new m.Schema({
-	student: {
-		type: m.Schema.Types.ObjectId, ref: 'User'
-	},
-	instructor: {
-		type: m.Schema.Types.ObjectId, ref: 'User'
-	},
+	studentCid: Number,
+	instructorCid: Number,
 	milestone: {
 		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
 	},
@@ -26,6 +22,20 @@ const trainingSessionSchema = new m.Schema({
 }, {
 	collection: "trainingSessions",
 	timestamps: true
+});
+
+trainingSessionSchema.virtual('student', {
+	ref: 'User',
+	localField: 'studentCid',
+	foreignField: 'cid',
+	justOne: true
+});
+
+trainingSessionSchema.virtual('instructor', {
+	ref: 'User',
+	localField: 'instructorCid',
+	foreignField: 'cid',
+	justOne: true
 });
 
 trainingSessionSchema.plugin(softDelete, {

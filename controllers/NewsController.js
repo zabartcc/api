@@ -1,12 +1,13 @@
 import e from 'express';
 const router = e.Router();
-import {isStaff} from '../middleware/isStaff.js';
+import getUser from '../middleware/getUser.js';
+import auth from '../middleware/auth.js';
 import News from '../models/News.js';
 
 router.get('/', async (req, res) => {
 
-	const page = parseInt(req.query.page, 10);
-	const limit = parseInt(req.query.limit, 10);
+	const page = parseInt(req.query.page || 1, 10);
+	const limit = parseInt(req.query.limit || 20, 10);
 
 	const amount = await News.countDocuments({deleted: false});
 	const news = await News.find({deleted: false}).sort({createdAt: 'desc'}).skip(limit * (page - 1)).limit(limit).populate('user', ['fname', 'lname']).lean();
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/', isStaff, async (req, res) => {
+router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) => {
 	try {
 		if(!req.body || !req.body.title || !req.body.content) {
 			throw {
@@ -56,7 +57,7 @@ router.get('/:slug', async (req, res) =>{
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug', isStaff, async (req, res) => {
+router.put('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) => {
 	try {
 		const {title, content} = req.body;
 		const newsItem = await News.findOne({uriSlug: req.params.slug});
@@ -74,7 +75,7 @@ router.put('/:slug', isStaff, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug', isStaff, async (req, res) =>{
+router.delete('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) =>{
 	try {
 		const newsItem = await News.findOne({uriSlug: req.params.slug});
 		const status = await newsItem.delete();

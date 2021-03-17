@@ -5,9 +5,8 @@ import multer from 'multer';
 import fs from 'fs/promises';
 import Downloads from '../models/Download.js';
 import Documents from '../models/Document.js';
-import {isStaff} from '../middleware/isStaff.js';
 import getUser from '../middleware/getUser.js';
-import {management} from '../middleware/auth.js';
+import auth from '../middleware/auth.js';
 
 const s3 = new aws.S3({
 	endpoint: new aws.Endpoint('sfo3.digitaloceanspaces.com'),
@@ -49,7 +48,7 @@ router.get('/downloads/:id', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/downloads', getUser, management, upload.single('download'), async (req, res) => {
+router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
 	try {
 		if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
 			throw {
@@ -80,7 +79,7 @@ router.post('/downloads', getUser, management, upload.single('download'), async 
 	return res.json(res.stdRes);
 });
 
-router.put('/downloads/:id', multer({storage: multer.memoryStorage(), limits: { fileSize: 25000000 }}).single("download"), isStaff, async (req, res) => {
+router.put('/downloads/:id', multer({storage: multer.memoryStorage(), limits: { fileSize: 25000000 }}).single("download"), getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		if(!req.file) { // no updated file provided
 			await Downloads.findByIdAndUpdate(req.params.id, {
@@ -118,7 +117,7 @@ router.put('/downloads/:id', multer({storage: multer.memoryStorage(), limits: { 
 	return res.json(res.stdRes);
 });
 
-router.delete('/downloads/:id', isStaff, async (req, res) => {
+router.delete('/downloads/:id', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		await Downloads.findByIdAndDelete(req.params.id).lean();
 		

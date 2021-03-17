@@ -4,13 +4,13 @@ import Feedback from '../models/Feedback.js';
 import m from 'mongoose';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
-import {isSenior} from '../middleware/isStaff.js';
-import {isSelf} from '../middleware/isSelf.js';
+import getUser from '../middleware/getUser.js';
+import auth from '../middleware/auth.js';
 
-router.get('/', isSenior, async (req, res) => { // All feedback
+router.get('/', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // All feedback
 	try {
-		const page = parseInt(req.query.page, 10);
-		const limit = parseInt(req.query.limit, 10);
+		const page = parseInt(req.query.page || 1, 10);
+		const limit = parseInt(req.query.limit || 20, 10);
 
 		const amount = await Feedback.countDocuments({$or: [{approved: true}, {deleted: true}]});
 		const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
@@ -64,7 +64,7 @@ router.get('/controllers', async ({res}) => { // Controller list on feedback pag
 	return res.json(res.stdRes);
 });
 
-router.get('/unapproved', isSenior, async ({res}) => { // Unapproved feedback
+router.get('/unapproved', getUser, auth(['atm', 'datm', 'ta']), async ({res}) => { // Unapproved feedback
 	try {
 		const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').lean();
 		res.stdRes.data = feedback;
@@ -74,7 +74,7 @@ router.get('/unapproved', isSenior, async ({res}) => { // Unapproved feedback
 	return res.json(res.stdRes);
 });
 
-router.put('/approve/:id', isSenior, async (req, res) => { // Approve feedback
+router.put('/approve/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // Approve feedback
 	try {
 		const approved = await Feedback.findOneAndUpdate({_id: req.params.id}, {
 			approved: true
@@ -94,7 +94,7 @@ router.put('/approve/:id', isSenior, async (req, res) => { // Approve feedback
 	return res.json(res.stdRes);
 });
 
-router.put('/reject/:id', isSenior, async (req, res) => { // Reject feedback
+router.put('/reject/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // Reject feedback
 	try {
 		await Feedback.delete({_id: req.params.id});
 	} catch(e) {
@@ -104,16 +104,22 @@ router.put('/reject/:id', isSenior, async (req, res) => { // Reject feedback
 	return res.json(res.stdRes);
 });
 
-router.get('/:id', isSelf, async (req, res) => {
+router.get('/:cid', getUser, async (req, res) => {
 	try {
-		const page = parseInt(req.query.page, 10);
-		const limit = parseInt(req.query.limit, 10);
-		const userId = m.Types.ObjectId(req.params.id);
+		if(res.user.cid !== +req.params.cid) {
+			throw {
+				code: 403,
+				message: 'Unauthorized'
+			};
+		}
 
-		const amount = await Feedback.countDocuments({approved: true, controller: req.params.id});
+		const page = parseInt(req.query.page || 1, 10);
+		const limit = parseInt(req.query.limit || 20, 10);
+
+		const amount = await Feedback.countDocuments({approved: true, controller: req.params.cid});
 		const feedback = await Feedback.aggregate([
 			{$match: { 
-				controller: userId,
+				controller: req.params.cid,
 				deleted: false
 			}},
 			{$project: {

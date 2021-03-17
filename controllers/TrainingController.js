@@ -7,12 +7,12 @@ import TrainingMilestone from '../models/TrainingMilestone.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import getUser from '../middleware/getUser.js';
-import {isIns} from '../middleware/isStaff.js';
+import auth from '../middleware/auth.js';
 
-router.get('/request/upcoming/:id', getUser, async (req, res) => {
+router.get('/request/upcoming', getUser, async (req, res) => {
 	try {
 		const upcoming = await TrainingRequest.find({
-			student: res.user._id, 
+			studentCid: res.user.cid, 
 			deleted: false,
 			startTime: {
 				$gt: new Date(new Date().toUTCString()) // request is in the future
@@ -36,7 +36,7 @@ router.post('/request/new', getUser, async (req, res) => {
 		}
 
 		await TrainingRequest.create({
-			student: res.user._id,
+			studentCid: res.user.cid,
 			startTime: req.body.startTime,
 			endTime: req.body.endTime,
 			milestone: req.body.milestone,
@@ -77,9 +77,9 @@ router.get('/milestones', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/request/open', isIns, async (req, res) => {
+router.get('/request/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
-		const days = req.query.period; // days from start of CURRENT week
+		const days = req.query.period || 21; // days from start of CURRENT week
 		const d = new Date(Date.now()),
 			currentDay = d.getDay(),
 			diff = d.getDate() - currentDay,
@@ -102,17 +102,17 @@ router.get('/request/open', isIns, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/request/take/:id', isIns, async (req, res) => {
+router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		console.log(req.body);
 
 		const request = await TrainingRequest.findByIdAndUpdate(req.params.id, {
-			instructor: req.body.instructor
+			instructorCid: req.body.instructor
 		}).lean();
 
 		await TrainingSession.create({
-			student: request.student,
-			instructor: req.body.instructor,
+			studentCid: request.student,
+			instructorCid: req.body.instructor,
 			startTime: req.body.startTime,
 			endTime: req.body.endTime,
 			milestone: request.milestone,
@@ -125,7 +125,7 @@ router.post('/request/take/:id', isIns, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/request/:date', isIns, async (req, res) => {
+router.get('/request/:date', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		const d = new Date(`${req.params.date.slice(0,4)}-${req.params.date.slice(4,6)}-${req.params.date.slice(6,8)}`);
 		const dayAfter = new Date(d);
@@ -146,10 +146,10 @@ router.get('/request/:date', isIns, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/session/open/:id', isIns, async (req, res) => {
+router.get('/session/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		const sessions = await TrainingSession.find({
-			instructor: req.params.id,
+			instructorCid: res.user.cid,
 			$or: [
 				{submitted: false},
 				{synced: false}
@@ -184,10 +184,10 @@ router.get('/session/:id', async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/sessions', isIns, async(req, res) => {
+router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
-		const page = parseInt(req.query.page, 10);
-		const limit = parseInt(req.query.limit, 10);
+		const page = parseInt(req.query.page || 1, 10);
+		const limit = parseInt(req.query.limit || 20, 10);
 
 		const amount = await TrainingSession.countDocuments({submitted: true, deleted: false});
 		const sessions = await TrainingSession.find({
@@ -215,12 +215,12 @@ router.get('/sessions', isIns, async(req, res) => {
 
 router.get('/sessions/past', getUser, async (req, res) => {
 	try {
-		const page = parseInt(req.query.page, 10);
-		const limit = parseInt(req.query.limit, 10);
+		const page = parseInt(req.query.page || 1, 10);
+		const limit = parseInt(req.query.limit || 20, 10);
 
-		const amount = await TrainingSession.countDocuments({student: res.user._id, deleted: false, submitted: true});
+		const amount = await TrainingSession.countDocuments({studentCid: res.user.cid, deleted: false, submitted: true});
 		const sessions = await TrainingSession.find({
-			student: res.user._id, deleted: false, submitted: true
+			studentCid: res.user.cid, deleted: false, submitted: true
 		}).skip(limit * (page - 1)).limit(limit).sort({
 			createdAt: 'desc'
 		}).populate(
@@ -230,6 +230,7 @@ router.get('/sessions/past', getUser, async (req, res) => {
 		).populate(
 			'milestone', 'name code'
 		).lean();
+
 		res.stdRes.data = {
 			count: amount,
 			sessions: sessions
@@ -241,7 +242,7 @@ router.get('/sessions/past', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/session/save/:id', isIns, async(req, res) => {
+router.put('/session/save/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
 		await TrainingSession.findOneAndUpdate(req.params.id, req.body);
 	} catch(e) {
@@ -251,7 +252,7 @@ router.put('/session/save/:id', isIns, async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.put('/session/submit/:id', isIns, async(req, res) => {
+router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
 		if(req.body.position === '' || req.body.progress === null || req.body.movements === null || req.body.location === null || req.body.ots === null || req.body.studentNotes === null || req.body.studentNotes.length > 3000 || req.body.insNotes.length > 3000) {
 			throw {
@@ -279,10 +280,10 @@ router.put('/session/submit/:id', isIns, async(req, res) => {
 			submitted: true
 		});
 
-		const instructor = await User.findById(session.instructor).select('fname lname').lean();
+		const instructor = await User.find({cid: session.instructorCid}).select('fname lname').lean();
 
 		await Notification.create({
-			recipient: session.student,
+			recipient: session.studentCid,
 			read: false,
 			title: 'Training Notes Submitted',
 			content: `The training notes from your session with <b>${instructor.fname + ' ' + instructor.lname}</b> have been submitted.`,
