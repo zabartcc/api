@@ -42,7 +42,7 @@ router.post('/request/new', getUser, async (req, res) => {
 			milestone: req.body.milestone,
 			remarks: req.body.remarks,
 		});
-		const student = await User.findById(req.body.submitter).select('fname lname').lean();
+		const student = await User.find({cid: res.user.cid}).select('fname lname').lean();
 
 		transporter.sendMail({
 			to: 'instructors@zabartcc.org',
@@ -90,7 +90,7 @@ router.get('/request/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 				$gte: ((new Date(startOfWeek)).toDateString()),
 				$lte: ((new Date(startOfWeek + (days * 1000 * 60 * 60 * 24))).toDateString())
 			},
-			instructor: null,
+			instructorCid: null,
 			deleted: false
 		}).select('startTime').lean();
 
@@ -104,15 +104,13 @@ router.get('/request/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 
 router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
-		console.log(req.body);
-
 		const request = await TrainingRequest.findByIdAndUpdate(req.params.id, {
-			instructorCid: req.body.instructor
+			instructorCid: res.user.cid
 		}).lean();
 
 		await TrainingSession.create({
-			studentCid: request.student,
-			instructorCid: req.body.instructor,
+			studentCid: request.studentCid,
+			instructorCid: res.user.cid,
 			startTime: req.body.startTime,
 			endTime: req.body.endTime,
 			milestone: request.milestone,
@@ -135,7 +133,9 @@ router.get('/request/:date', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']),
 			startTime: {
 				$gte: (d.toISOString()),
 				$lte: (dayAfter.toISOString())
-			}
+			},
+			instructorCid: null,
+			deleted: false
 		}).populate('student', 'fname lname rating vis').populate('milestone', 'name code').lean();
 
 		res.stdRes.data = requests;
@@ -150,10 +150,7 @@ router.get('/session/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 	try {
 		const sessions = await TrainingSession.find({
 			instructorCid: res.user.cid,
-			$or: [
-				{submitted: false},
-				{synced: false}
-			]
+			submitted: false
 		}).populate('student', 'fname lname cid vis').populate('milestone', 'name code').lean();
 
 		res.stdRes.data = sessions;
@@ -244,7 +241,7 @@ router.get('/sessions/past', getUser, async (req, res) => {
 
 router.put('/session/save/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
-		await TrainingSession.findOneAndUpdate(req.params.id, req.body);
+		await TrainingSession.findByIdAndUpdate(req.params.id, req.body);
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -268,7 +265,7 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 
 		const duration = `${('00' + hours).slice(-2)}:${('00' + minutes).slice(-2)}`;
 
-		const session = await TrainingSession.findOneAndUpdate(req.params.id, {
+		const session = await TrainingSession.findByIdAndUpdate(req.params.id, {
 			position: req.body.position,
 			progress: req.body.progress,
 			duration: duration,
