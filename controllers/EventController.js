@@ -104,8 +104,8 @@ router.get('/:slug/positions', async(req, res) => {
 		).populate(
 			'positions.user', 'cid fname lname'
 		).populate(
-			'signups.user', 'cid fname lname rating ratingLong certCodes requests'
-		).lean();
+			'signups.user', '-email -idsToken -createdAt -updatedAt'
+		).lean({virtuals: true});
 
 		res.stdRes.data = event;
 	} catch(e) {
