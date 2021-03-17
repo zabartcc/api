@@ -5,8 +5,8 @@ import Role from '../models/Role.js';
 import VisitApplication from '../models/VisitApplication.js';
 import transporter from '../config/mailer.js';
 import getUser from '../middleware/getUser.js';
+import auth from '../middleware/auth.js';
 import microAuth from '../middleware/microAuth.js';
-import {isSenior, isMgt} from '../middleware/isStaff.js';
 
 router.get('/', async ({res}) => {
 	try {
@@ -24,6 +24,14 @@ router.get('/', async ({res}) => {
 			options: {
 				sort: {order: 'asc'}
 			}
+		}).populate({
+			path: 'absence',
+			match: {
+				expirationDate: {
+					$gte: new Date()
+				}
+			},
+			select: '-reason'
 		}).lean({virtuals: true});
 	
 		const visiting = await User.find({vis: true}).select('-email -idsToken').sort({
@@ -162,7 +170,7 @@ router.get('/oi', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/visit', isMgt, async ({res}) => {
+router.get('/visit', getUser, auth(['atm', 'datm']), async ({res}) => {
 	try {
 		const applications = await VisitApplication.find({deletedAt: null, acceptedAt: null}).lean();
 		res.stdRes.data = applications;
@@ -173,7 +181,7 @@ router.get('/visit', isMgt, async ({res}) => {
 	return res.json(res.stdRes);	
 });
 
-router.get('/:cid', getUser, async (req, res) => {
+router.get('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins', 'mtr']), async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid}).select('-idsToken').populate('roles').populate('certifications').lean({virtuals: true});
 		if(!user) {
@@ -241,7 +249,7 @@ router.post('/visit', getUser, async (req, res) => {
 	return res.json(res.stdRes);	
 });
 
-router.put('/visit/:cid', isMgt, async (req, res) => {
+router.put('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
 		await VisitApplication.delete({cid: req.params.cid});
 
@@ -264,7 +272,7 @@ router.put('/visit/:cid', isMgt, async (req, res) => {
 });
 
 
-router.delete('/visit/:cid', isMgt, async (req, res) => {
+router.delete('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
 		await VisitApplication.delete({cid: req.params.cid});
 
@@ -366,7 +374,7 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 	return res.json(res.stdRes);
 })
 
-router.put('/:cid', isSenior, async (req, res) => {
+router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins', 'mtr']), async (req, res) => {
 	try {
 		if(!req.body.form) {
 			throw {
@@ -417,7 +425,7 @@ router.put('/:cid', isSenior, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/:cid', isMgt, async (req, res) => {
+router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid});
 		user.member = false;

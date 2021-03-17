@@ -4,6 +4,7 @@ import mlv from 'mongoose-lean-virtuals';
 import softDelete from 'mongoose-delete';
 import './Certification.js';
 import './Role.js';
+import './Absence.js';
 import './TrainingMilestone.js';
 
 import zab from '../config/zab.js';
@@ -81,12 +82,18 @@ userSchema.virtual('roles', {
 	ref: 'Role',
 	localField: 'roleCodes',
 	foreignField: 'code'
-})
+});
 
 userSchema.virtual('certifications', {
 	ref: 'Certification',
 	localField: 'certCodes',
 	foreignField: 'code'
-})
+});
+
+userSchema.virtual('absence', {
+	ref: 'Absence',
+	localField: 'cid',
+	foreignField: 'controller'
+});
 
 export default m.model('User', userSchema);
