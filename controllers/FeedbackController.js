@@ -13,7 +13,9 @@ router.get('/', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // A
 		const limit = parseInt(req.query.limit || 20, 10);
 
 		const amount = await Feedback.countDocuments({$or: [{approved: true}, {deleted: true}]});
-		const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'}).populate('controller', 'fname lname cid').lean();
+		const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'})
+		.populate('controller', 'fname lname cid')
+		.lean();
 		res.stdRes.data = {
 			amount,
 			feedback
@@ -39,7 +41,7 @@ router.post('/', async (req, res) => { // Submit feedback
 			name: req.body.name,
 			email: req.body.email,
 			submitter: req.body.cid,
-			controller: m.Types.ObjectId(req.body.controller),
+			controllerCid: req.body.controller,
 			rating: req.body.rating,
 			position: req.body.position,
 			comments: req.body.comments,
@@ -64,7 +66,7 @@ router.get('/controllers', async ({res}) => { // Controller list on feedback pag
 	return res.json(res.stdRes);
 });
 
-router.get('/unapproved', getUser, auth(['atm', 'datm', 'ta']), async ({res}) => { // Unapproved feedback
+router.get('/unapproved', getUser, auth(['atm', 'datm', 'ta']), async ({res}) => { // Get all unapproved feedback
 	try {
 		const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').lean();
 		res.stdRes.data = feedback;
@@ -78,10 +80,10 @@ router.put('/approve/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res
 	try {
 		const approved = await Feedback.findOneAndUpdate({_id: req.params.id}, {
 			approved: true
-		}).populate('controller', '_id');
+		}).populate('controller', 'cid');
 	
 		await Notification.create({
-			recipient: approved.controller._id,
+			recipient: approved.controller.cid,
 			read: false,
 			title: 'New Feedback Received',
 			content: `You have received new feedback from ${approved.anonymous ? '<b>Anonymous</b>' : '<b>' + approved.name + '</b>'}.`,
@@ -104,22 +106,15 @@ router.put('/reject/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res)
 	return res.json(res.stdRes);
 });
 
-router.get('/:cid', getUser, async (req, res) => {
+router.get('/own', getUser, async (req, res) => {
 	try {
-		if(res.user.cid !== +req.params.cid) {
-			throw {
-				code: 403,
-				message: 'Unauthorized'
-			};
-		}
-
 		const page = parseInt(req.query.page || 1, 10);
 		const limit = parseInt(req.query.limit || 20, 10);
 
-		const amount = await Feedback.countDocuments({approved: true, controller: req.params.cid});
+		const amount = await Feedback.countDocuments({approved: true, controllerCid: res.user.cid});
 		const feedback = await Feedback.aggregate([
 			{$match: { 
-				controller: req.params.cid,
+				controllerCid: res.user.cid,
 				deleted: false
 			}},
 			{$project: {

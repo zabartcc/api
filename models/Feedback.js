@@ -5,7 +5,7 @@ const feedbackSchema = new m.Schema({
 	name: String,
 	email: String,
 	submitter: Number,
-	cid: Number,
+	controllerCid: Number,
 	rating: Number,
 	position: String,
 	comments: String,
@@ -22,7 +22,7 @@ feedbackSchema.plugin(softDelete, {
 
 feedbackSchema.virtual('controller', {
 	ref: 'User',
-	localField: 'cid',
+	localField: 'controllerCid',
 	foreignField: 'cid',
 	justOne: true
 });
