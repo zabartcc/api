@@ -354,7 +354,7 @@ router.put('/notifications/read/all', getUser, async(req, res) => {
 
 router.put('/notifications/read/:id', async(req, res) => {
 	try {
-		if(!req.params.id) {
+	if(!req.params.id) {
 			throw {
 				code: 400,
 				message: "Incomplete request."
@@ -379,5 +379,22 @@ router.delete('/notifications', getUser, async(req, res) => {
 
 	return res.json(res.stdRes);
 });
+
+router.put('/profile', getUser, async (req, res) => {
+	try {
+		const { bio } = req.body;
+
+		console.log(res.user)
+
+		await User.findOneAndUpdate({cid: res.user.cid}, {
+			bio
+		});
+
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+})
 
 export default router;

@@ -20,6 +20,7 @@ const userSchema = new m.Schema({
 	member: Boolean,
 	vis: Boolean,
 	homeFacility: String,
+	bio: String,
 	image: {
 		custom: Boolean,
 		filename: String	

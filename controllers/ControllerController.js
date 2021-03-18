@@ -1,6 +1,7 @@
 import e from 'express';
 const router = e.Router();
 import User from '../models/User.js';
+import ControllerHours from '../models/ControllerHours.js';
 import Role from '../models/Role.js';
 import VisitApplication from '../models/VisitApplication.js';
 import transporter from '../config/mailer.js';
@@ -203,6 +204,89 @@ router.get('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 	
 	return res.json(res.stdRes);
 });
+
+router.get('/stats/:cid', async (req, res) => {
+
+	try {
+		const controllerHours = await ControllerHours.find({cid: req.params.cid});
+	
+		const hours = {
+			gtyear: {
+				del: 0,
+				gnd: 0,
+				twr: 0,
+				app: 0,
+				ctr: 0
+			}, 
+			total: {
+				del: 0,
+				gnd: 0,
+				twr: 0,
+				app: 0,
+				ctr: 0
+			},
+			sessionCount: controllerHours.length,
+			sessionAvg: 0,
+			months: [],
+		};
+	
+		const pos = {
+			del: 'del',
+			gnd: 'gnd',
+			twr: 'twr',
+			dep: 'app',
+			app: 'app',
+			ctr: 'ctr'
+		}
+	
+		const today = new Date();
+	
+		const getMonthYearString = date => date.toLocaleString('en-US', {month: 'short', year: 'numeric'});
+	
+		for(let i = 0; i < 12; i++) {
+			const theMonth = new Date;
+			theMonth.setMonth(today.getMonth() - i);
+			hours[getMonthYearString(theMonth)] = {
+				del: 0,
+				gnd: 0,
+				twr: 0,
+				app: 0,
+				ctr: 0
+			};
+			hours.months.push(getMonthYearString(theMonth));
+		}
+	
+		for(const sess of controllerHours) {
+			const thePos = sess.position.toLowerCase().match(/([a-z]{3})$/); // 🤮
+
+			if(thePos) {
+				const start = new Date(sess.timeStart);
+				const end = new Date(sess.timeEnd);
+				const type = pos[thePos[1]];
+				const length = Math.floor(end.getTime()/1000) - Math.floor(start.getTime()/1000);
+				let ms = getMonthYearString(start);
+	
+				if(!hours[ms]) {
+					ms = 'gtyear';
+				}
+	
+				hours[ms][type] += length;
+				hours.total[type] += length;
+			}
+	
+		}
+	
+		hours.sessionAvg = Math.round(Object.values(hours.total).reduce((acc, cv) => acc + cv)/hours.sessionCount);
+	
+		res.stdRes.data = hours;
+	}
+
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+})
 
 router.post('/visit', getUser, async (req, res) => {
 	try {
