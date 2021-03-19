@@ -37,12 +37,13 @@ router.post('/request/new', getUser, async (req, res) => {
 
 		await TrainingRequest.create({
 			studentCid: res.user.cid,
-			startTime: req.body.startTime,
-			endTime: req.body.endTime,
+			startTime: req.body.startTime + ':00.000Z',
+			endTime: req.body.endTime + ':00.000Z',
 			milestone: req.body.milestone,
 			remarks: req.body.remarks,
 		});
-		const student = await User.find({cid: res.user.cid}).select('fname lname').lean();
+
+		const student = await User.findOne({cid: res.user.cid}).select('fname lname').lean();
 
 		transporter.sendMail({
 			to: 'instructors@zabartcc.org',
@@ -50,8 +51,8 @@ router.post('/request/new', getUser, async (req, res) => {
 			template: 'newRequest',
 			context: {
 				student: student.fname + ' ' + student.lname,
-				startTime: new Date(req.body.startTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
-				endTime: new Date(req.body.endTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
+				startTime: new Date(req.body.startTime + ':00.000Z').toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
+				endTime: new Date(req.body.endTime + ':00.000Z').toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
 			}
 		});
 	} catch(e) {
@@ -108,13 +109,29 @@ router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr
 			instructorCid: res.user.cid
 		}).lean();
 
-		await TrainingSession.create({
+		const session = await TrainingSession.create({
 			studentCid: request.studentCid,
 			instructorCid: res.user.cid,
 			startTime: req.body.startTime,
 			endTime: req.body.endTime,
 			milestone: request.milestone,
 			submitted: false
+		});
+
+		const student = await User.findOne({cid: request.studentCid}).select('fname lname email').lean();
+		const instructor = await User.findOne({cid: res.user.cid}).select('fname lname email').lean();
+
+		transporter.sendMail({
+			to: `${student.email}, ${instructor.email}`,
+			cc: 'ta@zabartcc.org',
+			subject: 'Training Request Taken | Albuquerque ARTCC',
+			template: 'requestTaken',
+			context: {
+				student: student.fname + ' ' + student.lname,
+				instructor: instructor.fname + ' ' + instructor.lname,
+				startTime: new Date(session.startTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
+				endTime: new Date(session.endTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
+			}
 		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -278,8 +295,6 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 		});
 
 		const instructor = await User.findOne({cid: session.instructorCid}).select('fname lname').lean();
-
-		console.log(instructor);
 
 		await Notification.create({
 			recipient: session.studentCid,
