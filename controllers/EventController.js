@@ -7,7 +7,6 @@ import fs from 'fs/promises';
 const router = e.Router();
 import Event from '../models/Event.js';
 import User from '../models/User.js';
-import Notification from '../models/Notification.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
 
@@ -52,13 +51,13 @@ router.get('/archive', async(req, res) => {
 		const limit = parseInt(req.query.limit, 10);
 
 		const count = await Event.countDocuments({
-			eventStart: {
+			eventEnd: {
 				$lt: new Date(new Date().toUTCString())
 			},
 			deleted: false
 		});
 		const events = await Event.find({
-			eventStart: {
+			eventEnd: {
 				$lt: new Date(new Date().toUTCString())
 			},
 			deleted: false
