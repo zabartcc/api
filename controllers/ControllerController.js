@@ -182,7 +182,7 @@ router.get('/visit', getUser, auth(['atm', 'datm']), async ({res}) => {
 	return res.json(res.stdRes);	
 });
 
-router.get('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins', 'mtr']), async (req, res) => {
+router.get('/:cid', getUser, async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid}).select('-idsToken').populate('roles').populate('certifications').lean({virtuals: true});
 		if(!user) {
@@ -485,7 +485,7 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 			}
 		}
 
-		const updated = await User.updateOne({cid: req.params.cid}, {
+		const updated = await User.findOneAndUpdate({cid: req.params.cid}, {
 			fname,
 			lname, 
 			email,
