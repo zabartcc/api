@@ -185,19 +185,37 @@ router.get('/session/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 	return res.json(res.stdRes);
 });
 
-router.get('/session/:id', async(req, res) => {
+router.get('/session/:id', getUser, async(req, res) => {
 	try {
-		const session = await TrainingSession.findById(
-			req.params.id
-		).populate(
-			'student', 'fname lname cid vis'
-		).populate(
-			'instructor', 'fname lname'
-		).populate(
-			'milestone', 'name code'
-		).lean();
+		const isIns = ['ta', 'ins', 'mtr', 'atm', 'datm'].some(r => res.user.roleCodes.includes(r));
 
-		res.stdRes.data = session;
+		if(isIns) {
+			const session = await TrainingSession.findById(
+				req.params.id
+			).populate(
+				'student', 'fname lname cid vis'
+			).populate(
+				'instructor', 'fname lname'
+			).populate(
+				'milestone', 'name code'
+			).lean();
+
+			res.stdRes.data = session;
+		} else {
+			const session = await TrainingSession.findById(
+				req.params.id
+			).select(
+				'-insNotes'
+			).populate(
+				'student', 'fname lname cid vis'
+			).populate(
+				'instructor', 'fname lname'
+			).populate(
+				'milestone', 'name code'
+			).lean();
+
+			res.stdRes.data = session;
+		}
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -308,10 +326,9 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 			read: false,
 			title: 'Training Notes Submitted',
 			content: `The training notes from your session with <b>${instructor.fname + ' ' + instructor.lname}</b> have been submitted.`,
-			link: '/dash/training'
+			link: `/dash/training/session/${req.params.id}`
 		});
 	} catch(e) {
-		console.log(e);
 		res.stdRes.ret_det = e;
 	}
 
