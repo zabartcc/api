@@ -125,15 +125,6 @@ router.post('/login', async (req, res) => {
 		let user;
 		user = await User.findOne({cid: userData.cid});
 
-		
-		if(user.oi) {
-			const {data} = await axios.get(`https://ui-avatars.com/api/?name=${user.oi}&size=512&background=122049&color=ffffff&format=png`, {
-				responseType: 'arraybuffer'
-			});
-
-			await minioClient.putObject('avatars', `${user.cid}_default.png`, data).catch(console.log);
-		}
-
 		if(!user) {
 			user = await User.create({
 				cid: userData.cid,
@@ -152,8 +143,22 @@ router.post('/login', async (req, res) => {
 			});
 		} else {
 			if(!user.email) {
-				await User.findOneAndUpdate({cid: userData.cid}, {email: userData.email});
+				user.email = userData.email;
+				await user.save();
 			}
+		}
+
+		if(user.oi) {
+			const {data} = await axios.get(`https://ui-avatars.com/api/?name=${oi}&size=256&background=122049&color=ffffff`, {responseType: 'arraybuffer'});
+
+			await req.app.s3.putObject({
+				Bucket: 'zabartcc/avatars',
+				Key: `${req.params.cid}-default.png`,
+				Body: data,
+				ContentType: 'image/png',
+				ACL: 'public-read',
+				ContentDisposition: 'inline',
+			}).promise();
 		}
 		const apiToken = jwt.sign({cid: userData.cid}, process.env.JWT_SECRET, {expiresIn: '30d'});
 		res.cookie('token', apiToken, { httpOnly: true, maxAge: 2592000000, sameSite: true}); // Expires in 30 days
