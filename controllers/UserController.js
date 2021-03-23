@@ -11,18 +11,8 @@ import getUser from '../middleware/getUser.js';
 import Notification from '../models/Notification.js';
 
 import Discord from 'discord-oauth2';
-import minio from 'minio';
-import { runInNewContext } from 'vm';
 
 dotenv.config();
-
-const minioClient = new minio.Client({
-	endPoint: 'cdn.zabartcc.org',
-	port: 443,
-	useSSL: true,
-	accessKey: process.env.MINIO_ACCESS_KEY,
-	secretKey: process.env.MINIO_SECRET_KEY
-});
 
 router.get('/', async (req, res) => {
 	try {
@@ -144,12 +134,13 @@ router.post('/login', async (req, res) => {
 		} else {
 			if(!user.email) {
 				user.email = userData.email;
-				await user.save();
 			}
 		}
 
-		if(user.oi) {
-			const {data} = await axios.get(`https://ui-avatars.com/api/?name=${oi}&size=256&background=122049&color=ffffff`, {responseType: 'arraybuffer'});
+		console.log('hi')
+
+		if(user.oi && !user.avatar) {
+			const {data} = await axios.get(`https://ui-avatars.com/api/?name=${user.oi}&size=256&background=122049&color=ffffff`, {responseType: 'arraybuffer'});
 
 			await req.app.s3.putObject({
 				Bucket: 'zabartcc/avatars',
@@ -159,7 +150,10 @@ router.post('/login', async (req, res) => {
 				ACL: 'public-read',
 				ContentDisposition: 'inline',
 			}).promise();
+			user.avatar = `${req.params.cid}-default.png`;
 		}
+		
+		await user.save();
 		const apiToken = jwt.sign({cid: userData.cid}, process.env.JWT_SECRET, {expiresIn: '30d'});
 		res.cookie('token', apiToken, { httpOnly: true, maxAge: 2592000000, sameSite: true}); // Expires in 30 days
 	} 
