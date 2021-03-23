@@ -112,8 +112,7 @@ router.post('/login', async (req, res) => {
 			};
 		}
 		
-		let user;
-		user = await User.findOne({cid: userData.cid});
+		let user = await User.findOne({cid: userData.cid});
 
 		if(!user) {
 			user = await User.create({
@@ -126,10 +125,6 @@ router.post('/login', async (req, res) => {
 				broadcast: false,
 				member: false,
 				vis: false,
-				image: {
-					custom: false,
-					filename: `${userData.cid}_default.png`
-				}
 			});
 		} else {
 			if(!user.email) {
@@ -144,13 +139,13 @@ router.post('/login', async (req, res) => {
 
 			await req.app.s3.putObject({
 				Bucket: 'zabartcc/avatars',
-				Key: `${req.params.cid}-default.png`,
+				Key: `${user.cid}-default.png`,
 				Body: data,
 				ContentType: 'image/png',
 				ACL: 'public-read',
 				ContentDisposition: 'inline',
 			}).promise();
-			user.avatar = `${req.params.cid}-default.png`;
+			user.avatar = `${user.cid}-default.png`;
 		}
 		
 		await user.save();
