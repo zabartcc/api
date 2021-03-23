@@ -6,6 +6,7 @@ import env from 'dotenv';
 import mongoose from 'mongoose';
 import body from 'body-parser';
 import Redis from 'ioredis';
+import aws from 'aws-sdk';
 
 // Route Controllers
 import UserController from './controllers/UserController.js';
@@ -59,6 +60,13 @@ app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
 	res.setHeader('Access-Control-Allow-Credentials', true);
 	next();
+});
+
+
+app.s3 = new aws.S3({
+	endpoint: new aws.Endpoint('sfo3.digitaloceanspaces.com'),
+	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
 
 

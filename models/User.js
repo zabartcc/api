@@ -21,10 +21,7 @@ const userSchema = new m.Schema({
 	vis: Boolean,
 	homeFacility: String,
 	bio: String,
-	image: {
-		custom: Boolean,
-		filename: String	
-	},
+	avatar: String,
 	discordInfo: {
 		clientId: String,
 		accessToken: String,

@@ -8,6 +8,7 @@ import transporter from '../config/mailer.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
 import microAuth from '../middleware/microAuth.js';
+import axios from 'axios';
 
 router.get('/', async ({res}) => {
 	try {
@@ -398,10 +399,22 @@ router.post('/:cid', microAuth, async (req, res) => {
 		}
 
 		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
+		const userOi = generateOperatingInitials(req.body.fname, req.body.lname, oi.map(oi => oi.oi))
+		const {data} = await axios.get(`https://ui-avatars.com/api/?name=${userOi}&size=256&background=122049&color=ffffff`, {responseType: 'arraybuffer'});
+
+		await req.app.s3.putObject({
+			Bucket: 'zabartcc/avatars',
+			Key: `${req.body.cid}-default.png`,
+			Body: data,
+			ContentType: 'image/png',
+			ACL: 'public-read',
+			ContentDisposition: 'inline',
+		}).promise();
 
 		await User.create({
 			...req.body,
-			oi: generateOperatingInitials(req.body.fname, req.body.lname, oi.map(oi => oi.oi))
+			oi: userOi,
+			avatar: `${req.body.cid}-default.png`,
 		});
 	}
 	catch(e) {
@@ -485,7 +498,18 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 			}
 		}
 
-		const updated = await User.findOneAndUpdate({cid: req.params.cid}, {
+		const {data} = await axios.get(`https://ui-avatars.com/api/?name=${oi}&size=256&background=122049&color=ffffff`, {responseType: 'arraybuffer'});
+
+		await req.app.s3.putObject({
+			Bucket: 'zabartcc/avatars',
+			Key: `${req.params.cid}-default.png`,
+			Body: data,
+			ContentType: 'image/png',
+			ACL: 'public-read',
+			ContentDisposition: 'inline',
+		}).promise();
+
+		await User.findOneAndUpdate({cid: req.params.cid}, {
 			fname,
 			lname, 
 			email,
@@ -494,13 +518,6 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 			roleCodes: toApply.roles,
 			certCodes: toApply.certifications,
 		});
-
-		if(!updated.ok) {
-			throw {
-				code: 500,
-				message: "Unable to update user."
-			};
-		}
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;

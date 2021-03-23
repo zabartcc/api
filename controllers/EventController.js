@@ -1,6 +1,5 @@
 import e from 'express';
 import transporter from '../config/mailer.js';
-import aws from 'aws-sdk';
 import multer from 'multer';
 import FileType from 'file-type';
 import fs from 'fs/promises';
@@ -9,13 +8,6 @@ import Event from '../models/Event.js';
 import User from '../models/User.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
-
-
-const s3 = new aws.S3({
-	endpoint: new aws.Endpoint('sfo3.digitaloceanspaces.com'),
-	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-});
 
 const upload = multer({
 	storage: multer.diskStorage({
@@ -205,7 +197,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			}
 		}
 		const tmpFile = await fs.readFile(req.file.path);
-		await s3.putObject({
+		await req.app.s3.putObject({
 			Bucket: 'zabartcc/events',
 			Key: req.file.filename,
 			Body: tmpFile,
@@ -298,7 +290,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 				}
 			}
 			const tmpFile = await fs.readFile(req.file.path);
-			await s3.putObject({
+			await req.app.s3.putObject({
 				Bucket: 'zabartcc/events',
 				Key: req.file.filename,
 				Body: tmpFile,
