@@ -35,6 +35,13 @@ router.post('/request/new', getUser, async (req, res) => {
 			};
 		}
 
+		if((new Date(req.body.startTime + ':00.000Z') < new Date()) || (new Date(req.body.endTime + ':00.000Z') < new Date())) {
+			throw {
+				code: 400,
+				message: "Dates must be in the future"
+			}
+		}
+
 		await TrainingRequest.create({
 			studentCid: res.user.cid,
 			startTime: req.body.startTime + ':00.000Z',

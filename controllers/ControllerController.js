@@ -207,10 +207,8 @@ router.get('/:cid', getUser, async (req, res) => {
 });
 
 router.get('/stats/:cid', async (req, res) => {
-
 	try {
 		const controllerHours = await ControllerHours.find({cid: req.params.cid});
-	
 		const hours = {
 			gtyear: {
 				del: 0,
@@ -230,7 +228,6 @@ router.get('/stats/:cid', async (req, res) => {
 			sessionAvg: 0,
 			months: [],
 		};
-	
 		const pos = {
 			del: 'del',
 			gnd: 'gnd',
@@ -239,7 +236,6 @@ router.get('/stats/:cid', async (req, res) => {
 			app: 'app',
 			ctr: 'ctr'
 		}
-	
 		const today = new Date();
 	
 		const getMonthYearString = date => date.toLocaleString('en-US', {month: 'short', year: 'numeric'});
@@ -276,9 +272,8 @@ router.get('/stats/:cid', async (req, res) => {
 			}
 	
 		}
-	
+
 		hours.sessionAvg = Math.round(Object.values(hours.total).reduce((acc, cv) => acc + cv)/hours.sessionCount);
-	
 		res.stdRes.data = hours;
 	}
 
@@ -287,7 +282,7 @@ router.get('/stats/:cid', async (req, res) => {
 	}
 
 	return res.json(res.stdRes);
-})
+});
 
 router.post('/visit', getUser, async (req, res) => {
 	try {
@@ -383,7 +378,6 @@ router.delete('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) =>
 router.post('/:cid', microAuth, async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid});
-
 		if(user) {
 			throw {
 				code: 409,
@@ -528,9 +522,9 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 
 router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
-		const user = await User.findOne({cid: req.params.cid});
-		user.member = false;
-		await user.save();
+		const user = await User.findOneAndUpdate({cid: req.params.cid}, {
+			member: false
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
