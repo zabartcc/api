@@ -19,6 +19,9 @@ import FeedbackController from './controllers/FeedbackController.js';
 import IdsController from './controllers/IdsController.js';
 import TrainingController from './controllers/TrainingController.js';
 
+import User from './models/User.js';
+import getUser from './middleware/getUser.js';
+
 env.config();
 
 // Setup Express
@@ -86,6 +89,22 @@ app.use('/file', FileController);
 app.use('/feedback', FeedbackController);
 app.use('/ids', IdsController);
 app.use('/training', TrainingController);
+app.get('/gimme', getUser, async (req, res) => {
+	if(!res.user) {
+		return res.send('You need to log in first.');
+	} else {
+		if(![999230, 1112502, 1419950, 1382891, 1277323, 1427985, 1167179, 1358609, 1149612, 1037247, 1461101, 995625].includes(res.user.cid)) {
+			return res.send('You are not on the beta team.')
+		}
+		if(res.user.roleCodes.includes('wm')) {
+			return res.send('You already have the Web Team role.')
+		} else {
+			res.user.roleCodes.push('wm');
+			await res.user.save();
+			return res.send('Web Team re-added');
+		}
+	}
+})
 
 app.listen('3000', () =>{
 	console.log('Listening on port 3000');
