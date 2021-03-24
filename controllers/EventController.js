@@ -91,10 +91,12 @@ router.get('/:slug/positions', async(req, res) => {
 		}).select(
 			'open submitted eventStart positions signups name'
 		).populate(
-			'positions.user', 'cid fname lname'
+			'positions.user', 'cid fname lname roleCodes'
 		).populate(
 			'signups.user', '-email -idsToken -createdAt -updatedAt'
-		).lean({virtuals: true});
+		).lean({virtuals: true}).catch(console.error)
+
+		// console.log(event)
 
 		res.stdRes.data = event;
 	} catch(e) {
@@ -210,8 +212,8 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			description: req.body.description,
 			url: url,
 			bannerUrl: req.file.filename,
-			eventStart: `${req.body.startTime}:00.000Z`, // force Mongo to store as-is and not try to convert to UTC
-			eventEnd: `${req.body.endTime}:00.000Z`, // force Mongo to store as-is and not try to convert to UTC
+			eventStart: req.body.startTime,
+			eventEnd: req.body.endTime,
 			createdBy: res.user.cid,
 			// positions: positions,
 			open: true,

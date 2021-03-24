@@ -35,7 +35,7 @@ router.post('/request/new', getUser, async (req, res) => {
 			};
 		}
 
-		if((new Date(req.body.startTime + ':00.000Z') < new Date()) || (new Date(req.body.endTime + ':00.000Z') < new Date())) {
+		if((new Date(req.body.startTime) < new Date()) || (new Date(req.body.endTime) < new Date())) {
 			throw {
 				code: 400,
 				message: "Dates must be in the future"
@@ -44,8 +44,8 @@ router.post('/request/new', getUser, async (req, res) => {
 
 		await TrainingRequest.create({
 			studentCid: res.user.cid,
-			startTime: req.body.startTime + ':00.000Z',
-			endTime: req.body.endTime + ':00.000Z',
+			startTime: req.body.startTime,
+			endTime: req.body.endTime,
 			milestone: req.body.milestone,
 			remarks: req.body.remarks,
 		});
@@ -58,8 +58,8 @@ router.post('/request/new', getUser, async (req, res) => {
 			template: 'newRequest',
 			context: {
 				student: student.fname + ' ' + student.lname,
-				startTime: new Date(req.body.startTime + ':00.000Z').toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
-				endTime: new Date(req.body.endTime + ':00.000Z').toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
+				startTime: new Date(req.body.startTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
+				endTime: new Date(req.body.endTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
 			}
 		});
 	} catch(e) {
