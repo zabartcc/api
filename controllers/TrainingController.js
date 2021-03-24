@@ -112,6 +112,13 @@ router.get('/request/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 
 router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
+		if(new Date(req.body.startTime) >= new Date(req.body.endTime)) {
+			throw {
+				code: 400,
+				message: "End time must be greater than start time"
+			}
+		}
+
 		const request = await TrainingRequest.findByIdAndUpdate(req.params.id, {
 			instructorCid: res.user.cid
 		}).lean();
