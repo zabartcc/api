@@ -115,6 +115,7 @@ router.get('/own', getUser, async (req, res) => {
 		const feedback = await Feedback.aggregate([
 			{$match: { 
 				controllerCid: res.user.cid,
+				approved: true,
 				deleted: false
 			}},
 			{$project: {
