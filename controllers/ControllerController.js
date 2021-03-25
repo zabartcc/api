@@ -4,6 +4,8 @@ import User from '../models/User.js';
 import ControllerHours from '../models/ControllerHours.js';
 import Role from '../models/Role.js';
 import VisitApplication from '../models/VisitApplication.js';
+import Absence from '../models/Absence.js';
+import Notification from '../models/Notification.js';
 import transporter from '../config/mailer.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
@@ -31,7 +33,8 @@ router.get('/', async ({res}) => {
 			match: {
 				expirationDate: {
 					$gte: new Date()
-				}
+				},
+				deleted: false
 			},
 			select: '-reason'
 		}).lean({virtuals: true});
@@ -183,9 +186,96 @@ router.get('/visit', getUser, auth(['atm', 'datm']), async ({res}) => {
 	return res.json(res.stdRes);	
 });
 
+router.get('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
+	try {
+		const absences = await Absence.find({
+			expirationDate: {
+				$gte: new Date()
+			},
+			deleted: false
+		}).populate(
+			'user', 'fname lname cid'
+		).lean();
+
+		res.stdRes.data = absences;
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
+router.post('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
+	try {
+		if(!req.body || req.body.controller === '' || req.body.expirationDate === '' || req.body.reason === '') {
+			throw {
+				code: 400,
+				message: 'You must fill out all required fields'
+			}
+		} 
+
+		if(new Date(req.body.expirationDate) < new Date()) {
+			throw {
+				code: 400,
+				message: 'Expiration date must be in the future'
+			}
+		}
+
+		await Absence.create(req.body);
+
+		await Notification.create({
+			recipient: req.body.controller,
+			title: 'Leave of Absence granted',
+			read: false,
+			content: `You have been granted Leave of Absence until <b>${new Date(req.body.expirationDate).toLocaleString('en-US', {
+				month: 'long', 
+				day: 'numeric',
+				year: 'numeric', 
+				timeZone: 'UTC',
+			})}</b>.`
+		});
+
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
+router.delete('/absence/:id', getUser, auth(['atm', 'datm']), async(req, res) => {
+	try {
+		if(!req.params.id) {
+			throw {
+				code: 401,
+				message: "Invalid request"
+			}
+		}
+
+		await Absence.delete({_id: req.params.id});
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+})
+
 router.get('/:cid', getUser, async (req, res) => {
 	try {
-		const user = await User.findOne({cid: req.params.cid}).select('-idsToken').populate('roles').populate('certifications').lean({virtuals: true});
+		const user = await User.findOne({
+			cid: req.params.cid
+		}).select(
+			'-idsToken'
+		).populate('roles').populate('certifications').populate({
+			path: 'absence',
+			match: {
+				expirationDate: {
+					$gte: new Date()
+				},
+				deleted: false
+			},
+			select: '-reason'
+		}).lean({virtuals: true});
+
 		if(!user) {
 			throw {
 				code: 503,
@@ -522,7 +612,7 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 
 router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
-		const user = await User.findOneAndUpdate({cid: req.params.cid}, {
+		await User.findOneAndUpdate({cid: req.params.cid}, {
 			member: false
 		});
 	}
