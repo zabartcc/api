@@ -307,7 +307,7 @@ router.put('/session/save/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr'
 
 router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
-		if(req.body.position === '' || req.body.progress === null || req.body.movements === null || req.body.location === null || req.body.ots === null || req.body.studentNotes === null || req.body.studentNotes.length > 3000 || req.body.insNotes.length > 3000) {
+		if(req.body.position === '' || req.body.progress === null || req.body.movements === null || req.body.location === null || req.body.ots === null || req.body.studentNotes === null || (req.body.studentNotes && req.body.studentNotes.length > 3000) || (req.body.insNotes && req.body.insNotes.length > 3000)) {
 			throw {
 				code: 400,
 				message: 'Please fill out all required fields'
