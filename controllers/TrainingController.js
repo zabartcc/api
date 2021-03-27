@@ -49,6 +49,13 @@ router.post('/request/new', getUser, async (req, res) => {
 			}
 		}
 
+		if((new Date(req.body.endTime).getTime() - new Date(req.body.startTime).getTime()) / 60000 < 60) {
+			throw {
+				code: 400,
+				message: "Sessions must at least be 60 minutes in length"
+			}
+		}
+
 		await TrainingRequest.create({
 			studentCid: res.user.cid,
 			startTime: req.body.startTime,
