@@ -42,6 +42,13 @@ router.post('/request/new', getUser, async (req, res) => {
 			}
 		}
 
+		if(new Date(req.body.startTime) > new Date(req.body.endTime)) {
+			throw {
+				code: 400,
+				message: "End time must be greater than start time"
+			}
+		}
+
 		await TrainingRequest.create({
 			studentCid: res.user.cid,
 			startTime: req.body.startTime,
