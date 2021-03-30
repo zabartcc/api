@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
 				} else {
 					const user = await User.findOne({
 						cid: decoded.cid
-					}).select('-email -createdAt -updatedAt').populate('roles');
+					}).select('-createdAt -updatedAt').populate('roles');
 					res.stdRes.data = user;
 				}
 				resolve();
