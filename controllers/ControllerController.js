@@ -235,6 +235,12 @@ router.post('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
 			})}</b>.`
 		});
 
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: req.body.controller,
+			action: `%b added a leave of absence for %a: ${req.body.reason}`
+		});
+
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -251,11 +257,30 @@ router.delete('/absence/:id', getUser, auth(['atm', 'datm']), async(req, res) =>
 			}
 		}
 
-		await Absence.delete({_id: req.params.id});
+		const absence = await Absence.findOne({_id: req.params.id});
+		await absence.delete();
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: absence.controller,
+			action: `%b deleted the leave of absence for %a.`
+		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
 
+	return res.json(res.stdRes);
+});
+
+router.get('/log', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
+	try {
+		const dossier = await req.app.dossier.find().sort({createdAt: 'desc'}).populate('userBy', 'fname lname cid').populate('userAffected', 'fname lname cid').lean();
+		res.stdRes.data = dossier;
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
 	return res.json(res.stdRes);
 })
 
@@ -433,6 +458,12 @@ router.put('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 				name: `${user.fname} ${user.lname}`,
 			}
 		});
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: user.cid,
+			action: `%b approved the visiting application for %a.`
+		});
 	} 
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -456,6 +487,11 @@ router.delete('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) =>
 				name: `${user.fname} ${user.lname}`,
 				reason: req.body.reason
 			}
+		});
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: user.cid,
+			action: `%b rejected the visiting application for %a: ${req.body.reason}`
 		});
 	} 
 	catch(e) {
@@ -500,6 +536,13 @@ router.post('/:cid', microAuth, async (req, res) => {
 			oi: userOi,
 			avatar: `${req.body.cid}-default.png`,
 		});
+
+		
+		await req.app.dossier.create({
+			by: -1,
+			affected: req.body.cid,
+			action: `%a was created by an external service.`
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -525,6 +568,13 @@ router.put('/:cid/member', microAuth, async (req, res) => {
 		user.oi = (req.body.member) ? generateOperatingInitials(user.fname, user.lname, oi.map(oi => oi.oi)) : null
 
 		await user.save();
+
+		
+		await req.app.dossier.create({
+			by: -1,
+			affected: req.params.cid,
+			action: `%a was ${req.body.member ? 'added to' : 'removed from'} the roster by an external service.`
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -547,6 +597,12 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 		user.vis = req.body.vis,
 
 		await user.save();
+
+		await req.app.dossier.create({
+			by: -1,
+			affected: req.params.cid,
+			action: `%a was set as a ${req.body.vis ? 'visiting controller' : 'home controller'} by an external service.`
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -602,6 +658,12 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 			roleCodes: toApply.roles,
 			certCodes: toApply.certifications,
 		});
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: req.params.cid,
+			action: `%a was updated by %b.`
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -614,6 +676,12 @@ router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
 		await User.findOneAndUpdate({cid: req.params.cid}, {
 			member: false
+		});
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: req.params.cid,
+			action: `%a was removed from the roster by %b.`
 		});
 	}
 	catch(e) {

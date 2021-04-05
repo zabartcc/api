@@ -108,13 +108,21 @@ router.get('/:slug/positions', async(req, res) => {
 
 router.put('/:slug/signup', getUser, async (req, res) => {
 	try {
-		await Event.updateOne({url: req.params.slug}, {
+		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$push: {
 				signups: {
 					cid: res.user.cid,
 					requests: req.body.requests
 				} 
 			}
+		});
+
+		console.log(event)
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b signed up for the event *${event.name}*.`
 		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -125,12 +133,17 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 
 router.delete('/:slug/signup', getUser, async (req, res) => {
 	try {
-		await Event.updateOne({url: req.params.slug}, {
+		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$pull: {
 				signups: {
 					cid: res.user.cid
 				}
 			}
+		});
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b deleted their signup for the event *${event.name}*.`
 		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -141,12 +154,17 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 
 router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), async(req, res) => {
 	try {
-		await Event.updateOne({url: req.params.slug}, {
+		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$pull: {
 				signups: {
 					cid: req.params.cid
 				}
 			}
+		});
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: req.params.cid,
+			action: `%b manually deleted the event signup for %a for the event *${event.name}*.`
 		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -159,12 +177,18 @@ router.put('/:slug/mansignup/:cid', getUser, auth(['atm', 'datm', 'ec']), async 
 	try {
 		const user = await User.findOne({cid: req.params.cid});
 		if(user !== null) {
-			await Event.updateOne({url: req.params.slug}, {
+			const event = await Event.findOneAndUpdate({url: req.params.slug}, {
 				$push: {
 					signups: {
 						cid: req.params.cid,
 					} 
 				}
+			});
+			
+			await req.app.dossier.create({
+				by: res.user.cid,
+				affected: req.params.cid,
+				action: `%b manually signed up %a for the event *${event.name}*.`
 			});
 		} else {
 			throw {
@@ -218,6 +242,11 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			// positions: positions,
 			open: true,
 			submitted: false
+		});
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b created the event *${req.body.name}*.`
 		});
 	} catch(e) {
 		console.log(e)
@@ -305,6 +334,12 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 		}
 
 		await event.save();
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b updated the event *${event.name}*.`
+		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -317,6 +352,12 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 		const deleteEvent = await Event.findOne({url: req.params.slug});
 		await deleteEvent.delete();
 
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b deleted the event *${deleteEvent.name}*.`
+		});
+
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -326,11 +367,15 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 
 router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		console.log(req.body)
-		await Event.updateOne({url: req.params.slug}, {
+		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$set: {
 				positions: req.body.assignment
 			}
+		});
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b updated the positions assignments for the event *${event.name}*.`
 		});
 	} catch (e) {
 		res.stdRes.ret_det = e;
@@ -360,6 +405,12 @@ router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 					slug: getSignups.url
 				}
 			});
+		});
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b notified controllers of positions for the event *${getSignups.name}*.`
 		});
 	} catch(e) {
 		res.stdRes.ret_det = e;

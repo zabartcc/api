@@ -39,6 +39,12 @@ router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (
 			};
 		}
 
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b created the news item *${req.body.title}*.`
+		});
+
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -67,6 +73,11 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), asy
 		}
 		newsItem.content = content;
 		await newsItem.save();
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b updated the news item *${newsItem.title}*.`
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -86,6 +97,12 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), 
 				message: "Something went wrong, please try again."
 			};
 		}
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b deleted the news item *${newsItem.title}*.`
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;

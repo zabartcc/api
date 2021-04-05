@@ -55,6 +55,12 @@ router.post('/', async (req, res) => { // Submit feedback
 			anonymous: req.body.anon,
 			approved: false
 		});
+
+		await req.app.dossier.create({
+			by: req.body.cid,
+			affected: req.body.controller,
+			action: `%b submitted feeback about %a.`
+		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -96,6 +102,12 @@ router.put('/approve/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res
 			content: `You have received new feedback from ${approved.anonymous ? '<b>Anonymous</b>' : '<b>' + approved.name + '</b>'}.`,
 			link: '/dash/feedback'
 		});
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: approved.controllerCid,
+			action: `%b approved feedback for %a.`
+		});
 	} catch (e) {
 		res.stdRes.ret_det = e;
 	}
@@ -105,7 +117,13 @@ router.put('/approve/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res
 
 router.put('/reject/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // Reject feedback
 	try {
-		await Feedback.delete({_id: req.params.id});
+		const feedback = await Feedback.findOne({_id: req.params.id});
+		await feedback.delete();
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: feedback.controllerCid,
+			action: `%b rejected feedback for %a.`
+		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}

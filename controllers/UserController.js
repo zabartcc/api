@@ -62,6 +62,12 @@ router.post('/idsToken', getUser, async (req, res) => {
 
 		await res.user.save();
 
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b generated a new IDS Token.`
+		});
+
 		res.stdRes.data = res.user.idsToken;
 	}
 	catch(e) {
@@ -176,66 +182,6 @@ router.get('/logout', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/visit', async (req, res) => {
-	if(!req.cookies.visToken) {
-		return res.send('');
-	} else {
-		const visToken = req.cookies.visToken;
-		jwt.verify(visToken, process.env.JWT_SECRET, async (err, decoded) => {
-			if(err) {
-				console.log(`Unable to verify token: ${err}`);
-				return res.send(''); // In order to prevent console errors thrown from axios, return empty string.
-			} else {
-				return res.json(decoded);
-			}
-		});
-	}
-});
-
-router.get('/visit/logout', async (req, res) => {
-	if(!req.cookies.visToken) {
-		return res.sendStatus(500);
-	} else {
-		res.cookie('visToken', '', {expires: new Date(0)});
-		return res.sendStatus(200);
-	}
-});
-
-router.post('/visit/login', async (req, res) => {
-	const ulsJWK = JSON.parse(process.env.VATUSA_ULS_JWT);
-	const loginTokenParts = req.body.token.split('.');
-
-	const sig = Buffer.from(
-		crypto.createHmac('sha256', new Buffer.from(ulsJWK.k, 'base64'))
-			.update(`${loginTokenParts[0]}.${loginTokenParts[1]}`)
-			.digest()
-	).toString('base64').replace(/\+/g, "-").replace(/\//g, '_').replace(/=+$/g, '');
-
-	if(sig === loginTokenParts[2]) {
-		const loginTokenData = JSON.parse(Buffer.from(loginTokenParts[1], 'base64'));
-		if(loginTokenData.iss !== 'VATUSA') return res.sendStatus(500);
-		if(loginTokenData.aud !== 'ZAB') return res.sendStatus(500);
-
-		const { data: userData } = await axios.get(`https://login.vatusa.net/uls/v2/info?token=${loginTokenParts[1]}`);
-		
-		if(!userData) return res.sendStatus(500);
-		else {
-			const token = jwt.sign({
-				cid: userData.cid,
-				fname: userData.firstname,
-				lname: userData.lastname,
-				email: userData.email,
-				rating: userData.rating,
-				facility: userData.facility.id || undefined
-			}, process.env.JWT_SECRET, {expiresIn: '1d'});
-			res.cookie('visToken', token, { httpOnly: true, maxAge: 86400000, secure: true, sameSite: true}); // Expires in one day
-			return res.json(token);
-		}
-	} else {
-		return res.sendStatus(500);
-	}
-});
-
 router.post('/discord', async (req, res) => {
 	try {
 		if(!req.body.code || !req.body.cid) {
@@ -305,6 +251,12 @@ router.post('/discord', async (req, res) => {
 		user.discordInfo.expires = currentTime;
 
 		await user.save();
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b connected their Discord.`
+		});
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
@@ -378,10 +330,14 @@ router.put('/profile', getUser, async (req, res) => {
 	try {
 		const { bio } = req.body;
 
-		console.log(res.user)
-
 		await User.findOneAndUpdate({cid: res.user.cid}, {
 			bio
+		});
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b updated their profile.`
 		});
 
 	} catch(e) {

@@ -50,6 +50,12 @@ router.get('/downloads/:id', async (req, res) => {
 
 router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
 	try {
+		if(!req.body.category) {
+			throw {
+				code: 400,
+				message: 'No category was selected.'
+			}
+		}
 		if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
 			throw {
 				code: 400,
@@ -72,6 +78,13 @@ router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 			category: req.body.category,
 			author: req.body.author
 		});
+
+		
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b created the file *${req.body.name}*.`
+		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -81,20 +94,26 @@ router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 
 router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
+		let download;
 		if(!req.file) { // no updated file provided
-			await Downloads.findByIdAndUpdate(req.params.id, {
+			download = await Downloads.findByIdAndUpdate(req.params.id, {
 				name: req.body.name,
 				description: req.body.description,
 				category: req.body.category
 			});
 		} else {
-			await Downloads.findByIdAndUpdate(req.params.id, {
+			download = await Downloads.findByIdAndUpdate(req.params.id, {
 				name: req.body.name,
 				description: req.body.description,
 				category: req.body.category,
 				fileName: req.file.filename
 			})
 		}
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b updated the file *${req.body.name}*.`
+		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
 	}
@@ -104,7 +123,12 @@ router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'd
 
 router.delete('/downloads/:id', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
-		await Downloads.findByIdAndDelete(req.params.id).lean();
+		const download = await Downloads.findByIdAndDelete(req.params.id).lean();
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b deleted the file *${download.name}*.`
+		});
 	} catch(e) {
 		res.stdRes.std_res = e;
 	}
@@ -154,8 +178,6 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 
 		const slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 
-		console.log(slug);
-
 		const create = await Document.create({
 			name,
 			category,
@@ -165,7 +187,11 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 			author: res.user.cid
 		});
 
-		console.log(create);
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b created the document *${req.body.name}*.`
+		});
 		
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -174,7 +200,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 	return res.json(res.stdRes);
 });
 
-router.put('/documents/:slug', async (req, res) => {
+router.put('/documents/:slug', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		const document = await Document.findOne({slug: req.params.slug});
 		const {name, category, description, content} = req.body;
@@ -187,6 +213,12 @@ router.put('/documents/:slug', async (req, res) => {
 		document.content = content;
 
 		await document.save();
+
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b updated the document *${document.name}*.`
+		});
 	} catch(e) {
 		res.stdRes.std_res = e;
 	}
@@ -196,7 +228,12 @@ router.put('/documents/:slug', async (req, res) => {
 
 router.delete('/documents/:id', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
-		await Document.findByIdAndDelete(req.params.id);
+		const doc = await Document.findByIdAndDelete(req.params.id);
+		await req.app.dossier.create({
+			by: res.user.cid,
+			affected: -1,
+			action: `%b deleted the document *${doc.name}*.`
+		});
 	} catch(e) {
 		res.stdRes.std_res = e;
 	}

@@ -19,7 +19,9 @@ import FeedbackController from './controllers/FeedbackController.js';
 import IdsController from './controllers/IdsController.js';
 import TrainingController from './controllers/TrainingController.js';
 
-import User from './models/User.js';
+// Global Dossier Model
+import Dossier from './models/Dossier.js';
+
 import getUser from './middleware/getUser.js';
 
 env.config();
@@ -72,6 +74,7 @@ app.s3 = new aws.S3({
 	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
 
+app.dossier = Dossier;
 
 // Connect to MongoDB
 mongoose.set('toJSON', {virtuals: true});
