@@ -273,9 +273,25 @@ router.delete('/absence/:id', getUser, auth(['atm', 'datm']), async(req, res) =>
 });
 
 router.get('/log', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
+	const page = parseInt(req.query.page || 1, 10);
+	const limit = parseInt(req.query.limit || 20, 10);
+	const amount = await req.app.dossier.countDocuments();
+
 	try {
-		const dossier = await req.app.dossier.find().sort({createdAt: 'desc'}).populate('userBy', 'fname lname cid').populate('userAffected', 'fname lname cid').lean();
-		res.stdRes.data = dossier;
+		const dossier = await req.app.dossier
+		.find()
+		.sort({
+			createdAt: 'desc'
+		}).skip(limit * (page - 1)).limit(limit).populate(
+			'userBy', 'fname lname cid'
+		).populate(
+			'userAffected', 'fname lname cid'
+		).lean();
+
+		res.stdRes.data = {
+			dossier,
+			amount
+		};
 	}
 	catch(e) {
 		res.stdRes.ret_det = e;
