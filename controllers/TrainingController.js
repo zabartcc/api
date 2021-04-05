@@ -86,7 +86,7 @@ router.post('/request/new', getUser, async (req, res) => {
 router.get('/milestones', getUser, async (req, res) => {
 	try {
 		const user = await User.findOne({cid: res.user.cid}).select('trainingMilestones rating').populate('trainingMilestones', 'code name rating').lean();
-		const milestones = await TrainingMilestone.find({}).lean();
+		const milestones = await TrainingMilestone.find().sort({rating: "asc", code: "asc"}).lean();
 
 		res.stdRes.data = {
 			user,
