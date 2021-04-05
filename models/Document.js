@@ -2,16 +2,21 @@ import m from 'mongoose';
 
 const documentSchema = new m.Schema({
 	name: String,
-	description: String,
-	slug: String,
 	category: String,
-	author: {
-		type: m.Schema.Types.ObjectId, ref: 'User'
-	},
-	content: String
+	description: String,
+	content: String,
+	slug: String,
+	author: Number,
 }, {
 	collection: "documents",
 	timestamps: true
+});
+
+documentSchema.virtual('user', {
+	ref: 'User',
+	localField: 'author',
+	foreignField: 'cid',
+	justOne: true
 });
 
 export default m.model('documents', documentSchema);
