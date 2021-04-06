@@ -302,6 +302,42 @@ router.get('/sessions/past', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
+router.get('/sessions/:cid', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
+	try {
+		const controller = await User.findOne({cid: req.params.cid}).select('fname lname').lean();
+		if(!controller) {
+			throw {
+				code: 400,
+				messgage: 'User not found'
+			};
+		}
+
+		const page = parseInt(req.query.page || 1, 10);
+		const limit = parseInt(req.query.limit || 20, 10);
+
+		const amount = await TrainingSession.countDocuments({studentCid: req.params.cid, submitted: true, deleted: false});
+		const sessions = await TrainingSession.find({
+			studentCid: req.params.cid, deleted: false, submitted: true
+		}).skip(limit * (page - 1)).limit(limit).sort({
+			createdAt: 'desc'
+		}).populate(
+			'instructor', 'fname lname'
+		).populate(
+			'milestone', 'name code'
+		).lean();
+
+		res.stdRes.data = {
+			count: amount,
+			sessions: sessions,
+			controller: controller
+		};
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
 router.put('/session/save/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
 		await TrainingSession.findByIdAndUpdate(req.params.id, req.body);
