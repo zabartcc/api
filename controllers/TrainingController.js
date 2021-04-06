@@ -60,7 +60,7 @@ router.post('/request/new', getUser, async (req, res) => {
 			studentCid: res.user.cid,
 			startTime: req.body.startTime,
 			endTime: req.body.endTime,
-			milestone: req.body.milestone,
+			milestoneCode: req.body.milestone,
 			remarks: req.body.remarks,
 		});
 
@@ -142,7 +142,7 @@ router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr
 			instructorCid: res.user.cid,
 			startTime: req.body.startTime,
 			endTime: req.body.endTime,
-			milestone: request.milestone,
+			milestoneCode: request.milestoneCode,
 			submitted: false
 		});
 

@@ -6,13 +6,18 @@ const trainingRequestSchema = new m.Schema({
 	instructorCid: Number,
 	startTime: Date,
 	endTime: Date,
-	milestone: {
-		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
-	},
+	milestoneCode: String,
 	remarks: String
 }, {
 	collection: "trainingRequests",
 	timestamps: true
+});
+
+trainingRequestSchema.virtual('milestone', {
+	ref: 'TrainingMilestone',
+	localField: 'milestoneCode',
+	foreignField: 'code',
+	justOne: true
 });
 
 trainingRequestSchema.virtual('student', {

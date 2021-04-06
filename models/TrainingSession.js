@@ -4,9 +4,7 @@ import softDelete from 'mongoose-delete';
 const trainingSessionSchema = new m.Schema({
 	studentCid: Number,
 	instructorCid: Number,
-	milestone: {
-		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
-	},
+	milestoneCode: String,
 	position: String,
 	startTime: Date,
 	endTime: Date,
@@ -23,6 +21,14 @@ const trainingSessionSchema = new m.Schema({
 	collection: "trainingSessions",
 	timestamps: true
 });
+
+trainingSessionSchema.virtual('milestone', {
+	ref: 'TrainingMilestone',
+	localField: 'milestoneCode',
+	foreignField: 'code',
+	justOne: true
+});
+
 
 trainingSessionSchema.virtual('student', {
 	ref: 'User',
