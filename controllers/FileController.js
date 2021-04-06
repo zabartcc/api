@@ -178,7 +178,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 
 		const slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 
-		const create = await Document.create({
+		await Document.create({
 			name,
 			category,
 			description,
@@ -204,10 +204,12 @@ router.put('/documents/:slug', getUser, auth(['atm', 'datm', 'ta', 'fe']), async
 	try {
 		const document = await Document.findOne({slug: req.params.slug});
 		const {name, category, description, content} = req.body;
+
 		if(document.name !== name) {
 			document.name = name;
 			document.slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		}
+		
 		document.category = category;
 		document.description = description;
 		document.content = content;

@@ -6,13 +6,15 @@ import News from '../models/News.js';
 
 router.get('/', async (req, res) => {
 
-	const page = parseInt(req.query.page || 1, 10);
-	const limit = parseInt(req.query.limit || 20, 10);
+	const page = +req.query.page || 1;
+	const limit = +req.query.limit || 20;
 
 	const amount = await News.countDocuments({deleted: false});
 	const news = await News.find({deleted: false}).sort({createdAt: 'desc'}).skip(limit * (page - 1)).limit(limit).populate('user', ['fname', 'lname']).lean();
+
 	res.stdRes.amount = amount;
 	res.stdRes.data = news;
+
 	return res.json(res.stdRes);
 });
 
@@ -32,6 +34,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (
 			uriSlug,
 			createdBy
 		});
+		
 		if(!news) {
 			throw {
 				code: 500,

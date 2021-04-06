@@ -18,6 +18,7 @@ router.get('/request/upcoming', getUser, async (req, res) => {
 				$gt: new Date(new Date().toUTCString()) // request is in the future
 			},
 		}).populate('instructor', 'fname lname cid').populate('milestone', 'code name').sort({startTime: "asc"}).lean();
+
 		res.stdRes.data = upcoming;
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -101,7 +102,7 @@ router.get('/milestones', getUser, async (req, res) => {
 
 router.get('/request/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
-		const days = req.query.period || 21; // days from start of CURRENT week
+		const days = +req.query.period || 21; // days from start of CURRENT week
 		const d = new Date(Date.now()),
 			currentDay = d.getDay(),
 			diff = d.getDate() - currentDay,
@@ -246,8 +247,8 @@ router.get('/session/:id', getUser, async(req, res) => {
 
 router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
-		const page = parseInt(req.query.page || 1, 10);
-		const limit = parseInt(req.query.limit || 20, 10);
+		const page = +req.query.page || 1;
+		const limit = +req.query.limit || 20;
 
 		const amount = await TrainingSession.countDocuments({submitted: true, deleted: false});
 		const sessions = await TrainingSession.find({
@@ -275,8 +276,8 @@ router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), asyn
 
 router.get('/sessions/past', getUser, async (req, res) => {
 	try {
-		const page = parseInt(req.query.page || 1, 10);
-		const limit = parseInt(req.query.limit || 20, 10);
+		const page = +req.query.page || 1;
+		const limit = +req.query.limit || 20;
 
 		const amount = await TrainingSession.countDocuments({studentCid: res.user.cid, deleted: false, submitted: true});
 		const sessions = await TrainingSession.find({
@@ -312,8 +313,8 @@ router.get('/sessions/:cid', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']),
 			};
 		}
 
-		const page = parseInt(req.query.page || 1, 10);
-		const limit = parseInt(req.query.limit || 20, 10);
+		const page = +req.query.page || 1;
+		const limit = +req.query.limit || 20;
 
 		const amount = await TrainingSession.countDocuments({studentCid: req.params.cid, submitted: true, deleted: false});
 		const sessions = await TrainingSession.find({

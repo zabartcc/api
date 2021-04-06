@@ -9,18 +9,18 @@ import auth from '../middleware/auth.js';
 
 router.get('/', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // All feedback
 	try {
-		const page = parseInt(req.query.page || 1, 10);
-		const limit = parseInt(req.query.limit || 20, 10);
+		const page = +req.query.page || 1;
+		const limit = +req.query.limit || 20;
 
 		const amount = await Feedback.countDocuments({$or: [{approved: true}, {deleted: true}]});
 		const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'})
 		.populate('controller', 'fname lname cid')
 		.lean();
+
 		res.stdRes.data = {
 			amount,
 			feedback
 		};
-
 	} catch (e) {
 		res.stdRes.ret_det = e;
 	}
@@ -133,15 +133,15 @@ router.put('/reject/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res)
 
 router.get('/own', getUser, async (req, res) => {
 	try {
-		const page = parseInt(req.query.page || 1, 10);
-		const limit = parseInt(req.query.limit || 20, 10);
+		const page = +req.query.page || 1;
+		const limit = +req.query.limit || 20;
 
-		const amount = await Feedback.countDocuments({approved: true, controllerCid: res.user.cid});
+		const amount = await Feedback.countDocuments({approved: true, controllerCid: res.user.cid, deletedAt: null});
 		const feedback = await Feedback.aggregate([
 			{$match: { 
 				controllerCid: res.user.cid,
 				approved: true,
-				deleted: false
+				deletedAt: null
 			}},
 			{$project: {
 				controller: 1,

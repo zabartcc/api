@@ -39,8 +39,8 @@ router.get('/', async ({res}) => {
 
 router.get('/archive', async(req, res) => {
 	try {
-		const page = parseInt(req.query.page, 10);
-		const limit = parseInt(req.query.limit, 10);
+		const page = +req.query.page || 1;
+		const limit = +req.query.limit || 10;
 
 		const count = await Event.countDocuments({
 			eventEnd: {
@@ -96,8 +96,6 @@ router.get('/:slug/positions', async(req, res) => {
 			'signups.user', '-email -idsToken -createdAt -updatedAt'
 		).lean({virtuals: true}).catch(console.error)
 
-		// console.log(event)
-
 		res.stdRes.data = event;
 	} catch(e) {
 		res.stdRes.ret_det = e;
@@ -116,8 +114,6 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 				} 
 			}
 		});
-
-		console.log(event)
 
 		await req.app.dossier.create({
 			by: res.user.cid,
@@ -140,6 +136,7 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 				}
 			}
 		});
+
 		await req.app.dossier.create({
 			by: res.user.cid,
 			affected: -1,
@@ -161,6 +158,7 @@ router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), asy
 				}
 			}
 		});
+
 		await req.app.dossier.create({
 			by: res.user.cid,
 			affected: req.params.cid,
@@ -223,6 +221,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			}
 		}
 		const tmpFile = await fs.readFile(req.file.path);
+		
 		await req.app.s3.putObject({
 			Bucket: 'zabartcc/events',
 			Key: req.file.filename,
@@ -231,6 +230,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			ACL: 'public-read',
 			ContentDisposition: 'inline',
 		}).promise();
+
 		await Event.create({
 			name: req.body.name,
 			description: req.body.description,
@@ -243,6 +243,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			open: true,
 			submitted: false
 		});
+
 		await req.app.dossier.create({
 			by: res.user.cid,
 			affected: -1,
@@ -302,8 +303,6 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 		}
 		
 		event.positions = computedPositions;
-
-		console.log(computedPositions)
 
 		if(req.file) {
 			const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
@@ -372,6 +371,7 @@ router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 				positions: req.body.assignment
 			}
 		});
+		
 		await req.app.dossier.create({
 			by: res.user.cid,
 			affected: -1,

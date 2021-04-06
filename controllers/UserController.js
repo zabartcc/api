@@ -267,8 +267,8 @@ router.post('/discord', async (req, res) => {
 
 router.get('/notifications', getUser, async(req, res) => {
 	try {
-		const page = parseInt(req.query.page || 1, 10);
-		const limit = parseInt(req.query.limit || 10, 10);
+		const page = +req.query.page || 1;
+		const limit = +req.query.limit || 10;
 
 		const unread = await Notification.countDocuments({deleted: false, recipient: res.user.cid, read: false});
 		const amount = await Notification.countDocuments({deleted: false, recipient: res.user.cid});
