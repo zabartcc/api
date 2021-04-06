@@ -66,6 +66,7 @@ router.post('/request/new', getUser, async (req, res) => {
 		});
 
 		const student = await User.findOne({cid: res.user.cid}).select('fname lname').lean();
+		const milestone = await TrainingMilestone.findOne({code: req.body.milestone}).lean();
 
 		transporter.sendMail({
 			to: 'instructors@zabartcc.org',
@@ -74,7 +75,8 @@ router.post('/request/new', getUser, async (req, res) => {
 			context: {
 				student: student.fname + ' ' + student.lname,
 				startTime: new Date(req.body.startTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
-				endTime: new Date(req.body.endTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'})
+				endTime: new Date(req.body.endTime).toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
+				milestone: milestone.code.toUpperCase() + ' - ' + milestone.name
 			}
 		});
 	} catch(e) {
@@ -359,7 +361,6 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 		}
 
 		const delta = Math.abs(new Date(req.body.endTime) - new Date(req.body.startTime)) / 1000;
-		console.log(new Date(req.body.endTime));
 		const hours = Math.floor(delta / 3600);
 		const minutes = Math.floor(delta / 60) % 60;
 

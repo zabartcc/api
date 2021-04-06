@@ -4,7 +4,7 @@
     </div>
     <div class="card-content">
 		Hello {{name}}, <br /><br />
-		Unfortunately, your visiting application for the Albuquerque ARTCC was rejected. The following reason was provided:<br /><br /><strong>{{reason}}</strong><br /><br />If you have any questions, please don't hesitate to <a href="mailto:datm@zabartcc.org">reach out to the DATM.</a> You are welcome to reapply once you've met all requirements.<br /><br />Sincerely,<br />The ZAB Staff Team</p>
+		Unfortunately, your visiting application for the Albuquerque ARTCC has been rejected. The following reason was provided:<br /><br /><div class="reason">{{reason}}</div><br />If you have any questions, please don't hesitate to <a href="mailto:datm@zabartcc.org">reach out to the DATM.</a> You are welcome to reapply once you've met all requirements.<br /><br />Sincerely,<br />The ZAB Staff Team</p>
 	</div>
 </div>
 
@@ -28,5 +28,11 @@
 	text-decoration: none;
 	color: #192d66;
 	font-weight: 700;
+}
+
+.reason {
+	border-left: 2px solid #122049;
+	background: #EDEDED;
+	padding: 1em;
 }
 </style>
