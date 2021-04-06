@@ -273,8 +273,8 @@ router.delete('/absence/:id', getUser, auth(['atm', 'datm']), async(req, res) =>
 });
 
 router.get('/log', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
-	const page = parseInt(req.query.page || 1, 10);
-	const limit = parseInt(req.query.limit || 20, 10);
+	const page = +req.query.page || 1;
+	const limit = +req.query.limit || 20;
 	const amount = await req.app.dossier.countDocuments();
 
 	try {

@@ -9,6 +9,7 @@ const feedbackSchema = new m.Schema({
 	rating: Number,
 	position: String,
 	comments: String,
+	ip: String,
 	anonymous: Boolean,
 	approved: Boolean
 }, {
