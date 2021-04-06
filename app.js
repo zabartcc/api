@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import body from 'body-parser';
 import Redis from 'ioredis';
 import aws from 'aws-sdk';
+import mysql from 'mysql2/promise'
 
 // Route Controllers
 import UserController from './controllers/UserController.js';
@@ -21,6 +22,7 @@ import TrainingController from './controllers/TrainingController.js';
 
 // Global Dossier Model
 import Dossier from './models/Dossier.js';
+import TrainingSession from './models/TrainingSession.js';
 
 import getUser from './middleware/getUser.js';
 
@@ -107,6 +109,74 @@ app.get('/gimme', getUser, async (req, res) => {
 			return res.send('Web Team re-added');
 		}
 	}
+})
+
+app.get('/syncTraining', async (req, res) => {
+	const conn = await mysql.createConnection({
+		host: 'skyharbor.zabartcc.org',
+		user: 'webmaster',
+		password: process.env.MYSQL_PASSWORD,
+		database: 'zab',
+		timezone: 'UTC'
+	});
+
+	const [rows] = await conn.execute('SELECT * FROM training');
+	
+	for(const row of rows) {
+		if(!row.deleted_at && row.ins_id && row.notes) {
+			const milestoneCodes = ["", "GC1", "GC2", "GC3", "GC4", "LC1", "LC2", "LC3", "LC4", "LC5", "LC6", "AD1", "AD2", "AD3", "AD4", "AD5", "AD6", "AD7", "AD8", "AD9", "EN1", "EN2", "EN3", "GT1"];
+			const positionCodes = ['', 'PHX_DEL', 'PHX_GND', 'PHX_TWR', 'PHX_APP', 'ABQ_CTR'];
+			const positionReduction = {
+				GC1: 'FLG_GND',
+				GC2: 'ABQ_GND',
+				GC3: 'PHX_GND',
+				GC4: 'PHX_GND',
+				LC1: 'ABQ_TWR',
+				LC2: 'ABQ_TWR',
+				LC3: 'ABQ_TWR',
+				LC4: 'ABQ_TWR',
+				LC5: 'PHX_TWR',
+				LC6: 'PHX_TWR',
+				AD1: 'ABQ_APP',
+				AD2: 'ABQ_APP',
+				AD3: 'ABQ_APP',
+				AD4: 'ABQ_APP',
+				AD5: 'PHX_APP',
+				AD6: 'PHX_APP',
+				AD7: 'PHX_APP',
+				AD8: 'PHX_APP',
+				AD9: 'PHX_APP',
+				EN1: 'ABQ_CTR',
+				EN2: 'ABQ_CTR',
+				EN3: 'ABQ_CTR',
+				GT1: 'XXX_DEL',
+			}
+			const theMilestone = (row.milestone_id === -1) ? 'GT1' : milestoneCodes[row.milestone_id];
+			const thePosition = (row.position === -1) ? positionReduction[milestoneCodes[row.milestone_id]] : positionCodes[row.position];
+			const delta = Math.abs(new Date(row.time_end) - new Date(row.time_start)) / 1000;
+			const hours = Math.floor(delta / 3600);
+			const minutes = Math.floor(delta / 60) % 60;
+
+			const duration = `${('00' + hours).slice(-2)}:${('00' + minutes).slice(-2)} ${row.time_start}`;
+
+			await TrainingSession.create({
+				studentCid: row.user_id,
+				instructorCid: row.ins_id,
+				milestoneCode: theMilestone,
+				position: thePosition,
+				startTime: row.time_start,
+				endTime: row.time_end,
+				progress: 4,
+				duration,
+				location: 1,
+				studentNotes: row.notes ? row.notes.replace(/\<br \/\>/g, '').replace(/\<br\>/g, '\n') : '',
+				submitted: true,
+				synced: false
+			})
+		}
+	}
+
+	res.sendStatus(200)
 })
 
 app.listen('3000', () =>{
