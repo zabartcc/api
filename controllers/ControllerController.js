@@ -438,6 +438,10 @@ router.post('/visit', getUser, async (req, res) => {
 		
 		await transporter.sendMail({
 			to: req.body.email,
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
 			subject: `Visiting Application Received | Albuquerque ARTCC`,
 			template: 'visitReceived',
 			context: {
@@ -446,6 +450,10 @@ router.post('/visit', getUser, async (req, res) => {
 		});
 		await transporter.sendMail({
 			to: 'atm@zabartcc.org; datm@zabartcc.org',
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
 			subject: `New Visiting Application: ${req.body.fname} ${req.body.lname} | Albuquerque ARTCC`,
 			template: 'staffNewVisit',
 			context: {
@@ -468,6 +476,10 @@ router.put('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 
 		await transporter.sendMail({
 			to: user.email,
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
 			subject: `Visiting Application Accepted | Albuquerque ARTCC`,
 			template: 'visitAccepted',
 			context: {
@@ -497,6 +509,10 @@ router.delete('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) =>
 
 		await transporter.sendMail({
 			to: user.email,
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
 			subject: `Visiting Application Rejected | Albuquerque ARTCC`,
 			template: 'visitRejected',
 			context: {

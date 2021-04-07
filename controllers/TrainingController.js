@@ -70,6 +70,10 @@ router.post('/request/new', getUser, async (req, res) => {
 
 		transporter.sendMail({
 			to: 'instructors@zabartcc.org',
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
 			subject: 'New Training Request | Albuquerque ARTCC',
 			template: 'newRequest',
 			context: {
@@ -155,6 +159,10 @@ router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr
 		transporter.sendMail({
 			to: `${student.email}, ${instructor.email}`,
 			cc: 'ta@zabartcc.org',
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
 			subject: 'Training Request Taken | Albuquerque ARTCC',
 			template: 'requestTaken',
 			context: {
