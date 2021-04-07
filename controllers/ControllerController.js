@@ -17,7 +17,7 @@ dotenv.config();
 
 router.get('/', async ({res}) => {
 	try {
-		const home = await User.find({vis: false}).select('-email -idsToken').sort({
+		const home = await User.find({vis: false}).select('-email -idsToken -discordInfo').sort({
 			rating: 'desc',
 			lname: 'asc',
 			fname: 'asc'
@@ -42,7 +42,7 @@ router.get('/', async ({res}) => {
 			select: '-reason'
 		}).lean({virtuals: true});
 	
-		const visiting = await User.find({vis: true}).select('-email -idsToken').sort({
+		const visiting = await User.find({vis: true}).select('-email -idsToken -discordInfo').sort({
 			rating: 'desc',
 			lname: 'asc',
 			fname: 'asc'
@@ -308,7 +308,7 @@ router.get('/:cid', getUser, async (req, res) => {
 		const user = await User.findOne({
 			cid: req.params.cid
 		}).select(
-			'-idsToken'
+			'-idsToken -discordInfo'
 		).populate('roles').populate('certifications').populate({
 			path: 'absence',
 			match: {

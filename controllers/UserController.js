@@ -189,6 +189,16 @@ router.get('/logout', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
+router.get('/discord', getUser, async (req, res) => {
+	try {
+		res.stdRes.data = !!res.user.discordInfo.clientId;
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+})
+
 router.post('/discord', async (req, res) => {
 	try {
 		if(!req.body.code || !req.body.cid) {
@@ -259,8 +269,10 @@ router.post('/discord', async (req, res) => {
 
 		await user.save();
 
+
+
 		await req.app.dossier.create({
-			by: res.user.cid,
+			by: user.cid,
 			affected: -1,
 			action: `%b connected their Discord.`
 		});
@@ -271,6 +283,17 @@ router.post('/discord', async (req, res) => {
 
 	return res.json(res.stdRes);
 });
+
+router.delete('/discord', getUser, async (req, res) => {
+	try {
+		res.user.discordInfo = undefined;
+		await res.user.save();
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+})
 
 router.get('/notifications', getUser, async(req, res) => {
 	try {
