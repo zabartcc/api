@@ -161,6 +161,8 @@ router.get('/documents/:slug', async (req, res) => {
 
 router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
 	try {
+		console.log(req.body.type);
+
 		const {name, category, description, content, type} = req.body;
 		if(!category) {
 			throw {
@@ -169,7 +171,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 			}
 		}
 
-		if(!content) {
+		if(!content && type === 'doc') {
 			throw {
 				code: 400,
 				message: 'No content was included.'
@@ -179,6 +181,13 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 		const slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 
 		if(type === "file") {
+			if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
+				throw {
+					code: 400,
+					message: 'File too large.'
+				}
+			}
+
 			await s3.putObject({
 				Bucket: 'zabartcc/downloads',
 				Key: req.file.filename,
@@ -186,7 +195,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 				ContentType: req.file.mimetype,
 				ACL: 'public-read',
 			}).promise();
-			
+
 			await Document.create({
 				name,
 				category,
