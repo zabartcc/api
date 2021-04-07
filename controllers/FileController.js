@@ -94,15 +94,14 @@ router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 
 router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
-		let download;
 		if(!req.file) { // no updated file provided
-			download = await Downloads.findByIdAndUpdate(req.params.id, {
+			await Downloads.findByIdAndUpdate(req.params.id, {
 				name: req.body.name,
 				description: req.body.description,
 				category: req.body.category
 			});
 		} else {
-			download = await Downloads.findByIdAndUpdate(req.params.id, {
+			await Downloads.findByIdAndUpdate(req.params.id, {
 				name: req.body.name,
 				description: req.body.description,
 				category: req.body.category,
@@ -159,9 +158,9 @@ router.get('/documents/:slug', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
+router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
 	try {
-		const {name, category, description, content} = req.body;
+		const {name, category, description, content, type} = req.body;
 		if(!category) {
 			throw {
 				code: 400,
@@ -169,7 +168,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 			}
 		}
 
-		if(!content) {
+		if(!content && type === 'doc') {
 			throw {
 				code: 400,
 				message: 'No content was included.'
@@ -178,14 +177,43 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 
 		const slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 
-		await Document.create({
-			name,
-			category,
-			description,
-			content,
-			slug,
-			author: res.user.cid
-		});
+		if(type === "file") {
+			if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
+				throw {
+					code: 400,
+					message: 'File too large.'
+				}
+			}
+
+			const tmpFile = await fs.readFile(req.file.path);
+			await s3.putObject({
+				Bucket: 'zabartcc/downloads',
+				Key: req.file.filename,
+				Body: tmpFile,
+				ContentType: req.file.mimetype,
+				ACL: 'public-read',
+			}).promise();
+
+			await Document.create({
+				name,
+				category,
+				description,
+				slug,
+				author: res.user.cid,
+				type: 'file',
+				fileName: req.file.filename
+			});
+		} else {
+			await Document.create({
+				name,
+				category,
+				description,
+				content,
+				slug,
+				author: res.user.cid,
+				type: 'doc'
+			});
+		}
 
 		await req.app.dossier.create({
 			by: res.user.cid,
@@ -200,27 +228,49 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 	return res.json(res.stdRes);
 });
 
-router.put('/documents/:slug', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
+router.put('/documents/:slug', upload.single('download'), getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		const document = await Document.findOne({slug: req.params.slug});
-		const {name, category, description, content} = req.body;
+		const {name, category, description, content, type} = req.body;
 
-		if(document.name !== name) {
-			document.name = name;
-			document.slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
+		if(type === 'doc') {
+			if(document.name !== name) {
+				document.name = name;
+				document.slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
+			}
+			
+			document.type = 'doc';
+			document.category = category;
+			document.description = description;
+			document.content = content;
+
+			await document.save();
+		} else {
+			if(!req.file) { // no updated file provided
+				await Document.findOneAndUpdate({slug: req.params.slug}, {
+					name: req.body.name,
+					description: req.body.description,
+					category: req.body.category,
+					type: 'file'
+				});
+			} else {
+				await Document.findOneAndUpdate({slug: req.params.slug}, {
+					name: req.body.name,
+					description: req.body.description,
+					category: req.body.category,
+					fileName: req.file.filename,
+					type: 'file'
+				})
+			}
 		}
-		
-		document.category = category;
-		document.description = description;
-		document.content = content;
-
-		await document.save();
 
 		await req.app.dossier.create({
 			by: res.user.cid,
 			affected: -1,
-			action: `%b updated the document *${document.name}*.`
+			action: `%b updated the document *${req.body.name}*.`
 		});
+
+		return res.json(res.stdRes);
 	} catch(e) {
 		res.stdRes.std_res = e;
 	}

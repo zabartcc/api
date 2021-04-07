@@ -7,6 +7,8 @@ const documentSchema = new m.Schema({
 	content: String,
 	slug: String,
 	author: Number,
+	type: String,
+	fileName: String
 }, {
 	collection: "documents",
 	timestamps: true
