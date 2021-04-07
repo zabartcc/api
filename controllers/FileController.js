@@ -187,7 +187,8 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 					message: 'File too large.'
 				}
 			}
-
+			
+			const tmpFile = await fs.readFile(req.file.path);
 			await s3.putObject({
 				Bucket: 'zabartcc/downloads',
 				Key: req.file.filename,
