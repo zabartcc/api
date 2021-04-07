@@ -11,6 +11,9 @@ import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
 import microAuth from '../middleware/microAuth.js';
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 router.get('/', async ({res}) => {
 	try {
@@ -486,6 +489,8 @@ router.put('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 				name: `${user.fname} ${user.lname}`,
 			}
 		});
+
+		await axios.post(`https://api.vatusa.net/v2/facility/ZAB/roster/manageVisitor/${req.params.cid}?apikey=${process.env.VATUSA_API_KEY}`)
 
 		await req.app.dossier.create({
 			by: res.user.cid,
