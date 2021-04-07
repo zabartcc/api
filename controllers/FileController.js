@@ -159,9 +159,9 @@ router.get('/documents/:slug', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
+router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
 	try {
-		const {name, category, description, content} = req.body;
+		const {name, category, description, content, type} = req.body;
 		if(!category) {
 			throw {
 				code: 400,
@@ -178,14 +178,35 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req
 
 		const slug = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 
-		await Document.create({
-			name,
-			category,
-			description,
-			content,
-			slug,
-			author: res.user.cid
-		});
+		if(type === "file") {
+			await s3.putObject({
+				Bucket: 'zabartcc/downloads',
+				Key: req.file.filename,
+				Body: tmpFile,
+				ContentType: req.file.mimetype,
+				ACL: 'public-read',
+			}).promise();
+			
+			await Document.create({
+				name,
+				category,
+				description,
+				slug,
+				author: res.user.cid,
+				type: 'file',
+				fileName: req.file.filename
+			});
+		} else {
+			await Document.create({
+				name,
+				category,
+				description,
+				content,
+				slug,
+				author: res.user.cid,
+				type: 'doc'
+			});
+		}
 
 		await req.app.dossier.create({
 			by: res.user.cid,
