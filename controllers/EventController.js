@@ -106,6 +106,23 @@ router.get('/:slug/positions', async(req, res) => {
 
 router.put('/:slug/signup', getUser, async (req, res) => {
 	try {
+		console.log(req.body.requests);
+		if(req.body.requests.length > 3) {
+			throw {
+				code: 400,
+				message: "No more than 3 requests may be given"
+			}
+		}
+
+		for(const r of req.body.requests) {
+			if((/^([A-Z]{2,3})(_([A-Z]{1,3}))?_(DEL|GND|TWR|APP|DEP|CTR)$/.test(r) || r.toLowerCase() === "any") === false) {
+				throw {
+					code: 400,
+					message: "Request must be a valid callsign or 'Any'"
+				}
+			}
+		}
+
 		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$push: {
 				signups: {
