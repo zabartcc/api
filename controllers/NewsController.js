@@ -59,7 +59,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (
 router.get('/:slug', async (req, res) =>{
 	const newsItem = await News
 		.findOne({uriSlug: req.params.slug})
-		.populate('user')
+		.populate('user', 'fname lname')
 		.lean();
 
 	res.stdRes.data = newsItem;
