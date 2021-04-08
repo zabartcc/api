@@ -101,6 +101,22 @@ router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'd
 				category: req.body.category
 			});
 		} else {
+
+			if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
+				throw {
+					code: 400,
+					message: 'File too large.'
+				}
+			}
+			const tmpFile = await fs.readFile(req.file.path);
+			await s3.putObject({
+				Bucket: 'zabartcc/downloads',
+				Key: req.file.filename,
+				Body: tmpFile,
+				ContentType: req.file.mimetype,
+				ACL: 'public-read',
+			}).promise();
+
 			await Downloads.findByIdAndUpdate(req.params.id, {
 				name: req.body.name,
 				description: req.body.description,
@@ -254,6 +270,21 @@ router.put('/documents/:slug', upload.single('download'), getUser, auth(['atm', 
 					type: 'file'
 				});
 			} else {
+				if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
+					throw {
+						code: 400,
+						message: 'File too large.'
+					}
+				}
+				const tmpFile = await fs.readFile(req.file.path);
+				await s3.putObject({
+					Bucket: 'zabartcc/downloads',
+					Key: req.file.filename,
+					Body: tmpFile,
+					ContentType: req.file.mimetype,
+					ACL: 'public-read',
+				}).promise();
+				
 				await Document.findOneAndUpdate({slug: req.params.slug}, {
 					name: req.body.name,
 					description: req.body.description,
