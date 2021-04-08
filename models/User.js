@@ -49,21 +49,25 @@ userSchema.virtual('isMem').get(function() {
 });
 
 userSchema.virtual('isMgt').get(function() {
+	if(!this.roleCodes) return false;
 	const search = ['atm', 'datm'];
 	return this.roleCodes.some(r => search.includes(r));
 });
 
 userSchema.virtual('isSenior').get(function() {
+	if(!this.roleCodes) return false;
 	const search = ['atm', 'datm', 'ta'];
 	return this.roleCodes.some(r => search.includes(r));
 });
 
 userSchema.virtual('isStaff').get(function() {
+	if(!this.roleCodes) return false;
 	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe'];
 	return this.roleCodes.some(r => search.includes(r));
 });
 
 userSchema.virtual('isIns').get(function() {
+	if(!this.roleCodes) return false;
 	const search = ['atm', 'datm', 'ta', 'ins', 'mtr'];
 	return this.roleCodes.some(r => search.includes(r));
 });
