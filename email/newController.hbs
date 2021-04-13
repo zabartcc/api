@@ -1,0 +1,59 @@
+<div class="card">
+	<div class="card-title">
+    	New {{#if vis}}Visitor{{/if}} {{#else}}Member{{/else}} Added
+    </div>
+    <div class="card-content">
+		Hello, <br /><br />
+		A new {{type}} has been added to the roster.  You can find his/her info below.
+		<br /><br />
+		<div class="info">
+			<div class="cid">
+				<div>CID</div>
+				<div>{{cid}}</div>
+			</div>
+			<div class="name">
+				<div>Name</div>
+				<div>{{name}}</div>
+			</div>
+			<div class="email">
+				<div>Email</div>
+				<div>{{email}}</div>
+			</div>
+			<div class="rating">
+				<div>Rating</div>
+				<div>{{rating}}</div>
+			</div>
+			{{#if vis}}
+			<div class="home">
+				<div>Home Facility</div>
+				<div>{{home}}</div>
+			</div>
+			{{/if}}
+		</div>
+		<br /><br />Sincerely,<br />The ZAB Staff Team</p>
+	</div>
+</div>
+
+<style>
+.info div {
+    width: 100%;
+    display: flex;
+}
+
+.cid, .email, .home {
+  background: #EDEDED;
+}
+
+.info div div {
+      padding: .25em .5em .5em .5em;
+}
+
+.info div div:nth-child(odd) {
+  width: 120px;
+  border-right: 1px solid darkgray;
+}
+
+.info div div:nth-child(even) {
+  padding-left: 1em;
+}
+</style>

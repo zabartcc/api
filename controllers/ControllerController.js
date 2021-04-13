@@ -568,13 +568,33 @@ router.post('/:cid', microAuth, async (req, res) => {
 			ContentDisposition: 'inline',
 		}).promise();
 
-		await User.create({
+		const newUser = await User.create({
 			...req.body,
 			oi: userOi,
 			avatar: `${req.body.cid}-default.png`,
 		});
 
-		
+		const ratings = ['Unknown', 'OBS', 'S1', 'S2', 'S3', 'C1', 'C2', 'C3', 'I1', 'I2', 'I3', 'SUP', 'ADM'];
+
+		await transporter.sendMail({
+			to: "staff@zabartcc.org",
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
+			subject: `New ${newUser.vis ? 'Visitor' : 'Member'}: ${newUser.fname} ${newUser.lname} | Albuquerque ARTCC`,
+			template: 'newController',
+			context: {
+				name: `${newUser.fname} ${newUser.lname}`,
+				email: newUser.email,
+				cid: newUser.cid,
+				rating: ratings[newUser.rating],
+				vis: newUser.vis,
+				type: newUser.vis ? 'visitor' : 'member',
+				home: newUser.homeFacility
+			}
+		});
+
 		await req.app.dossier.create({
 			by: -1,
 			affected: req.body.cid,
