@@ -26,7 +26,6 @@
 </html>
 <style>
 @import url('https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap');
-
 body {
   margin: 0;
   font-family: "Lato", sans-serif!important;
@@ -51,6 +50,7 @@ h6 {
 	background-color: #122049;
 	color: #fff;
 	height: 70px;
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.5), 0 3px 1px -2px rgba(0,0,0,0.5), 0 1px 5px 0 rgba(0,0,0,0.5)!important;
 }
 
 .header-image-container {
@@ -60,8 +60,10 @@ h6 {
 
 .header-image {
 	width: 50px;
-	height: auto;
-	float: right;
+	height: 50px;
+	position: absolute;
+	right: 1em;
+	top: 10px;
 }
 
 .header-title {
@@ -105,5 +107,15 @@ h6 {
 	font-size: 0.8rem;
 	color: gray;
 	font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) and (pointer:none), (pointer:coarse) {
+	.card {
+		box-shadow: 0 2px 2px 0 rgba(0,0,0,0.5), 0 3px 1px -2px rgba(0,0,0,0.5), 0 1px 5px 0 rgba(0,0,0,0.5);
+	}
+  
+	.header {
+		background-color: #191B39;
+	}
 }
 </style>
