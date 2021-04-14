@@ -568,7 +568,7 @@ router.post('/:cid', microAuth, async (req, res) => {
 			ContentDisposition: 'inline',
 		}).promise();
 
-		const newUser = await User.create({
+		await User.create({
 			...req.body,
 			oi: userOi,
 			avatar: `${req.body.cid}-default.png`,
@@ -582,16 +582,16 @@ router.post('/:cid', microAuth, async (req, res) => {
 				name: "Albuquerque ARTCC",
 				address: 'noreply@zabartcc.org'
 			},
-			subject: `New ${newUser.vis ? 'Visitor' : 'Member'}: ${newUser.fname} ${newUser.lname} | Albuquerque ARTCC`,
+			subject: `New ${req.body.vis ? 'Visitor' : 'Member'}: ${req.body.fname} ${req.body.lname} | Albuquerque ARTCC`,
 			template: 'newController',
 			context: {
-				name: `${newUser.fname} ${newUser.lname}`,
-				email: newUser.email,
-				cid: newUser.cid,
-				rating: ratings[newUser.rating],
-				vis: newUser.vis,
-				type: newUser.vis ? 'visitor' : 'member',
-				home: newUser.homeFacility
+				name: `${req.body.fname} ${req.body.lname}`,
+				email: req.body.email,
+				cid: req.body.cid,
+				rating: ratings[req.body.rating],
+				vis: req.body.vis,
+				type: req.body.vis ? 'visitor' : 'member',
+				home: req.body.vis ? req.body.homeFacility : 'ZAB'
 			}
 		});
 
