@@ -106,7 +106,6 @@ router.get('/:slug/positions', async(req, res) => {
 
 router.put('/:slug/signup', getUser, async (req, res) => {
 	try {
-		console.log(req.body.requests);
 		if(req.body.requests.length > 3) {
 			throw {
 				code: 400,
@@ -114,7 +113,7 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 			}
 		}
 
-		if(req.user.member === false) {
+		if(res.user.member === false) {
 			throw {
 				code: 403,
 				message: "You are not a member of ZAB"
