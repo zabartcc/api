@@ -33,14 +33,14 @@ router.post('/', async (req, res) => { // Submit feedback
 		if(req.body.name === '' || req.body.email === '' || req.body.cid === null || req.body.controller === null || req.body.rating === null || req.body.position === null || req.body.comments === '') { // Validation
 			throw {
 				code: 400,
-				message: `You must fill out all required forms`
+				message: "You must fill out all required forms"
 			};
 		}
 
 		if(req.body.comments && req.body.comments.length > 5000) {
 			throw {
 				code: 400,
-				message: 'Comments may not exceed 5000 characters in length'
+				message: "Comments must not exceed 5000 characters in length"
 			}
 		}
 

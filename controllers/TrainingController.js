@@ -32,7 +32,7 @@ router.post('/request/new', getUser, async (req, res) => {
 		if(!req.body.submitter || !req.body.startTime || !req.body.endTime || !req.body.milestone || req.body.remarks.length > 500) {
 			throw {
 				code: 400,
-				message: `You must fill out all required forms`
+				message: "You must fill out all required forms"
 			};
 		}
 
@@ -53,7 +53,7 @@ router.post('/request/new', getUser, async (req, res) => {
 		if((new Date(req.body.endTime).getTime() - new Date(req.body.startTime).getTime()) / 60000 < 60) {
 			throw {
 				code: 400,
-				message: "Sessions must at least be 60 minutes in length"
+				message: "Sessions must be at least 60 minutes in length"
 			}
 		}
 
@@ -364,7 +364,7 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 		if(req.body.position === '' || req.body.progress === null || req.body.movements === null || req.body.location === null || req.body.ots === null || req.body.studentNotes === null || (req.body.studentNotes && req.body.studentNotes.length > 3000) || (req.body.insNotes && req.body.insNotes.length > 3000)) {
 			throw {
 				code: 400,
-				message: 'Please fill out all required fields'
+				message: "You must fill out all required forms"
 			};
 		}
 

@@ -53,13 +53,13 @@ router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 		if(!req.body.category) {
 			throw {
 				code: 400,
-				message: 'No category was selected.'
+				message: 'You must select a category'
 			}
 		}
 		if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
 			throw {
 				code: 400,
-				message: 'File too large.'
+				message: 'File too large'
 			}
 		}
 		const tmpFile = await fs.readFile(req.file.path);
@@ -105,7 +105,7 @@ router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'd
 			if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
 				throw {
 					code: 400,
-					message: 'File too large.'
+					message: 'File too large'
 				}
 			}
 			const tmpFile = await fs.readFile(req.file.path);
@@ -180,14 +180,14 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 		if(!category) {
 			throw {
 				code: 400,
-				message: 'No category was selected.'
+				message: 'You must select a category'
 			}
 		}
 
 		if(!content && type === 'doc') {
 			throw {
 				code: 400,
-				message: 'No content was included.'
+				message: 'You must include content'
 			}
 		}
 
@@ -197,7 +197,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 			if(req.file.size > (20 * 1024 * 1024)) {	// 20MiB
 				throw {
 					code: 400,
-					message: 'File too large.'
+					message: 'File too large'
 				}
 			}
 

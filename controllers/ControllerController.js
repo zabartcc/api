@@ -61,7 +61,7 @@ router.get('/', async ({res}) => {
 		if(!home || !visiting) {
 			throw {
 				code: 503,
-				message: "Unable to retrieve controllers."
+				message: "Unable to retrieve controllers"
 			};
 		}
 
@@ -89,7 +89,7 @@ router.get('/staff', async (req, res) => {
 		if(!users) {
 			throw {
 				code: 503,
-				message: "Unable to retrieve staff members."
+				message: "Unable to retrieve staff members"
 			};
 		}
 
@@ -165,7 +165,7 @@ router.get('/oi', async (req, res) => {
 		if(!oi) {
 			throw {
 				code: 503,
-				message: "Unable to retrieve operating initials."
+				message: "Unable to retrieve operating initials"
 			};
 		}
 
@@ -210,17 +210,17 @@ router.get('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
 
 router.post('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
 	try {
-		if(!req.body || req.body.controller === '' || req.body.expirationDate === '' || req.body.reason === '') {
+		if(!req.body || req.body.controller === '' || req.body.expirationDate === 'T00:00:00.000Z' || req.body.reason === '') {
 			throw {
 				code: 400,
-				message: 'You must fill out all required fields'
+				message: "You must fill out all required fields"
 			}
 		} 
 
 		if(new Date(req.body.expirationDate) < new Date()) {
 			throw {
 				code: 400,
-				message: 'Expiration date must be in the future'
+				message: "Expiration date must be in the future"
 			}
 		}
 
@@ -323,7 +323,7 @@ router.get('/:cid', getUser, async (req, res) => {
 		if(!user) {
 			throw {
 				code: 503,
-				message: "Unable to find controller."
+				message: "Unable to find controller"
 			};
 		}
 
@@ -423,7 +423,7 @@ router.post('/visit', getUser, async (req, res) => {
 		if(!res.user) {
 			throw {
 				code: 401,
-				message: "Unable to verify user."
+				message: "Unable to verify user"
 			};
 		}
 
@@ -577,7 +577,7 @@ router.post('/:cid', microAuth, async (req, res) => {
 		const ratings = ['Unknown', 'OBS', 'S1', 'S2', 'S3', 'C1', 'C2', 'C3', 'I1', 'I2', 'I3', 'SUP', 'ADM'];
 
 		await transporter.sendMail({
-			to: "staff@zabartcc.org",
+			to: "atm@zabartcc.org; datm@zabartcc.org; ta@zabartcc.org",
 			from: {
 				name: "Albuquerque ARTCC",
 				address: 'noreply@zabartcc.org'
@@ -615,7 +615,7 @@ router.put('/:cid/member', microAuth, async (req, res) => {
 		if(!user) {
 			throw {
 				code: 400,
-				message: "Unable to find user."
+				message: "Unable to find user"
 			};
 		}
 
@@ -647,7 +647,7 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 		if(!user) {
 			throw {
 				code: 400,
-				message: "Unable to find user."
+				message: "Unable to find user"
 			};
 		}
 
@@ -673,7 +673,7 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 		if(!req.body.form) {
 			throw {
 				code: 400,
-				message: "No user data included."
+				message: "No user data included"
 			};
 		}
 		
@@ -731,14 +731,41 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 
 router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
-		await User.findOneAndUpdate({cid: req.params.cid}, {
+		if(!req.body.reason) {
+			throw {
+				code: 400,
+				message: "You must specify a reason"
+			};
+		}
+
+		const user = await User.findOneAndUpdate({cid: req.params.cid}, {
 			member: false
 		});
+
+		if(user.vis) {
+			await axios.delete(`https://api.vatusa.net/v2/facility/ZAB/roster/manageVisitor/${req.params.cid}`, {
+				params: {
+					apikey: process.env.VATUSA_API_KEY,
+				},
+				data: {
+					reason: req.body.reason
+				}
+			});
+		} else {
+			await axios.delete(`https://api.vatusa.net/v2/facility/ZAB/roster/${req.params.cid}`, {
+				params: {
+					apikey: process.env.VATUSA_API_KEY,
+				},
+				data: {
+					reason: req.body.reason
+				}
+			});
+		}
 
 		await req.app.dossier.create({
 			by: res.user.cid,
 			affected: req.params.cid,
-			action: `%a was removed from the roster by %b.`
+			action: `%a was removed from the roster by %b: ${req.body.reason}`
 		});
 	}
 	catch(e) {

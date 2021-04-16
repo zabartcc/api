@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 		if(!req.cookies.token) {
 			throw {
 				code: 401,
-				message: "Token cookie not found."
+				message: "Token cookie not found"
 			};
 		}
 
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 						res.cookie('token', '', {expires: new Date(0)});
 						reject({
 							code: 401,
-							message: "User not found."
+							message: "User not found"
 						});
 					} 
 					res.stdRes.data = user;
@@ -63,7 +63,7 @@ router.post('/idsToken', getUser, async (req, res) => {
 		if(!req.cookies.token) {
 			throw {
 				code: 401,
-				message: "Not logged in."
+				message: "Not logged in"
 			};
 		}
 
@@ -99,7 +99,7 @@ router.post('/login', async (req, res) => {
 		if(sig !== loginTokenParts[2]) {
 			throw {
 				code: 500, 
-				message: 'Unable to verify signature from VATUSA.'
+				message: "Unable to verify signature from VATUSA"
 			};
 		}
 		
@@ -108,13 +108,13 @@ router.post('/login', async (req, res) => {
 		if(loginTokenData.iss !== 'VATUSA') {
 			throw {
 				code: 500, 
-				message: 'Token not issued by VATUSA.'
+				message: "Token not issued by VATUSA"
 			};
 		}		
 		if(loginTokenData.aud !== 'ZAB') {
 			throw {
 				code: 500, 
-				message: 'Token not issued for ZAB.'
+				message: "Token not issued for ZAB"
 			};
 		}
 
@@ -123,7 +123,7 @@ router.post('/login', async (req, res) => {
 		if(!userData) {
 			throw {
 				code: 500,
-				message: "Unable to retrieve user data from VATUSA."
+				message: "Unable to retrieve user data from VATUSA"
 			};
 		}
 		
@@ -177,7 +177,7 @@ router.get('/logout', async (req, res) => {
 		if(!req.cookies.token) {
 			throw {
 				code: 400,
-				message: "User not logged in."
+				message: "User not logged in"
 			};
 		}
 		res.cookie('token', '', {expires: new Date(0)});
@@ -204,7 +204,7 @@ router.post('/discord', async (req, res) => {
 		if(!req.body.code || !req.body.cid) {
 			throw {
 				code: 400,
-				message: "Incomplete request."
+				message: "Incomplete request"
 			};
 		}
 
@@ -214,7 +214,7 @@ router.post('/discord', async (req, res) => {
 		if(!user) {
 			throw {
 				code: 401,
-				message: "User not found."
+				message: "User not found"
 			};
 		}
 
@@ -235,7 +235,7 @@ router.post('/discord', async (req, res) => {
 		if(!token) {
 			throw {
 				code: 403,
-				message: "Unable to authenticate with Discord."
+				message: "Unable to authenticate with Discord"
 			};
 
 		}
@@ -253,7 +253,7 @@ router.post('/discord', async (req, res) => {
 		if(!discordUser) {
 			throw {
 				code: 403,
-				message: "Unable to retrieve Discord info."
+				message: "Unable to retrieve Discord info"
 			};
 
 		}
@@ -333,7 +333,7 @@ router.put('/notifications/read/:id', async(req, res) => {
 	if(!req.params.id) {
 			throw {
 				code: 400,
-				message: "Incomplete request."
+				message: "Incomplete request"
 			};
 		}
 		await Notification.findByIdAndUpdate(req.params.id, {

@@ -109,14 +109,14 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 		if(req.body.requests.length > 3) {
 			throw {
 				code: 400,
-				message: "No more than 3 requests may be given"
+				message: "You may only give 3 preferred positions"
 			}
 		}
 
 		if(res.user.member === false) {
 			throw {
 				code: 403,
-				message: "You are not a member of ZAB"
+				message: "You must be a member of ZAB"
 			}
 		}
 
@@ -234,13 +234,13 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 		if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 			throw {
 				code: 400,
-				message: 'File type not supported'
+				message: "File type not supported"
 			}
 		}
 		if(req.file.size > (6 * 1024 * 1024)) {	// 6MiB
 			throw {
 				code: 400,
-				message: 'File too large'
+				message: "File too large"
 			}
 		}
 		const tmpFile = await fs.readFile(req.file.path);
@@ -262,7 +262,6 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			eventStart: req.body.startTime,
 			eventEnd: req.body.endTime,
 			createdBy: res.user.cid,
-			// positions: positions,
 			open: true,
 			submitted: false
 		});
@@ -333,13 +332,13 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 			if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 				throw {
 					code: 400,
-					message: 'File type not supported'
+					message: "File type not supported"
 				}
 			}
 			if(req.file.size > (6 * 1024 * 1024)) {	// 6MiB
 				throw {
 					code: 400,
-					message: 'File too large'
+					message: "File too large"
 				}
 			}
 			const tmpFile = await fs.readFile(req.file.path);

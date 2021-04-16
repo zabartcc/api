@@ -23,7 +23,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (
 		if(!req.body || !req.body.title || !req.body.content) {
 			throw {
 				code: 400,
-				message: "One or more form fields are missing."
+				message: "You must fill out all required forms"
 			};
 		}
 		const {title, content, createdBy} = req.body;
@@ -38,7 +38,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (
 		if(!news) {
 			throw {
 				code: 500,
-				message: "Something went wrong, please try again."
+				message: "Something went wrong, please try again"
 			};
 		}
 
@@ -97,7 +97,7 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), 
 		if(!status) {
 			throw {
 				code: 500,
-				message: "Something went wrong, please try again."
+				message: "Something went wrong, please try again"
 			};
 		}
 
