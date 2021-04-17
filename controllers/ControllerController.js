@@ -56,6 +56,15 @@ router.get('/', async ({res}) => {
 			options: {
 				sort: {order: 'asc'}
 			}
+		}).populate({
+			path: 'absence',
+			match: {
+				expirationDate: {
+					$gte: new Date()
+				},
+				deleted: false
+			},
+			select: '-reason'
 		}).lean({virtuals: true});
 	
 		if(!home || !visiting) {
