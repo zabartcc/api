@@ -1,34 +1,34 @@
-<div class="card">
-	<div class="card-title">
+<div style="padding: 1em; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);">
+	<div style="font-size: 1.2rem; font-weight: 300; margin-bottom: 20px;">
     	New Visiting Application
     </div>
-    <div class="card-content">
+    <div style="font-size: 0.9rem;">
 		Hello, <br /><br />
         There is a new visiting application pending review. You can find the details below. <br /> <br />
-    	<div class="info">
-			<div class="name">
-				<div>Name</div>
-				<div>{{user.fname}} {{user.lname}}</div>
+    	<div>
+			<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Name</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{user.fname}} {{user.lname}}</div>
 			</div>
-			<div class="cid">
-				<div>CID</div>
-				<div>{{user.cid}}</div>
+			<div style="width: 100%; display: flex;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">CID</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{user.cid}}</div>
 			</div>
-			<div class="rating">
-				<div>Rating</div>
-				<div>{{user.rating}}</div>
+			<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Rating</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{user.rating}}</div>
 			</div>
-			<div class="email">
-				<div>Email</div>
-				<div>{{user.email}}</div>
+			<div style="width: 100%; display: flex;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Email</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{user.email}}</div>
 			</div>
-      		<div class="facility">
-				<div>Home Facility</div>
-				<div>{{user.home}}</div>
+      		<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Home Facility</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{user.home}}</div>
 			</div>
-      		<div class="reason">
-				<div>Motivation</div>
-				<div>{{user.reason}}</div>
+      		<div style="width: 100%; display: flex;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Motivation</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{user.reason}}</div>
 			</div>
 		</div>
 		<br /><br />
@@ -36,27 +36,3 @@
 		The ZAB Staff Team
 	</div>
 </div>
-
-<style>
-.info div {
-    width: 100%;
-    display: flex;
-}
-
-.name, .rating, .facility {
-  background: #EDEDED;
-}
-
-.info div div {
-      padding: .25em .5em .5em .5em;
-}
-
-.info div div:nth-child(odd) {
-  width: 120px;
-  border-right: 1px solid darkgray;
-}
-
-.info div div:nth-child(even) {
-  padding-left: 1em;
-}
-</style>

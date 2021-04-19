@@ -1,59 +1,35 @@
-<div class="card">
-	<div class="card-title">
+<div style="padding: 1em; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);">
+	<div style="font-size: 1.2rem; font-weight: 300; margin-bottom: 20px;">
     	New {{#if vis}}Visitor{{/if}} {{#else}}Member{{/else}} Added
     </div>
-    <div class="card-content">
+    <div style="font-size: 0.9rem;">
 		Hello, <br /><br />
 		A new {{type}} has been added to the roster.  You can find his/her info below.
 		<br /><br />
-		<div class="info">
-			<div class="cid">
-				<div>CID</div>
-				<div>{{cid}}</div>
+		<div>
+			<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">CID</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{cid}}</div>
 			</div>
-			<div class="name">
-				<div>Name</div>
-				<div>{{name}}</div>
+			<div style="width: 100%; display: flex;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Name</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{name}}</div>
 			</div>
-			<div class="email">
-				<div>Email</div>
-				<div>{{email}}</div>
+			<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Email</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{email}}</div>
 			</div>
-			<div class="rating">
-				<div>Rating</div>
-				<div>{{rating}}</div>
+			<div style="width: 100%; display: flex;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Rating</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{rating}}</div>
 			</div>
 			{{#if vis}}
-			<div class="home">
-				<div>Home Facility</div>
-				<div>{{home}}</div>
+			<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Home Facility</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{home}}</div>
 			</div>
 			{{/if}}
 		</div>
 		<br /><br />Sincerely,<br />The ZAB Staff Team</p>
 	</div>
 </div>
-
-<style>
-.info div {
-    width: 100%;
-    display: flex;
-}
-
-.cid, .email, .home {
-  background: #EDEDED;
-}
-
-.info div div {
-      padding: .25em .5em .5em .5em;
-}
-
-.info div div:nth-child(odd) {
-  width: 120px;
-  border-right: 1px solid darkgray;
-}
-
-.info div div:nth-child(even) {
-  padding-left: 1em;
-}
-</style>
