@@ -145,6 +145,9 @@ router.post('/login', async (req, res) => {
 			if(!user.email) {
 				user.email = userData.email;
 			}
+			user.fname = userData.fname;
+			user.lname = userData.lname;
+			user.rating = userData.rating;
 		}
 
 		if(user.oi && !user.avatar) {
