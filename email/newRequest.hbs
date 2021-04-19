@@ -1,53 +1,29 @@
-<div class="card">
-	<div class="card-title">
+<div style="padding: 1em; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);">
+	<div style="font-size: 1.2rem; font-weight: 300; margin-bottom: 20px;">
     	New Training Request
     </div>
-    <div class="card-content">
+    <div style="font-size: 0.9rem;">
 		Hello, <br /><br />
 		A new training request has been submitted. Please head over to the instructor dashboard on <a href="https://zabartcc.org/ins/training">the website</a> if you would like to pick this session up.
 		<br /><br />
-		<div class="info">
-			<div class="student">
-				<div>Student</div>
-				<div>{{student}}</div>
+		<div>
+			<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Student</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{student}}</div>
 			</div>
-			<div class="startTime">
-				<div>Start Time</div>
-				<div>{{startTime}}z</div>
+			<div style="width: 100%; display: flex;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Start Time</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{startTime}}z</div>
 			</div>
-			<div class="endTime">
-				<div>End Time</div>
-				<div>{{endTime}}z</div>
+			<div style="width: 100%; display: flex; background: #EDEDED;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">End Time</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{endTime}}z</div>
 			</div>
-			<div class="milestone">
-				<div>Milestone</div>
-				<div>{{milestone}}</div>
+			<div style="width: 100%; display: flex;">
+				<div style="padding: .25em .5em .5em .5em; width: 120px; border-right: 1px solid darkgray;">Milestone</div>
+				<div style="padding: .25em .5em .5em .5em; padding-left: 1em;">{{milestone}}</div>
 			</div>
 		</div>
 		<br /><br />Sincerely,<br />The ZAB Staff Team</p>
 	</div>
 </div>
-
-<style>
-.info div {
-    width: 100%;
-    display: flex;
-}
-
-.student, .endTime {
-  background: #EDEDED;
-}
-
-.info div div {
-      padding: .25em .5em .5em .5em;
-}
-
-.info div div:nth-child(odd) {
-  width: 120px;
-  border-right: 1px solid darkgray;
-}
-
-.info div div:nth-child(even) {
-  padding-left: 1em;
-}
-</style>

@@ -4,118 +4,46 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Albuquerque ARTCC</title>
+		<style>
+			@font-face {
+				font-family: 'Lato';
+				font-style: normal;
+				font-weight: 700;
+				font-display: swap;
+				src: url(https://fonts.gstatic.com/s/lato/v17/S6u9w4BMUTPHh6UVSwaPGR_p.woff2) format('woff2');
+			}
+			@font-face {
+				font-family: 'Lato';
+				font-style: normal;
+				font-weight: 400;
+				font-display: swap;
+				src: url(https://fonts.gstatic.com/s/lato/v17/S6uyw4BMUTPHjxAwXjeu.woff2) format('woff2');
+			}
+			@font-face {
+				font-family: 'Lato';
+				font-style: normal;
+				font-weight: 300;
+				font-display: swap;
+				src: url(https://fonts.gstatic.com/s/lato/v17/S6u9w4BMUTPHh7USSwaPGR_p.woff2) format('woff2');
+			}
+		</style>
 	</head>
-	<body>
-		<nav class="header">
-			<div class="header-title">
-				<div class="title-top">Albuquerque</div>
-				<div class="title-bottom">ARTCC</div>
+	<body style="margin: 0; font-family: 'Lato', Roboto, sans-serif!important;">
+		<div style="background-color: #122049; color: #fff; height: 70px; box-shadow: 0 2px 2px 0 rgba(0,0,0,0.5), 0 3px 1px -2px rgba(0,0,0,0.5), 0 1px 5px 0 rgba(0,0,0,0.5)!important">
+			<div style="margin-left: 1em; padding-top: 10px;">
+				<div style="font-size: 1.3rem;">Albuquerque</div>
+				<div style="font-weight: 300; margin-left: 40px;">ARTCC</div>
 			</div>
-			<div class="header-image-container">
-				<img src="https://zabartcc.sfo3.digitaloceanspaces.com/images/zab_logo.png" class="header-image" />
+			<div style="margin-right: 1em; margin-top: -45px;">
+				<img src="https://zabartcc.sfo3.digitaloceanspaces.com/images/zab_logo.png" style="position: absolute; right: 1em; top: 10px;" width="50" height="50" />
 			</div>
-		</nav>
-		<div class="container">
+		</div>
+		<div class="container" style="width: 100%; padding: 0 1em; box-sizing: border-box; max-width: 600px; margin: 40px auto 20px auto;">
 			{{{body}}}
 		</div>
 
-		<div class="footer">
+		<div style="text-align: center; padding: 0 1em; font-size: 0.8rem; color: gray; font-style: italic;">
 			Bleep-bloop, I am a robot. Replies to this email will not be delivered.
 		</div>
 	</body>
 </html>
-<style type="text/css">
-@import url('https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap');
-body {
-  margin: 0;
-  font-family: "Lato", sans-serif!important;
-}
-
-.container {
-	width: 100%;
-	padding: 0 1em;
-	box-sizing: border-box;
-	max-width: 600px;
-	margin: 40px auto 20px auto;
-}
-
-h6 {
-	font-size: 1em;
-	font-weight: 700;
-	margin-top: 1em;
-	margin-bottom: .25em;
-}
-
-.header {
-	background-color: #122049;
-	color: #fff;
-	height: 70px;
-	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.5), 0 3px 1px -2px rgba(0,0,0,0.5), 0 1px 5px 0 rgba(0,0,0,0.5)!important;
-}
-
-.header-image-container {
-	margin-right: 1em;
-	margin-top: -45px;
-}
-
-.header-image {
-	width: 50px;
-	height: 50px;
-	position: absolute;
-	right: 1em;
-	top: 10px;
-}
-
-.header-title {
-	margin-left: 1em;
-	padding-top: 10px;
-}
-
-.title-top {
-	font-size: 1.3rem;
-}
-
-.title-bottom {
-	font-weight: 300;
-	margin-left: 40px;
-}
-
-.card {
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
-	padding: 1em;
-}
-
-.card-title {
-	font-size: 1.2rem;
-	font-weight: 300;
-	margin-bottom: 20px;
-}
-
-.card-content {
-  	font-size: 0.9rem;
-}
-
-.card-content a {
-	text-decoration: none;
-	color: #192d66;
-	font-weight: 700;
-}
-
-.footer {
-	text-align: center;
-	padding: 0 1em;
-	font-size: 0.8rem;
-	color: gray;
-	font-style: italic;
-}
-
-@media (prefers-color-scheme: dark) and (pointer:none), (pointer:coarse) {
-	.card {
-		box-shadow: 0 2px 2px 0 rgba(0,0,0,0.5), 0 3px 1px -2px rgba(0,0,0,0.5), 0 1px 5px 0 rgba(0,0,0,0.5);
-	}
-  
-	.header {
-		background-color: #191B39;
-	}
-}
-</style>
