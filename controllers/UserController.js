@@ -147,7 +147,7 @@ router.post('/login', async (req, res) => {
 			}
 			user.fname = userData.fname;
 			user.lname = userData.lname;
-			user.rating = userData.rating;
+			user.rating = userData.intRating;
 		}
 
 		if(user.oi && !user.avatar) {
