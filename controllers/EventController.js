@@ -419,6 +419,10 @@ router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 		getSignups.signups.forEach(async (signup) => {
 			await transporter.sendMail({
 				to: signup.user.email,
+				from: {
+					name: "Albuquerque ARTCC",
+					address: 'noreply@zabartcc.org'
+				},
 				subject: `Position Assignments for ${getSignups.name} | Albuquerque ARTCC`,
 				template: 'event',
 				context: {
