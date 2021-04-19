@@ -10,6 +10,10 @@ const transport = nodemailer.createTransport({
 	auth: {
 		user: 'noreply@zabartcc.org',
 		pass: process.env.EMAIL_PASSWORD
+	},
+	from: {
+		name: "Albuquerque ARTCC",
+		address: 'noreply@zabartcc.org'
 	}
 });
 
