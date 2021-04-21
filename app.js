@@ -19,6 +19,7 @@ import FeedbackController from './controllers/FeedbackController.js';
 import IdsController from './controllers/IdsController.js';
 import TrainingController from './controllers/TrainingController.js';
 import DiscordController from './controllers/DiscordController.js';
+import StatsController from './controllers/StatsController.js';
 
 // Global Dossier Model
 import Dossier from './models/Dossier.js';
@@ -92,6 +93,7 @@ app.use('/feedback', FeedbackController);
 app.use('/ids', IdsController);
 app.use('/training', TrainingController);
 app.use('/discord', DiscordController);
+app.use('/stats', StatsController);
 
 app.listen('3000', () =>{
 	console.log('Listening on port 3000');
