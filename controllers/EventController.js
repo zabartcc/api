@@ -174,7 +174,7 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 
 router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), async(req, res) => {
 	try {
-		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
+		const signup = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$pull: {
 				signups: {
 					cid: req.params.cid
@@ -182,10 +182,20 @@ router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), asy
 			}
 		});
 
+		for(const position of signup.positions) {
+			if(position.takenBy === res.user.cid) {
+				await Event.findOneAndUpdate({url: req.params.slug, 'positions.takenBy': res.user.cid}, {
+					$set: {
+						'positions.$.takenBy': null
+					}
+				});
+			}
+		}
+
 		await req.app.dossier.create({
 			by: res.user.cid,
 			affected: req.params.cid,
-			action: `%b manually deleted the event signup for %a for the event *${event.name}*.`
+			action: `%b manually deleted the event signup for %a for the event *${signup.name}*.`
 		});
 	} catch(e) {
 		res.stdRes.ret_det = e;
