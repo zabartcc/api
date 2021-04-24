@@ -141,7 +141,9 @@ router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr
 		}
 
 		const request = await TrainingRequest.findByIdAndUpdate(req.params.id, {
-			instructorCid: res.user.cid
+			instructorCid: res.user.cid,
+			startTime: req.body.startTime,
+			endTime: req.body.endTime
 		}).lean();
 
 		const session = await TrainingSession.create({
