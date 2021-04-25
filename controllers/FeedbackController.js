@@ -136,12 +136,11 @@ router.get('/own', getUser, async (req, res) => {
 		const page = +req.query.page || 1;
 		const limit = +req.query.limit || 20;
 
-		const amount = await Feedback.countDocuments({approved: true, deleted: false, controllerCid: res.user.cid});
+		const amount = await Feedback.countDocuments({approved: true, controllerCid: res.user.cid});
 		const feedback = await Feedback.aggregate([
 			{$match: { 
 				controllerCid: res.user.cid,
-				approved: true,
-				deleted: false
+				approved: true
 			}},
 			{$project: {
 				controller: 1,
