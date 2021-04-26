@@ -266,7 +266,7 @@ router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), asyn
 		const sessions = await TrainingSession.find({
 			deleted: false, submitted: true
 		}).skip(limit * (page - 1)).limit(limit).sort({
-			createdAt: 'desc'
+			startTime: 'desc'
 		}).populate(
 			'student', 'fname lname cid vis'
 		).populate(
@@ -295,7 +295,7 @@ router.get('/sessions/past', getUser, async (req, res) => {
 		const sessions = await TrainingSession.find({
 			studentCid: res.user.cid, deleted: false, submitted: true
 		}).skip(limit * (page - 1)).limit(limit).sort({
-			createdAt: 'desc'
+			startTime: 'desc'
 		}).populate(
 			'instructor', 'fname lname cid'
 		).populate(
