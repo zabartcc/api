@@ -134,7 +134,7 @@ router.put('/reject/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res)
 router.get('/own', getUser, async (req, res) => {
 	try {
 		const page = +req.query.page || 1;
-		const limit = +req.query.limit || 20;
+		const limit = +req.query.limit || 10;
 
 		const amount = await Feedback.countDocuments({approved: true, controllerCid: res.user.cid});
 		const feedback = await Feedback.aggregate([
@@ -151,9 +151,9 @@ router.get('/own', getUser, async (req, res) => {
 				anonymous: 1,
 				name: { $cond: [ "$anonymous", "$$REMOVE", "$name"]} // Conditionally remove name if submitter wishes to remain anonymous
 			}},
+			{$sort: { "createdAt": -1}},
 			{$skip: limit * (page - 1)},
 			{$limit: limit},
-			{$sort: { "createdAt": -1}}
 		]);
 
 		res.stdRes.data = {
