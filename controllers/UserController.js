@@ -9,6 +9,7 @@ import axios from 'axios';
 import {v4} from 'uuid';
 import getUser from '../middleware/getUser.js';
 import Notification from '../models/Notification.js';
+import ControllerHours from '../models/ControllerHours.js';
 
 import Discord from 'discord-oauth2';
 
@@ -191,6 +192,17 @@ router.get('/logout', async (req, res) => {
 	
 	return res.json(res.stdRes);
 });
+
+router.get('/sessions', getUser, async (req, res) => {
+	try {
+		const sessions = await ControllerHours.find({cid: res.user.cid}).sort({timeStart: -1}).limit(20);
+		res.stdRes.data = sessions;
+	} catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+})
 
 router.get('/discord', getUser, async (req, res) => {
 	try {
