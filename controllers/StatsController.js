@@ -110,4 +110,41 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 	return res.json(res.stdRes);
 })
 
+router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
+	try {
+		const d = new Date();
+		const chkDate = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDay()-60))
+		const users = await User.find({member: true}).select('fname lname cid rating vis createdAt roleCodes').lean({virtuals: true});
+		const activityReduced = {};
+		(await ControllerHours.aggregate([
+			{$match: {timeStart: {$gt: chkDate}}},
+			{$project: {
+				length: {$subtract: ['$timeEnd', '$timeStart']},
+				cid: 1
+			}},
+			{$group: {
+				_id: "$cid",
+				total: {$sum: "$length"}
+			}}
+		])).forEach(i => activityReduced[i._id] = i.total);
+		const userData = {};
+		for(let user of users) {
+			const theTotal = Math.round(activityReduced[user.cid]/1000) || 0;
+			console.log(user.createdAt < chkDate)
+			userData[user.cid] = {
+				...user,
+				total: theTotal,
+				tooLow: theTotal < 7200 && user.createdAt < chkDate,
+				protected: user.isStaff || [865270,880153,943427,988614,995625,1090280,1148671,1206494,1236818,1285036,1315435,1374893].includes(user.cid)
+			}
+		}
+		res.stdRes.data = Object.values(userData);
+	}
+	catch(e) {
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+})
+
 export default router;
