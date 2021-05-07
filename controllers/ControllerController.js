@@ -207,7 +207,9 @@ router.get('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
 			deleted: false
 		}).populate(
 			'user', 'fname lname cid'
-		).lean();
+		).sort({
+			expirationDate: 'asc'
+		}).lean();
 
 		res.stdRes.data = absences;
 	} catch(e) {
@@ -317,7 +319,7 @@ router.get('/:cid', getUser, async (req, res) => {
 		const user = await User.findOne({
 			cid: req.params.cid
 		}).select(
-			'-idsToken -discordInfo'
+			'-idsToken -discordInfo -trainingMilestones'
 		).populate('roles').populate('certifications').populate({
 			path: 'absence',
 			match: {
@@ -436,7 +438,7 @@ router.post('/visit', getUser, async (req, res) => {
 			};
 		}
 
-		const data = {
+		await VisitApplication.create({
 			cid: res.user.cid,
 			fname: res.user.fname,
 			lname: res.user.lname,
@@ -444,9 +446,7 @@ router.post('/visit', getUser, async (req, res) => {
 			email: res.user.email,
 			home: req.body.home,
 			reason: req.body.reason
-		};
-
-		await VisitApplication.create(data);
+		});
 		
 		await transporter.sendMail({
 			to: req.body.email,
@@ -457,7 +457,7 @@ router.post('/visit', getUser, async (req, res) => {
 			subject: `Visiting Application Received | Albuquerque ARTCC`,
 			template: 'visitReceived',
 			context: {
-				name: `${ req.body.fname} ${ req.body.lname}`,
+				name: `${req.body.fname} ${req.body.lname}`,
 			}
 		});
 		await transporter.sendMail({

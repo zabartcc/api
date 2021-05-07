@@ -13,7 +13,11 @@ router.get('/', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // A
 		const limit = +req.query.limit || 20;
 
 		const amount = await Feedback.countDocuments({$or: [{approved: true}, {deleted: true}]});
-		const feedback = await Feedback.find({$or: [{approved: true}, {deleted: true}]}).skip(limit * (page - 1)).limit(limit).sort({createdAt: 'desc'})
+		const feedback = await Feedback.find({
+			$or: [{approved: true}, {deleted: true}]
+		}).skip(limit * (page - 1))
+		.limit(limit)
+		.sort({createdAt: 'desc'})
 		.populate('controller', 'fname lname cid')
 		.lean();
 
@@ -81,7 +85,7 @@ router.get('/controllers', async ({res}) => { // Controller list on feedback pag
 
 router.get('/unapproved', getUser, auth(['atm', 'datm', 'ta']), async ({res}) => { // Get all unapproved feedback
 	try {
-		const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').lean();
+		const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').sort({createdAt: 'desc'}).lean();
 		res.stdRes.data = feedback;
 	} catch (e) {
 		res.stdRes.ret_det = e;
