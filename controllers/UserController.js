@@ -6,11 +6,10 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import axios from 'axios';
-import {v4} from 'uuid';
+import { randomUUID } from 'crypto';
 import getUser from '../middleware/getUser.js';
 import Notification from '../models/Notification.js';
 import ControllerHours from '../models/ControllerHours.js';
-
 import Discord from 'discord-oauth2';
 
 dotenv.config();
@@ -68,7 +67,7 @@ router.post('/idsToken', getUser, async (req, res) => {
 			};
 		}
 
-		res.user.idsToken = v4();
+		res.user.idsToken = randomUUID();
 
 		await res.user.save();
 

@@ -6,7 +6,7 @@
   "keywords": [],
   "author": "Albuquerque ARTCC",
   "contributors": [
-    "Austin Robison",
+    "Alexandra Robison",
     "Daan Janssen"
   ],
   "license": "CC-BY-NC-SA-4.0",
@@ -16,29 +16,28 @@
     "url": "https://gitlab.com/albuquerque-web-stack/api"
   },
   "dependencies": {
-    "aws-sdk": "^2.902.0",
+    "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "discord-oauth2": "^2.6.0",
-    "dotenv": "^9.0.0",
+    "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "file-type": "^16.4.0",
-    "ioredis": "^4.27.2",
+    "file-type": "^16.5.0",
+    "ioredis": "^4.27.3",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.12.7",
+    "mongoose": "^5.12.12",
     "mongoose-delete": "^0.5.3",
     "mongoose-lean-virtuals": "^0.8.0",
     "mongoose-select-virtuals": "^3.0.3",
     "multer": "^1.4.2",
     "multer-s3": "^2.9.0",
     "mysql2": "^2.2.5",
-    "nodemailer": "^6.6.0",
-    "nodemailer-express-handlebars": "^4.0.0",
-    "uuid": "^8.3.2"
+    "nodemailer": "^6.6.1",
+    "nodemailer-express-handlebars": "^4.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.25.0"
+    "eslint": "^7.27.0"
   }
 }
