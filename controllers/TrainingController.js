@@ -53,7 +53,14 @@ router.post('/request/new', getUser, async (req, res) => {
 		if((new Date(req.body.endTime).getTime() - new Date(req.body.startTime).getTime()) / 60000 < 60) {
 			throw {
 				code: 400,
-				message: "Sessions must be at least 60 minutes in length"
+				message: "Requests must be longer than 60 minutes"
+			}
+		}
+
+		if((new Date(req.body.endTime).getTime() - new Date(req.body.startTime).getTime()) / 60000 > 960) {
+			throw {
+				code: 400,
+				message: "Requests must be shorter than 16 hours"
 			}
 		}
 
