@@ -64,6 +64,18 @@ router.post('/request/new', getUser, async (req, res) => {
 			}
 		}
 
+		const totalRequests = await req.app.redis.get(`TRAININGREQ:${res.user.cid}`);
+		
+		if(totalRequests > 5) {
+			throw {
+				code: 429,
+				message: `You have requested too many sessions in the last 4 hours.`
+			}
+		}
+
+		req.app.redis.set(`TRAININGREQ:${res.user.cid}`, (+totalRequests || 0 ) + 1);
+		req.app.redis.expire(`TRAININGREQ:${res.user.cid}`, 14400)
+
 		await TrainingRequest.create({
 			studentCid: res.user.cid,
 			startTime: req.body.startTime,
