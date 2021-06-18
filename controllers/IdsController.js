@@ -180,6 +180,7 @@ router.post('/pireps', async(req, res) => {
 	} else {
 		await Pireps.create({
 			reportTime: new Date().getTime(),
+			location: req.body.ov,
 			aircraft: req.body.tp,
 			flightLevel: req.body.fl,
 			skyCond: req.body.sk,
