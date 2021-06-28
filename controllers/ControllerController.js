@@ -484,7 +484,15 @@ router.put('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 	try {
 		await VisitApplication.delete({cid: req.params.cid});
 
-		const user = await User.findOneAndUpdate({cid: req.params.cid}, {member: true, vis: true});
+		const user = await User.findOne({cid: req.params.cid});
+		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
+		const userOi = generateOperatingInitials(user.fname, user.lname, oi.map(oi => oi.oi))
+
+		user.member = true;
+		user.vis = true;
+		user.oi = userOi;
+
+		await user.save();
 
 		await transporter.sendMail({
 			to: user.email,
