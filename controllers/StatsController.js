@@ -5,7 +5,9 @@ const router = express.Router();
 
 import ControllerHours from '../models/ControllerHours.js';
 import Feedback from '../models/Feedback.js';
+import TrainingRequest from '../models/TrainingRequest.js';
 import User from '../models/User.js';
+import { DateTime as L } from 'luxon'
 
 const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const ratings = ["Unknown", "OBS", "S1", "S2", "S3", "C1", "C2", "C3", "I1", "I2", "I3", "SUP", "ADM"];
@@ -110,12 +112,13 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 	return res.json(res.stdRes);
 })
 
-router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
+router.get('/activity'/*, getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm'])*/, async (req, res) => {
 	try {
-		const d = new Date();
-		const chkDate = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDay() - 60))
+		const today = L.utc();
+		const chkDate = today.minus({days: 60});
 		const users = await User.find({member: true}).select('fname lname cid rating vis createdAt roleCodes').lean({virtuals: true});
 		const activityReduced = {};
+		const trainingReduced = {};
 		(await ControllerHours.aggregate([
 			{$match: {timeStart: {$gt: chkDate}}},
 			{$project: {
@@ -127,13 +130,21 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), 
 				total: {$sum: "$length"}
 			}}
 		])).forEach(i => activityReduced[i._id] = i.total);
+		(await TrainingRequest.aggregate([
+			{$match: {startTime: {$gt: chkDate}}},
+			{$group: {
+				_id: "$studentCid",
+				total: {$sum: 1}
+			}}
+		])).forEach(i => trainingReduced[i._id] = i.total);
 		const userData = {};
 		for(let user of users) {
-			const theTotal = Math.round(activityReduced[user.cid] / 1000) || 0;
+			const totalTime = Math.round(activityReduced[user.cid] / 1000) || 0;
+			const totalRequests = trainingReduced[user.cid] || 0;
 			userData[user.cid] = {
 				...user,
-				total: theTotal,
-				tooLow: theTotal < 7200 && user.createdAt < chkDate,
+				total: totalTime,
+				tooLow: theTotal < 7200 && user.createdAt < chkDate && !totalRequests,
 				protected: user.isStaff || [865270, 880153, 943427, 988614, 995625, 1090280, 1148671, 1206494, 1236818, 1285036, 1315435, 1374893].includes(user.cid)
 			}
 		}

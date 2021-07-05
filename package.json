@@ -27,6 +27,7 @@
     "file-type": "^16.5.0",
     "ioredis": "^4.27.6",
     "jsonwebtoken": "^8.5.1",
+    "luxon": "^1.27.0",
     "mongoose": "^5.12.15",
     "mongoose-delete": "^0.5.3",
     "mongoose-lean-virtuals": "^0.8.0",
