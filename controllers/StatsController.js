@@ -112,7 +112,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 	return res.json(res.stdRes);
 })
 
-router.get('/activity'/*, getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm'])*/, async (req, res) => {
+router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
 	try {
 		const today = L.utc();
 		const chkDate = today.minus({days: 60});
@@ -143,8 +143,9 @@ router.get('/activity'/*, getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm'])
 			const totalRequests = trainingReduced[user.cid] || 0;
 			userData[user.cid] = {
 				...user,
-				total: totalTime,
-				tooLow: theTotal < 7200 && user.createdAt < chkDate && !totalRequests,
+				totalTime,
+				totalRequests,
+				tooLow: totalTime < 7200 && user.createdAt < chkDate && !totalRequests,
 				protected: user.isStaff || [865270, 880153, 943427, 988614, 995625, 1090280, 1148671, 1206494, 1236818, 1285036, 1315435, 1374893].includes(user.cid)
 			}
 		}
