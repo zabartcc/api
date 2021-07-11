@@ -109,6 +109,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 		}
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -162,6 +163,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), 
 		res.stdRes.data = Object.values(userData);
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -177,6 +179,7 @@ router.post('/fifty/:cid', microAuth, async (req, res) => {
 		redis.expire(`FIFTY:${cid}`, 86400)
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	

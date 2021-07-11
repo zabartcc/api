@@ -77,6 +77,7 @@ router.get('/', async ({res}) => {
 		res.stdRes.data = {home, visiting};
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -149,6 +150,7 @@ router.get('/staff', async (req, res) => {
 		res.stdRes.data = staff;
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -161,6 +163,7 @@ router.get('/role', async (req, res) => {
 		res.stdRes.data = roles;
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -181,6 +184,7 @@ router.get('/oi', async (req, res) => {
 		res.stdRes.data = oi.map(oi => oi.oi);
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -192,6 +196,7 @@ router.get('/visit', getUser, auth(['atm', 'datm']), async ({res}) => {
 		const applications = await VisitApplication.find({deletedAt: null, acceptedAt: null}).lean();
 		res.stdRes.data = applications;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -213,6 +218,7 @@ router.get('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
 
 		res.stdRes.data = absences;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -256,6 +262,7 @@ router.post('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
 		});
 
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -280,6 +287,7 @@ router.delete('/absence/:id', getUser, auth(['atm', 'datm']), async(req, res) =>
 			action: `%b deleted the leave of absence for %a.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -308,6 +316,7 @@ router.get('/log', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async
 		};
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -345,6 +354,7 @@ router.get('/:cid', getUser, async (req, res) => {
 		res.stdRes.data = user;
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -423,6 +433,7 @@ router.get('/stats/:cid', async (req, res) => {
 	}
 
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -476,6 +487,7 @@ router.post('/visit', getUser, async (req, res) => {
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -493,6 +505,7 @@ router.get('/visit/status', getUser, async (req, res) => {
 		const count = await VisitApplication.countDocuments({cid: res.user.cid, deleted: false});
 		res.stdRes.data = count;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -535,6 +548,7 @@ router.put('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 		});
 	} 
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -568,6 +582,7 @@ router.delete('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) =>
 		});
 	} 
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -638,6 +653,7 @@ router.post('/:cid', microAuth, async (req, res) => {
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 		
@@ -670,6 +686,7 @@ router.put('/:cid/member', microAuth, async (req, res) => {
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 		
@@ -698,6 +715,7 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 		
@@ -759,6 +777,7 @@ router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins',
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -805,6 +824,7 @@ router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	

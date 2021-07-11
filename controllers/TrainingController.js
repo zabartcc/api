@@ -21,6 +21,7 @@ router.get('/request/upcoming', getUser, async (req, res) => {
 
 		res.stdRes.data = upcoming;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -103,6 +104,7 @@ router.post('/request/new', getUser, async (req, res) => {
 			}
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -119,6 +121,7 @@ router.get('/milestones', getUser, async (req, res) => {
 			milestones
 		};
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -144,6 +147,7 @@ router.get('/request/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 
 		res.stdRes.data = requests;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -194,6 +198,7 @@ router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr
 			}
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -217,6 +222,7 @@ router.get('/request/:date', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']),
 
 		res.stdRes.data = requests;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -232,6 +238,7 @@ router.get('/session/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 
 		res.stdRes.data = sessions;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -270,6 +277,7 @@ router.get('/session/:id', getUser, async(req, res) => {
 			res.stdRes.data = session;
 		}
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -299,6 +307,7 @@ router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), asyn
 			sessions: sessions
 		};
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -328,6 +337,7 @@ router.get('/sessions/past', getUser, async (req, res) => {
 			sessions: sessions
 		};
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -364,6 +374,7 @@ router.get('/sessions/:cid', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']),
 			controller: controller
 		};
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -374,6 +385,7 @@ router.put('/session/save/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr'
 	try {
 		await TrainingSession.findByIdAndUpdate(req.params.id, req.body);
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -417,6 +429,7 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 			link: `/dash/training/session/${req.params.id}`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 

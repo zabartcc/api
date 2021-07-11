@@ -31,6 +31,7 @@ router.get('/', async ({res}) => {
 
 		res.stdRes.data = events;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -60,6 +61,7 @@ router.get('/archive', async(req, res) => {
 			events: events
 		};
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -75,6 +77,7 @@ router.get('/:slug', async(req, res) => {
 
 		res.stdRes.data = event;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -98,6 +101,7 @@ router.get('/:slug/positions', async(req, res) => {
 
 		res.stdRes.data = event;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -144,6 +148,7 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 			action: `%b signed up for the event *${event.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -166,6 +171,7 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 			action: `%b deleted their signup for the event *${event.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -198,6 +204,7 @@ router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), asy
 			action: `%b manually deleted the event signup for %a for the event *${signup.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -228,6 +235,7 @@ router.put('/:slug/mansignup/:cid', getUser, auth(['atm', 'datm', 'ec']), async 
 			};
 		}
 	} catch (e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -282,7 +290,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			action: `%b created the event *${req.body.name}*.`
 		});
 	} catch(e) {
-		console.log(e)
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	return res.json(res.stdRes);
@@ -372,6 +380,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 			action: `%b updated the event *${event.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -390,6 +399,7 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 		});
 
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -410,6 +420,7 @@ router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 			action: `%b updated the positions assignments for the event *${event.name}*.`
 		});
 	} catch (e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -449,6 +460,7 @@ router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 			action: `%b notified controllers of positions for the event *${getSignups.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -463,6 +475,7 @@ router.put('/:slug/close', getUser, auth(['atm', 'datm', 'ec']), async (req, res
 			}
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 

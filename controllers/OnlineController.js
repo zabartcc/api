@@ -49,6 +49,7 @@ router.get('/', async ({res}) => {
 			atc: atc
 		}
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -86,6 +87,7 @@ router.get('/top', async (req, res) => {
 		res.stdRes.data.controllers = Object.values(controllerTimes).sort((a, b) => b.len - a.len).slice(0,5);
 		res.stdRes.data.positions = Object.values(positionTimes).sort((a, b) => b.len - a.len).slice(0,5);
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 

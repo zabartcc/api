@@ -52,6 +52,7 @@ router.get('/', async (req, res) => {
 		
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -80,6 +81,7 @@ router.post('/idsToken', getUser, async (req, res) => {
 		res.stdRes.data = res.user.idsToken;
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -169,6 +171,7 @@ router.post('/login', async (req, res) => {
 		res.cookie('token', apiToken, { httpOnly: true, maxAge: 2592000000, sameSite: true}); // Expires in 30 days
 	} 
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -186,6 +189,7 @@ router.get('/logout', async (req, res) => {
 		res.cookie('token', '', {expires: new Date(0)});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -197,6 +201,7 @@ router.get('/sessions', getUser, async (req, res) => {
 		const sessions = await ControllerHours.find({cid: res.user.cid}).sort({timeStart: -1}).limit(20);
 		res.stdRes.data = sessions;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -207,6 +212,7 @@ router.get('/discord', getUser, async (req, res) => {
 	try {
 		res.stdRes.data = !!res.user.discordInfo.clientId;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -292,6 +298,7 @@ router.post('/discord', async (req, res) => {
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -303,6 +310,7 @@ router.delete('/discord', getUser, async (req, res) => {
 		res.user.discordInfo = undefined;
 		await res.user.save();
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -324,6 +332,7 @@ router.get('/notifications', getUser, async(req, res) => {
 			notif
 		};
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -336,6 +345,7 @@ router.put('/notifications/read/all', getUser, async(req, res) => {
 			read: true
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -354,6 +364,7 @@ router.put('/notifications/read/:id', async(req, res) => {
 			read: true
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -364,6 +375,7 @@ router.delete('/notifications', getUser, async(req, res) => {
 	try {
 		await Notification.delete({recipient: res.user.cid});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -385,6 +397,7 @@ router.put('/profile', getUser, async (req, res) => {
 		});
 
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 

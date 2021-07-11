@@ -12,6 +12,7 @@ router.get('/users', microAuth, async (req, res) => {
 		res.stdRes.data = users;
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	

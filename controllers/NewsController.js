@@ -50,6 +50,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (
 
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -57,12 +58,19 @@ router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (
 });
 
 router.get('/:slug', async (req, res) =>{
-	const newsItem = await News
-		.findOne({uriSlug: req.params.slug})
-		.populate('user', 'fname lname')
-		.lean();
-
-	res.stdRes.data = newsItem;
+	try {
+		const newsItem = await News
+			.findOne({uriSlug: req.params.slug})
+			.populate('user', 'fname lname')
+			.lean();
+	
+		res.stdRes.data = newsItem;
+	}
+	catch(e) {
+		req.app.Sentry.captureException(e);
+		res.stdRes.ret_det = e;
+	}
+	
 	return res.json(res.stdRes);
 });
 
@@ -83,6 +91,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), asy
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}	
 
@@ -108,6 +117,7 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), 
 		});
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}	
 

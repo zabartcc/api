@@ -31,6 +31,7 @@ router.get('/downloads', async ({res}) => {
 		const downloads = await Downloads.find({deletedAt: null}).sort({category: "asc"}).lean();
 		res.stdRes.data = downloads;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -42,6 +43,7 @@ router.get('/downloads/:id', async (req, res) => {
 		const download = await Downloads.findById(req.params.id).lean();
 		res.stdRes.data = download;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
@@ -86,6 +88,7 @@ router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 			action: `%b created the file *${req.body.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -130,6 +133,7 @@ router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'd
 			action: `%b updated the file *${req.body.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -145,6 +149,7 @@ router.delete('/downloads/:id', getUser, auth(['atm', 'datm', 'ta', 'fe']), asyn
 			action: `%b deleted the file *${download.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.std_res = e;
 	}
 
@@ -157,6 +162,7 @@ router.get('/documents', async ({res}) => {
 		const documents = await Document.find({deletedAt: null}).select('-content').sort({category: "asc"}).sort({name: 'asc'}).lean();
 		res.stdRes.data = documents;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -168,6 +174,7 @@ router.get('/documents/:slug', async (req, res) => {
 		const document = await Document.findOne({slug: req.params.slug, deletedAt: null}).lean();
 		res.stdRes.data = document;
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -238,6 +245,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 		});
 		
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 
@@ -303,6 +311,7 @@ router.put('/documents/:slug', upload.single('download'), getUser, auth(['atm', 
 
 		return res.json(res.stdRes);
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.std_res = e;
 	}
 
@@ -318,6 +327,7 @@ router.delete('/documents/:id', getUser, auth(['atm', 'datm', 'ta', 'fe']), asyn
 			action: `%b deleted the document *${doc.name}*.`
 		});
 	} catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.std_res = e;
 	}
 

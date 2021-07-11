@@ -26,6 +26,7 @@ router.post('/checktoken', async (req, res) => {
 		}
 	}
 	catch(e) {
+		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
 	
