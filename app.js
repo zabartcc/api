@@ -39,7 +39,7 @@ Sentry.init({
 			app, 
 		}),
 	],
-	tracesSampleRate: 1.0,
+	tracesSampleRate: 0.5,
 });
 
 app.Sentry = Sentry;
