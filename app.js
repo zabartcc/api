@@ -51,6 +51,7 @@ app.use(body.urlencoded({
 app.redis = new Redis(process.env.REDIS_URI);
 
 app.redis.on('error', err => { throw new Error(`Failed to connect to Redis: ${err}`); });
+app.redis.on('connect', () => console.log('Successfully connected to Redis'));
 
 const origins = process.env.CORS_ORIGIN.split('|');
 
