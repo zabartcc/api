@@ -9,6 +9,7 @@ const router = express.Router();
 import ControllerHours from '../models/ControllerHours.js';
 import Feedback from '../models/Feedback.js';
 import TrainingRequest from '../models/TrainingRequest.js';
+import TrainingSession from '../models/TrainingSession.js';
 import User from '../models/User.js';
 import { DateTime as L } from 'luxon'
 
@@ -108,6 +109,58 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 			byRating: ratingCounts.reverse()
 		}
 	}
+	catch(e) {
+		req.app.Sentry.captureException(e);
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+})
+
+router.get('/ins', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
+	try {
+		let lastTraining = await TrainingSession.aggregate([
+			{$group: {
+				_id: "$studentCid",
+				studentCid: {$first: "$studentCid"},
+				lastSession: {$last: "$endTime"},
+				milestoneCode: {$first: "$milestoneCode"}
+			}},
+			{$sort: {lastSession: 1}}
+		]);
+
+		let lastRequest = await TrainingRequest.aggregate([
+			{$group: {
+				_id: "$studentCid",
+				studentCid: {$first: "$studentCid"},
+				lastRequest: {$last: "$endTime"},
+				milestoneCode: {$first: "$milestoneCode"}
+			}},
+			{$sort: {lastSession: 1}}
+		]);
+
+		await TrainingSession.populate(lastTraining, {path: 'student'})
+		await TrainingSession.populate(lastTraining, {path: 'milestone'})
+		await TrainingRequest.populate(lastRequest, {path: 'milestone'})
+
+		const allHomeControllers = await User.find({member: true, vis: false, rating: {$lt: 5}}).select('-email -idsToken -discordInfo');
+		const allCids = allHomeControllers.map(c => c.cid);
+		lastTraining = lastTraining.filter(train => (train.student?.rating < 5 && train.student?.member && !train.student?.vis));
+		const cidsWithTraining = lastTraining.map(train => train.studentCid);
+		const cidsWithoutTraining = allCids.filter(cid => !cidsWithTraining.includes(cid))
+
+		const controllersWithoutTraining = allHomeControllers.filter(c => cidsWithoutTraining.includes(c.cid));
+		lastRequest = lastRequest.reduce((acc, cur) => {
+			acc[cur.studentCid] = cur
+			return acc;
+		}, {})
+		
+		res.stdRes.data = {
+			lastTraining,
+			lastRequest,
+			controllersWithoutTraining
+		}
+	} 
 	catch(e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
