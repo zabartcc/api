@@ -406,19 +406,55 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 	return res.json(res.stdRes);
 });
 
+// router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
+// 	try {
+// 		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
+// 			$set: {
+// 				positions: req.body.assignment
+// 			}
+// 		});
+		
+// 		await req.app.dossier.create({
+// 			by: res.user.cid,
+// 			affected: -1,
+// 			action: `%b updated the positions assignments for the event *${event.name}*.`
+// 		});
+// 	} catch (e) {
+// 		req.app.Sentry.captureException(e);
+// 		res.stdRes.ret_det = e;
+// 	}
+
+// 	return res.json(res.stdRes);
+// });
+
 router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
+		const {position, cid} = req.body;
+
+		const event = await Event.findOneAndUpdate({url: req.params.slug, "positions._id": position}, {
 			$set: {
-				positions: req.body.assignment
+				'positions.$.takenBy': cid || null
 			}
 		});
+
+		const [assignedPosition] = event.positions.filter(pos => pos._id == position);
+
+		if(cid) {
+			await req.app.dossier.create({
+				by: res.user.cid,
+				affected: cid,
+				action: `%b assigned %a to *${assignedPosition.pos}* for *${event.name}*.`
+			});
+		} else {
+			await req.app.dossier.create({
+				by: res.user.cid,
+				affected: -1,
+				action: `%b unassigned *${assignedPosition.pos}* for *${event.name}*.`
+			});
+		}
 		
-		await req.app.dossier.create({
-			by: res.user.cid,
-			affected: -1,
-			action: `%b updated the positions assignments for the event *${event.name}*.`
-		});
+		res.stdRes.data = assignedPosition;
+
 	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
