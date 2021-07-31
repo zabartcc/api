@@ -121,7 +121,7 @@ router.get('/staff', async (req, res) => {
 				users: []
 			},
 			ec: {
-				title: "Events Coordinator",
+				title: "Events Team",
 				code: "ec",
 				users: []
 			},
