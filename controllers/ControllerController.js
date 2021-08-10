@@ -12,6 +12,7 @@ import auth from '../middleware/auth.js';
 import microAuth from '../middleware/microAuth.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { DateTime as L } from 'luxon'
 
 dotenv.config();
 
@@ -120,7 +121,7 @@ router.get('/staff', async (req, res) => {
 				users: []
 			},
 			ec: {
-				title: "Events Coordinator",
+				title: "Events Team",
 				code: "ec",
 				users: []
 			},
@@ -391,31 +392,31 @@ router.get('/stats/:cid', async (req, res) => {
 			app: 'app',
 			ctr: 'ctr'
 		}
-		const today = new Date();
+		const today = L.utc();
 	
-		const getMonthYearString = date => date.toLocaleString('en-US', {month: 'short', year: 'numeric'});
+		const getMonthYearString = date => date.toFormat('LLL yyyy');
 	
 		for(let i = 0; i < 12; i++) {
-			const theMonth = new Date;
-			theMonth.setMonth(today.getMonth() - i);
-			hours[getMonthYearString(theMonth)] = {
+			const theMonth = today.minus({months: i});
+			const ms = getMonthYearString(theMonth)
+			hours[ms] = {
 				del: 0,
 				gnd: 0,
 				twr: 0,
 				app: 0,
 				ctr: 0
 			};
-			hours.months.push(getMonthYearString(theMonth));
+			hours.months.push(ms);
 		}
 	
 		for(const sess of controllerHours) {
 			const thePos = sess.position.toLowerCase().match(/([a-z]{3})$/); // 🤮
 
 			if(thePos) {
-				const start = new Date(sess.timeStart);
-				const end = new Date(sess.timeEnd);
+				const start = L.fromJSDate(sess.timeStart).toUTC();
+				const end = L.fromJSDate(sess.timeEnd).toUTC();
 				const type = pos[thePos[1]];
-				const length = Math.floor(end.getTime()/1000) - Math.floor(start.getTime()/1000);
+				const length = end.toFormat('X') - start.toFormat('X');
 				let ms = getMonthYearString(start);
 	
 				if(!hours[ms]) {
@@ -440,59 +441,6 @@ router.get('/stats/:cid', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/visit', getUser, async (req, res) => {
-	try {
-		if(!res.user) {
-			throw {
-				code: 401,
-				message: "Unable to verify user"
-			};
-		}
-
-		const userData = {
-			cid: res.user.cid,
-			fname: res.user.fname,
-			lname: res.user.lname,
-			rating: res.user.ratingLong,
-			email: req.body.email,
-			home: req.body.facility,
-			reason: req.body.reason
-		}
-
-		await VisitApplication.create(userData);
-		
-		await transporter.sendMail({
-			to: req.body.email,
-			from: {
-				name: "Albuquerque ARTCC",
-				address: 'noreply@zabartcc.org'
-			},
-			subject: `Visiting Application Received | Albuquerque ARTCC`,
-			template: 'visitReceived',
-			context: {
-				name: `${res.user.fname} ${res.user.lname}`,
-			}
-		});
-		await transporter.sendMail({
-			to: 'atm@zabartcc.org, datm@zabartcc.org',
-			from: {
-				name: "Albuquerque ARTCC",
-				address: 'noreply@zabartcc.org'
-			},
-			subject: `New Visiting Application: ${res.user.fname} ${res.user.lname} | Albuquerque ARTCC`,
-			template: 'staffNewVisit',
-			context: {
-				user: userData
-			}
-		});
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);	
-});
 
 router.get('/visit/status', getUser, async (req, res) => {
 	try {
