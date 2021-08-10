@@ -1,7 +1,6 @@
 import express from 'express';
 const router = express.Router();
 import Feedback from '../models/Feedback.js';
-import m from 'mongoose';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import getUser from '../middleware/getUser.js';
