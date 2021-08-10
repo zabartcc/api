@@ -6,7 +6,6 @@ import cookie from 'cookie-parser';
 import cors from 'cors';
 import env from 'dotenv';
 import mongoose from 'mongoose';
-import body from 'body-parser';
 import Redis from 'ioredis';
 import aws from 'aws-sdk';
 
@@ -59,9 +58,8 @@ app.use((req, res, next) => {
 	next();
 });
 app.use(cookie());
-app.use(express.json());
-app.use(body.json({limit: '50mb'}));
-app.use(body.urlencoded({
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({
 	limit: '50mb',
 	extended: true,
 	parameterLimit: 50000

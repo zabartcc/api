@@ -16,31 +16,30 @@
     "url": "https://gitlab.com/albuquerque-web-stack/api"
   },
   "dependencies": {
-    "@sentry/node": "^6.8.0",
-    "@sentry/tracing": "^6.8.0",
-    "aws-sdk": "^2.935.0",
+    "@sentry/node": "^6.11.0",
+    "@sentry/tracing": "^6.11.0",
+    "aws-sdk": "^2.964.0",
     "axios": "^0.21.1",
-    "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
-    "discord-oauth2": "^2.6.0",
+    "discord-oauth2": "^2.7.1",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "file-type": "^16.5.0",
-    "ioredis": "^4.27.6",
+    "file-type": "^16.5.3",
+    "ioredis": "^4.27.7",
     "jsonwebtoken": "^8.5.1",
-    "luxon": "^1.27.0",
-    "mongoose": "^5.12.15",
+    "luxon": "^1.28.0",
+    "mongoose": "^5.13.6",
     "mongoose-delete": "^0.5.3",
     "mongoose-lean-virtuals": "^0.8.0",
     "mongoose-select-virtuals": "^3.0.3",
-    "multer": "^1.4.2",
+    "multer": "^1.4.3",
     "multer-s3": "^2.9.0",
     "mysql2": "^2.2.5",
-    "nodemailer": "^6.6.2",
+    "nodemailer": "^6.6.3",
     "nodemailer-express-handlebars": "^4.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.29.0"
+    "eslint": "^7.32.0"
   }
 }
