@@ -245,22 +245,22 @@ router.put('/:slug/mansignup/:cid', getUser, auth(['atm', 'datm', 'ec']), async 
 router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), async (req, res) => {
 	try {
 		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
-		// const positions = JSON.parse(req.body.positions);
-		
 		const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
 		const fileType = await FileType.fromFile(req.file.path);
+
 		if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 			throw {
 				code: 400,
-				message: "File type not supported"
+				message: "Banner type not supported"
 			}
 		}
 		if(req.file.size > (6 * 1024 * 1024)) {	// 6MiB
 			throw {
 				code: 400,
-				message: "File too large"
+				message: "Banner too large"
 			}
 		}
+
 		const tmpFile = await fs.readFile(req.file.path);
 		
 		await req.app.s3.putObject({
@@ -341,8 +341,29 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 				})
 			}
 		}
-		
-		event.positions = computedPositions;
+
+		if(event.positions.length > 0) {
+
+			const newPositions = [];
+
+			for(let position of computedPositions) {
+				newPositions.push(position);
+				for(let i = 0; i < event.positions.length; i++) {
+					if(event.positions[i].pos === position.pos) {
+
+						if(event.positions[i].takenBy) {
+							console.log(event.positions[i].takenBy);
+							const j = newPositions.indexOf(position);
+							newPositions[j].takenBy = event.positions[i].takenBy;
+						}
+					}
+				}
+			}
+
+			event.positions = newPositions;
+		} else {
+			event.positions = computedPositions;
+		}
 
 		if(req.file) {
 			const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
