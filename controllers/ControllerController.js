@@ -441,6 +441,59 @@ router.get('/stats/:cid', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
+router.post('/visit', getUser, async (req, res) => {
+	try {
+		if(!res.user) {
+			throw {
+				code: 401,
+				message: "Unable to verify user"
+			};
+		}
+
+		const userData = {
+			cid: res.user.cid,
+			fname: res.user.fname,
+			lname: res.user.lname,
+			rating: res.user.ratingLong,
+			email: req.body.email,
+			home: req.body.facility,
+			reason: req.body.reason
+		}
+
+		await VisitApplication.create(userData);
+		
+		await transporter.sendMail({
+			to: req.body.email,
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
+			subject: `Visiting Application Received | Albuquerque ARTCC`,
+			template: 'visitReceived',
+			context: {
+				name: `${res.user.fname} ${res.user.lname}`,
+			}
+		});
+		await transporter.sendMail({
+			to: 'atm@zabartcc.org, datm@zabartcc.org',
+			from: {
+				name: "Albuquerque ARTCC",
+				address: 'noreply@zabartcc.org'
+			},
+			subject: `New Visiting Application: ${res.user.fname} ${res.user.lname} | Albuquerque ARTCC`,
+			template: 'staffNewVisit',
+			context: {
+				user: userData
+			}
+		});
+	}
+	catch(e) {
+		req.app.Sentry.captureException(e);
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);	
+});
 
 router.get('/visit/status', getUser, async (req, res) => {
 	try {
