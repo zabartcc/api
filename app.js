@@ -30,21 +30,27 @@ env.config();
 // Setup Express
 const app = express();
 
-Sentry.init({
-	dsn: "https://1ef975d497c5404f8aadd6b97cd48424@o885721.ingest.sentry.io/5837848",  
-	integrations: [
-		new Sentry.Integrations.Http({ tracing: true }),
-		new Tracing.Integrations.Express({ 
-			app, 
-		}),
-	],
-	tracesSampleRate: 0.5,
-});
+if(process.env.NODE_ENV !== 'development') {
+	Sentry.init({
+		dsn: "https://1ef975d497c5404f8aadd6b97cd48424@o885721.ingest.sentry.io/5837848",  
+		integrations: [
+			new Sentry.Integrations.Http({ tracing: true }),
+			new Tracing.Integrations.Express({ 
+				app, 
+			}),
+		],
+		tracesSampleRate: 0.5,
+	});
 
-app.Sentry = Sentry;
-
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
+	app.use(Sentry.Handlers.requestHandler());
+	app.use(Sentry.Handlers.tracingHandler());
+} else {
+	app.Sentry = {
+		captureException(e) {
+			console.log(e);
+		}
+	};
+}
 
 app.use((req, res, next) => {
 	res.stdRes = {
@@ -97,7 +103,7 @@ app.dossier = Dossier;
 // Connect to MongoDB
 mongoose.set('toJSON', {virtuals: true});
 mongoose.set('toObject', {virtuals: true});
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true, useFindAndModify: false });
+mongoose.connect(process.env.MONGO_URI);
 const db = mongoose.connection;
 db.once('open', () => console.log('Successfully connected to MongoDB'));
 
@@ -113,7 +119,7 @@ app.use('/training', TrainingController);
 app.use('/discord', DiscordController);
 app.use('/stats', StatsController);
 
-app.use(Sentry.Handlers.errorHandler());
+if(process.env.NODE_ENV !== 'development') app.use(Sentry.Handlers.errorHandler());
 
 app.listen('3000', () =>{
 	console.log('Listening on port 3000');
