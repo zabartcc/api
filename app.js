@@ -30,7 +30,7 @@ env.config();
 // Setup Express
 const app = express();
 
-if(process.env.NODE_ENV !== 'development') {
+if(process.env.NODE_ENV === 'production') {
 	Sentry.init({
 		dsn: "https://1ef975d497c5404f8aadd6b97cd48424@o885721.ingest.sentry.io/5837848",  
 		integrations: [
@@ -48,6 +48,9 @@ if(process.env.NODE_ENV !== 'development') {
 	app.Sentry = {
 		captureException(e) {
 			console.log(e);
+		},
+		captureMessage(m) {
+			console.log(m);
 		}
 	};
 }
@@ -119,7 +122,7 @@ app.use('/training', TrainingController);
 app.use('/discord', DiscordController);
 app.use('/stats', StatsController);
 
-if(process.env.NODE_ENV !== 'development') app.use(Sentry.Handlers.errorHandler());
+if(process.env.NODE_ENV === 'production') app.use(Sentry.Handlers.errorHandler());
 
 app.listen('3000', () =>{
 	console.log('Listening on port 3000');

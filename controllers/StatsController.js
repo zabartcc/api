@@ -169,11 +169,11 @@ router.get('/ins', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (re
 	return res.json(res.stdRes);
 })
 
-router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
+router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, res) => {
 	try {
 		const today = L.utc();
-		const chkDate = today.minus({days: 60});
-		const users = await User.find({member: true}).select('fname lname cid rating vis createdAt roleCodes').lean({virtuals: true});
+		const chkDate = today.minus({days: 61});
+		const users = await User.find({member: true}).select('fname lname cid rating oi vis createdAt roleCodes certCodes').populate('certifications').lean({virtuals: true});
 		const activityReduced = {};
 		const trainingReduced = {};
 		(await ControllerHours.aggregate([
@@ -210,7 +210,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), 
 				totalRequests,
 				fiftyTime: Math.round(fiftyTime),
 				tooLow: totalTime < 7200 && user.createdAt < chkDate && !totalRequests,
-				protected: user.isStaff || [865270, 880153, 943427, 988614, 995625, 1090280, 1148671, 1206494, 1236818, 1285036, 1315435, 1374893].includes(user.cid)
+				protected: user.isStaff || [865270, 880153, 943427, 988614, 995625, 1090280, 1148671, 1206494, 1285036, 1315435].includes(user.cid)
 			}
 		}
 		res.stdRes.data = Object.values(userData);
