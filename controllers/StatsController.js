@@ -173,7 +173,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 	try {
 		const today = L.utc();
 		const chkDate = today.minus({days: 61});
-		const users = await User.find({member: true}).select('fname lname cid rating oi vis createdAt roleCodes certCodes').populate('certifications').lean({virtuals: true});
+		const users = await User.find({member: true}).select('fname lname cid rating oi vis createdAt roleCodes certCodes joinDate').populate('certifications').lean({virtuals: true});
 		const activityReduced = {};
 		const trainingReduced = {};
 
@@ -212,7 +212,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 				totalTime,
 				totalRequests,
 				fiftyTime: Math.round(fiftyTime),
-				tooLow: totalTime < 7200 && user.createdAt < chkDate && !totalRequests,
+				tooLow: totalTime < 7200 && (user.joinDate ?? user.createdAt) < chkDate && !totalRequests,
 				protected: user.isStaff || [865270, 880153, 943427, 988614, 995625, 1090280, 1148671, 1206494, 1285036, 1315435].includes(user.cid)
 			}
 		}
