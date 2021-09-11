@@ -176,6 +176,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 		const users = await User.find({member: true}).select('fname lname cid rating oi vis createdAt roleCodes certCodes').populate('certifications').lean({virtuals: true});
 		const activityReduced = {};
 		const trainingReduced = {};
+
 		(await ControllerHours.aggregate([
 			{$match: {timeStart: {$gt: chkDate}}},
 			{$project: {
@@ -202,8 +203,10 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 				req.app.redis.set(`FIFTY:${user.cid}`, fiftyTime)
 				req.app.redis.expire(`FIFTY:${user.cid}`, 86400)
 			}
+			
 			const totalTime = Math.round(activityReduced[user.cid] / 1000) || 0;
 			const totalRequests = trainingReduced[user.cid] || 0;
+
 			userData[user.cid] = {
 				...user,
 				totalTime,

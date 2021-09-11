@@ -22,6 +22,7 @@ const userSchema = new m.Schema({
 	homeFacility: String,
 	bio: String,
 	avatar: String,
+	joinDate: Date,
 	discordInfo: {
 		clientId: String,
 		accessToken: String,

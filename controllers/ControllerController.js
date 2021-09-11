@@ -674,8 +674,9 @@ router.put('/:cid/member', microAuth, async (req, res) => {
 
 		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
 
-		user.member = req.body.member,
-		user.oi = (req.body.member) ? generateOperatingInitials(user.fname, user.lname, oi.map(oi => oi.oi)) : null
+		user.member = req.body.member;
+		user.oi = (req.body.member) ? generateOperatingInitials(user.fname, user.lname, oi.map(oi => oi.oi)) : null;
+		user.joinDate = req.body.member ? new Date() : null;
 
 		await user.save();
 
@@ -705,7 +706,8 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 			};
 		}
 
-		user.vis = req.body.vis,
+		user.vis = req.body.vis;
+		user.joinDate = new Date();
 
 		await user.save();
 
