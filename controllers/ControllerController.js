@@ -18,7 +18,7 @@ dotenv.config();
 
 router.get('/', async ({res}) => {
 	try {
-		const home = await User.find({vis: false}).select('-email -idsToken -discordInfo').sort({
+		const home = await User.find({vis: false, cid: { "$nin": [995625] }}).select('-email -idsToken -discordInfo').sort({
 			rating: 'desc',
 			lname: 'asc',
 			fname: 'asc'
@@ -341,7 +341,7 @@ router.get('/:cid', getUser, async (req, res) => {
 			select: '-reason'
 		}).lean({virtuals: true});
 
-		if(!user) {
+		if(!user || [995625].includes(user.cid)) {
 			throw {
 				code: 503,
 				message: "Unable to find controller"
