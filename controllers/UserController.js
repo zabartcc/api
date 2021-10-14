@@ -198,7 +198,7 @@ router.get('/logout', async (req, res) => {
 
 router.get('/sessions', getUser, async (req, res) => {
 	try {
-		const sessions = await ControllerHours.find({cid: res.user.cid}).sort({timeStart: -1}).limit(20);
+		const sessions = await ControllerHours.find({cid: res.user.cid}).sort({timeStart: -1}).limit(20).lean();
 		res.stdRes.data = sessions;
 	} catch(e) {
 		req.app.Sentry.captureException(e);
