@@ -41,7 +41,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 						month: "$month",
 						year: "$year"
 					}, 
-					total: {$sum: 1},
+					total: { $sum: 1 },
 					month: { $first: "$month" },
 					year: { $first: "$year" },
 				}
