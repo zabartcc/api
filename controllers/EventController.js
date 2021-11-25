@@ -1,7 +1,7 @@
 import e from 'express';
 import transporter from '../config/mailer.js';
 import multer from 'multer';
-import FileType from 'file-type';
+import { fileTypeFromFile } from 'file-type';
 import fs from 'fs/promises';
 const router = e.Router();
 import Event from '../models/Event.js';
@@ -246,7 +246,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 	try {
 		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
-		const fileType = await FileType.fromFile(req.file.path);
+		const fileType = await fileTypeFromFile(req.file.path);
 
 		if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 			throw {
@@ -367,7 +367,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 
 		if(req.file) {
 			const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
-			const fileType = await FileType.fromFile(req.file.path);
+			const fileType = await fileTypeFromFile(req.file.path);
 			if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 				throw {
 					code: 400,
