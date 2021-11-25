@@ -232,7 +232,7 @@ router.get('/request/:date', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']),
 		const requests = await TrainingRequest.find({
 			startTime: {
 				$gte: (d.toISOString()),
-				$lte: (dayAfter.toISOString())
+				$lt: (dayAfter.toISOString())
 			},
 			instructorCid: null,
 			deleted: false
