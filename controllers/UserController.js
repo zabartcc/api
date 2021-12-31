@@ -147,8 +147,10 @@ router.post('/login', async (req, res) => {
 			if(!user.email) {
 				user.email = userData.email;
 			}
-			user.fname = userData.firstname;
-			user.lname = userData.lastname;
+			if(!user.prefName ?? true) {
+				user.fname = userData.firstname;
+				user.lname = userData.lastname;
+			}
 			user.rating = userData.intRating;
 		}
 

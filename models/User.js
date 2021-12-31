@@ -23,6 +23,7 @@ const userSchema = new m.Schema({
 	bio: String,
 	avatar: String,
 	joinDate: Date,
+	prefName: Boolean,
 	discordInfo: {
 		clientId: String,
 		accessToken: String,
