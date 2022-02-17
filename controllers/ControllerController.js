@@ -396,7 +396,7 @@ router.get('/stats/:cid', async (req, res) => {
 	
 		const getMonthYearString = date => date.toFormat('LLL yyyy');
 	
-		for(let i = 0; i < 12; i++) {
+		for(let i = 0; i < 13; i++) {
 			const theMonth = today.minus({months: i});
 			const ms = getMonthYearString(theMonth)
 			hours[ms] = {
