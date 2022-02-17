@@ -47,7 +47,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 				}
 			},
 			{$sort: {year: -1, month: -1}},
-			{$limit: 12}
+			{$limit: 13}
 		]);
 
 		const hours = await ControllerHours.aggregate([
@@ -76,7 +76,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
                 }
 			},
 			{$sort: {year: -1, month: -1}},
-			{$limit: 12}
+			{$limit: 13}
 		]);
 		
 		for(const item of feedback) {
