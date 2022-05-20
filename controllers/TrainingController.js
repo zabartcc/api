@@ -8,6 +8,7 @@ import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
+import microAuth from '../middleware/microAuth.js';
 
 router.get('/request/upcoming', getUser, async (req, res) => {
 	try {
@@ -332,6 +333,44 @@ router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), asyn
 	return res.json(res.stdRes);
 });
 
+router.get('/sessions/forsync', microAuth, async (req, res) => {
+	try {
+		const sessions = await TrainingSession.find({ $or: [{synced: false}, {synced: null}] })
+		.lean();
+
+		res.stdRes.data = sessions;
+	} catch(e) {
+		req.app.Sentry.captureException(e);
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
+router.put('/sessions/setsynced', microAuth, async (req, res) => {
+	try {
+		if(!req.body.ids || !req.body.ids.length) {
+			throw {
+				code: 400,
+				messgage: 'Missing session IDs'
+			};
+		}
+
+		const sessionIdsArray = req.body.ids;
+
+		for(const id of sessionIdsArray) {
+			await TrainingSession.findByIdAndUpdate(id, {
+				synced: true
+			});
+		}
+	}  catch(e) {
+		req.app.Sentry.captureException(e);
+		res.stdRes.ret_det = e;
+	}
+	
+	return res.json(res.stdRes);
+})
+
 router.get('/sessions/past', getUser, async (req, res) => {
 	try {
 		const page = +req.query.page || 1;
@@ -434,7 +473,8 @@ router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mt
 			ots: req.body.ots,
 			studentNotes: req.body.studentNotes,
 			insNotes: req.body.insNotes,
-			submitted: true
+			submitted: true,
+			synced: false
 		});
 
 		const instructor = await User.findOne({cid: session.instructorCid}).select('fname lname').lean();
