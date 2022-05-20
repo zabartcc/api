@@ -335,8 +335,11 @@ router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), asyn
 
 router.get('/sessions/forsync', microAuth, async (req, res) => {
 	try {
-		const sessions = await TrainingSession.find({ $or: [{synced: false}, {synced: null}] })
-		.lean();
+		const sessions = await TrainingSession.find({
+			$or: [{synced: false}, {synced: null}] 
+		}).sort({
+			createdAt: 'desc'
+		}).lean();
 
 		res.stdRes.data = sessions;
 	} catch(e) {
