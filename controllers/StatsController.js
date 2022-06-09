@@ -213,7 +213,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 				totalRequests,
 				fiftyTime: Math.round(fiftyTime),
 				tooLow: totalTime < 7200 && (user.joinDate ?? user.createdAt) < chkDate && !totalRequests,
-				protected: user.isStaff || [999230, 1118012, 1167179, 1240411, 1371395, 1427985, 1457669].includes(user.cid)
+				protected: user.isStaff || [999230, 995625, 1118012, 1167179, 1371395, 1427985, 1457669].includes(user.cid)
 			}
 		}
 		res.stdRes.data = Object.values(userData);
