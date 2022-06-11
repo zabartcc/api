@@ -28,7 +28,7 @@ const upload = multer({
 // Downloads
 router.get('/downloads', async ({res}) => {
 	try {
-		const downloads = await Downloads.find({deletedAt: null}).sort({category: "asc"}).lean();
+		const downloads = await Downloads.find({deletedAt: null}).sort({category: "asc"}).sort({name: 'asc'}).lean();
 		res.stdRes.data = downloads;
 	} catch(e) {
 		req.app.Sentry.captureException(e);
