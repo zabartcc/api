@@ -16,8 +16,8 @@ The following people have contributed to this project. If you have contributed, 
 
 Daan Janssen  
 Alexandra Robison  
-Jeremy Werderman
-Evan Bradley
+Jeremy Werderman  
+Evan Bradley  
 
 Thank you to all contributors, past and present.
 
