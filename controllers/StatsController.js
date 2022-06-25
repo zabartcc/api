@@ -11,26 +11,26 @@ import Feedback from '../models/Feedback.js';
 import TrainingRequest from '../models/TrainingRequest.js';
 import TrainingSession from '../models/TrainingSession.js';
 import User from '../models/User.js';
-import { DateTime as L } from 'luxon'
+import { DateTime as L } from 'luxon';
 
-const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const ratings = ["Unknown", "OBS", "S1", "S2", "S3", "C1", "C2", "C3", "I1", "I2", "I3", "SUP", "ADM"];
 
 router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
 	try {
 		const d = new Date();
-		const thisMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))
-		const nextMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth()+1, 1))
+		const thisMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+		const nextMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth()+1, 1));
 		const totalTime = await ControllerHours.aggregate([
 			{$match: {timeStart: {$gt: thisMonth, $lt: nextMonth}}},
 			{$project: {length: {$subtract: ['$timeEnd', '$timeStart']}}},
 			{$group: {_id: null, total: {$sum: '$length'}}}
-		])
+		]);
 
 		const sessionCount = await ControllerHours.aggregate([
 			{$match: {timeStart: {$gt: thisMonth, $lt: nextMonth}}},
 			{$group: {_id: null, total: {$sum: 1}}}
-		])
+		]);
 
 		const feedback = await Feedback.aggregate([
 			{$match: {approved: true}},
@@ -82,6 +82,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 		for(const item of feedback) {
 			item.month = months[item.month]
 		}
+
 		for(const item of hours) {
 			item.month = months[item.month]
 			item.total = Math.round(item.total/1000)
@@ -93,7 +94,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 			{$match: {member: true}},
 			{$group: {_id: "$rating", count: {$sum: 1}}},
 			{$sort: {_id: -1}}
-		])
+		]);
 		
 		for(const item of ratingCounts) {
 			item.rating = ratings[item._id];
@@ -108,8 +109,7 @@ router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), asy
 			vis: visitorCount,
 			byRating: ratingCounts.reverse()
 		}
-	}
-	catch(e) {
+	} catch(e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -139,17 +139,19 @@ router.get('/ins', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (re
 			{$sort: {lastSession: 1}}
 		]);
 
-		await TrainingSession.populate(lastTraining, {path: 'student'})
-		await TrainingSession.populate(lastTraining, {path: 'milestone'})
-		await TrainingRequest.populate(lastRequest, {path: 'milestone'})
+		await TrainingSession.populate(lastTraining, {path: 'student'});
+		await TrainingSession.populate(lastTraining, {path: 'milestone'});
+		await TrainingRequest.populate(lastRequest, {path: 'milestone'});
 
 		const allHomeControllers = await User.find({member: true, vis: false, rating: {$lt: 5}}).select('-email -idsToken -discordInfo');
-		const allCids = allHomeControllers.map(c => c.cid);
-		lastTraining = lastTraining.filter(train => (train.student?.rating < 5 && train.student?.member && !train.student?.vis));
-		const cidsWithTraining = lastTraining.map(train => train.studentCid);
-		const cidsWithoutTraining = allCids.filter(cid => !cidsWithTraining.includes(cid))
+		const allCids = allHomeControllers.map((c) => c.cid);
 
-		const controllersWithoutTraining = allHomeControllers.filter(c => cidsWithoutTraining.includes(c.cid));
+		lastTraining = lastTraining.filter(train => (train.student?.rating < 5 && train.student?.member && !train.student?.vis));
+
+		const cidsWithTraining = lastTraining.map(train => train.studentCid);
+		const cidsWithoutTraining = allCids.filter((cid) => !cidsWithTraining.includes(cid))
+
+		const controllersWithoutTraining = allHomeControllers.filter((c) => cidsWithoutTraining.includes(c.cid));
 		lastRequest = lastRequest.reduce((acc, cur) => {
 			acc[cur.studentCid] = cur
 			return acc;
@@ -160,8 +162,7 @@ router.get('/ins', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (re
 			lastRequest,
 			controllersWithoutTraining
 		}
-	} 
-	catch(e) {
+	} catch(e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -217,8 +218,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 			}
 		}
 		res.stdRes.data = Object.values(userData);
-	}
-	catch(e) {
+	} catch(e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -233,8 +233,7 @@ router.post('/fifty/:cid', microAuth, async (req, res) => {
 		const fiftyData = await getFiftyData(cid);
 		redis.set(`FIFTY:${cid}`, fiftyData)
 		redis.expire(`FIFTY:${cid}`, 86400)
-	}
-	catch(e) {
+	} catch(e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -242,15 +241,14 @@ router.post('/fifty/:cid', microAuth, async (req, res) => {
 	return res.json(res.stdRes);
 })
 
-const getFiftyData = async cid => {
+const getFiftyData = async(cid) => {
 	const today = L.utc();
 	const chkDate = today.minus({days: 60});
-	
 	const {data: fiftyData} = await axios.get(`https://api.vatsim.net/api/ratings/${cid}/atcsessions/?start=${chkDate.toISODate()}&group_by_callsign`);
 	
 	let total = 0;
 	
-	for(const session of fiftyData.results) {
+	for(const session of fiftyData) {
 		const callsignParts = session.callsign.split('_');
 
 		if(!zab.atcPos.includes(callsignParts[0])) {
