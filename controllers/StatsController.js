@@ -198,13 +198,6 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 		])).forEach(i => trainingReduced[i._id] = i.total);
 		const userData = {};
 		for(let user of users) {
-			let fiftyTime = await req.app.redis.get(`FIFTY:${user.cid}`);
-			if(!fiftyTime) {
-				fiftyTime = await getFiftyData(user.cid);
-				req.app.redis.set(`FIFTY:${user.cid}`, fiftyTime)
-				req.app.redis.expire(`FIFTY:${user.cid}`, 86400)
-			}
-			
 			const totalTime = Math.round(activityReduced[user.cid] / 1000) || 0;
 			const totalRequests = trainingReduced[user.cid] || 0;
 
@@ -212,7 +205,6 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 				...user,
 				totalTime,
 				totalRequests,
-				fiftyTime: Math.round(fiftyTime),
 				tooLow: totalTime < 7200 && (user.joinDate ?? user.createdAt) < chkDate && !totalRequests,
 				protected: user.isStaff || [995625, 1118012, 1167179, 1427985].includes(user.cid)
 			}
@@ -225,38 +217,5 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 	
 	return res.json(res.stdRes);
 })
-
-router.post('/fifty/:cid', microAuth, async (req, res) => {
-	try {
-		const { redis } = req.app;
-		const { cid } = req.params;
-		const fiftyData = await getFiftyData(cid);
-		redis.set(`FIFTY:${cid}`, fiftyData)
-		redis.expire(`FIFTY:${cid}`, 86400)
-	} catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
-})
-
-const getFiftyData = async(cid) => {
-	const today = L.utc();
-	const chkDate = today.minus({days: 60});
-	const {data: fiftyData} = await axios.get(`https://api.vatsim.net/api/ratings/${cid}/atcsessions/?start=${chkDate.toISODate()}&group_by_callsign`);
-	
-	let total = 0;
-	
-	for(const session of fiftyData) {
-		const callsignParts = session.callsign.split('_');
-
-		if(!zab.atcPos.includes(callsignParts[0])) {
-			total += session.total_minutes_on_callsign;
-		}
-	}
-
-	return total;
-}
 
 export default router;
