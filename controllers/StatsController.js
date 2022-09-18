@@ -174,7 +174,7 @@ router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, 
 	try {
 		const today = L.utc();
 		const chkDate = today.minus({days: 61});
-		const users = await User.find({member: true}).select('fname lname cid rating oi vis createdAt roleCodes certCodes joinDate').populate('certifications').lean({virtuals: true});
+		const users = await User.find({member: true}).select('fname lname cid rating oi vis createdAt roleCodes certCodes joinDate').sort({lname: 1}).populate('certifications').lean({virtuals: true});
 		const activityReduced = {};
 		const trainingReduced = {};
 
