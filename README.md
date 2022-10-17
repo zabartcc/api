@@ -1,7 +1,7 @@
-# Albuquerque ARTCC 2020  - API
-An Express app that provides data to UI
+# Albuquerque ARTCC - API
+An Express app that provides data to UI.
 
-# License
+## License
 
 The Albuquerque ARTCC website is hereby released under the Creative Commons CC BY-NC-SA 4.0 license. Please ensure you are familiar with the license before contributing to this project. A couple of key takeaways:
 
@@ -11,17 +11,18 @@ The Albuquerque ARTCC website is hereby released under the Creative Commons CC B
 
 https://creativecommons.org/licenses/by-nc-sa/4.0/
 
-# Contributors
-The following people have contributed to this project. If you have contributed, but your name is not listed here, or if you are on this list and would like to be removed, please email atm@zabartcc.org.
+## Contributors
+The following people have contributed to this project. If you have contributed, but your name is not listed here, or if you are on this list and would like to be removed, please reach out to the ZAB web team (or open a PR).
 
-Daan Janssen  
-Alexandra Robison  
-Jeremy Werderman  
-Evan Bradley  
+- Daan Janssen  
+- Alexandra Robison  
+- Jeremy Werderman  
+- Evan Bradley
+- Cole Connelly (@cdconn00)
 
 Thank you to all contributors, past and present.
 
-# Contributing
+## Contributing
 
 Prerequisites:
 - Most recent LTS of Node.js (v16), with the corresponding version of npm.
@@ -33,14 +34,17 @@ If you wish to contribute, please do the following:
 2. Run `npm install`
 3. Run `node app.js`
 
-There are no DB seeds provided with this project. If you would like to contriubute, please contact Austin for the dev DB creds.
-
+There are no DB seeds provided with this project. Reach out to the Web team for access.
 
 ## Contributing Guidelines and Style
 
 In order to maintain consistent code, please adhere to the following guidelines:
 
 - The `master` branch is protected, therefore you should always be working in a branch. Please name the branch `OI-feature_name` where `OI` is your operating initials and `feature_name` is a brief description of the feature (`II-feedback_form` or `DJ-admin_stats_page`). Please make sure to follow the capitalization standards.
-- When you have completed your updates, push them to your branch, and then open a merge request to `development` in GitLab.
-- Please follow the styleguide for how to format your code.
+- When you have completed your updates, push them to your branch, and then open a merge request to `master` in GitHub.
+- Please follow the style guide for how to format your code.
 - We recommend you use VSCode with at least the ESLint plugin installed and configured to auto-fix on save. ESLint can take care of a lot of little mistakes automatically.
+
+## Roadmap
+
+We are in the process of making changes to our contribution and CI/CD processes -- check back soon for more info.
