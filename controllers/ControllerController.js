@@ -120,6 +120,11 @@ router.get('/staff', async (req, res) => {
 				code: "ta",
 				users: []
 			},
+			dta: {
+				title: "Deputy Training Administrator",
+				code: "dta",
+				users: []
+			},
 			ec: {
 				title: "Events Team",
 				code: "ec",
