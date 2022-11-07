@@ -1,5 +1,6 @@
 import e from 'express';
 const router = e.Router();
+// import User from '../models/User.js';
 import User from '../models/User.js';
 import ControllerHours from '../models/ControllerHours.js';
 import Role from '../models/Role.js';
@@ -103,6 +104,8 @@ router.get('/staff', async (req, res) => {
 				message: "Unable to retrieve staff members"
 			};
 		}
+		console.log(users);
+		
 
 		const staff = {
 			atm: {
@@ -137,15 +140,21 @@ router.get('/staff', async (req, res) => {
 			},
 			ins: {
 				title: "Instructors",
-				code: "instructors",
+				code: "ins",
 				users: []
 			},
 			mtr: {
 				title: "Mentors",
-				code: "instructors",
+				code: "mtr",
+				users: []
+			},
+			dta: {
+				title: "Deputy Training Administrator",
+				code: "dta",
 				users: []
 			},
 		};
+		// something dosen't work here
 		users.forEach(user => user.roleCodes.forEach(role => staff[role].users.push(user)));
 
 		res.stdRes.data = staff;
