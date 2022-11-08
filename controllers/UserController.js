@@ -119,7 +119,8 @@ router.post("/login", oAuth, async (req, res) => {
     if (Object.values(userData).some((x) => x == null || x == "")) {
       throw {
         code: 400,
-        message: "User must authorize all requested VATSIM data.",
+        message:
+          "User must authorize all requested VATSIM data. [Authorize Data]",
       };
     }
 
