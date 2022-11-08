@@ -96,6 +96,7 @@ router.post("/idsToken", getUser, async (req, res) => {
   return res.json(res.stdRes);
 });
 
+// Endpoint to preform user login, uses oAuth middleware to retrieve an access token
 router.post("/login", oAuth, async (req, res) => {
   try {
     const { access_token } = req.oauth;
