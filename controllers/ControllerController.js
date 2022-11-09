@@ -103,7 +103,6 @@ router.get('/staff', async (req, res) => {
 				message: "Unable to retrieve staff members"
 			};
 		}
-		
 
 		const staff = {
 			atm: {
