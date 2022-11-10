@@ -9,7 +9,12 @@ export default function (req, res, next) {
   const vatsimOauthTokenEndpoint =
     process.env.VATSIM_AUTH_ENDPOINT + "/oauth/token";
 
-  if (process.env.NODE_ENV === "production") {
+  if (
+    process.env.NODE_ENV === "production" &&
+    vatsimOauthTokenEndpoint.includes("dev")
+  ) {
+    redirectUrl = "https://beta.zabartcc.org" + redirectUrl;
+  } else if (process.env.NODE_ENV === "production") {
     redirectUrl = "https://zabartcc.org" + redirectUrl;
   } else {
     redirectUrl = "http://localhost:8080" + redirectUrl;
