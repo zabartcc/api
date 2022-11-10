@@ -35,8 +35,7 @@ export default function (req, res, next) {
       next();
     })
     .catch((e) => {
-      console.log(e);
-      //req.app.Sentry.captureException(e);
-      res.status(500).send(e);
+      req.app.Sentry.captureException(e);
+      res.status(500);
     });
 }
