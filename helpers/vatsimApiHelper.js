@@ -15,7 +15,7 @@ export default {
         return response?.data?.data;
       })
       .catch((e) => {
-        req.app.Sentry.captureException(e);
+        //req.app.Sentry.captureException(e);
         res.status(500);
       });
   },
