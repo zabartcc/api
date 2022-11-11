@@ -13,10 +13,6 @@ export default {
       })
       .then((response) => {
         return response?.data?.data;
-      })
-      .catch((e) => {
-        req.app.Sentry.captureException(e);
-        res.status(500);
       });
   },
 };

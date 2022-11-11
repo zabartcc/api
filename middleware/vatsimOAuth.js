@@ -9,7 +9,9 @@ export default function (req, res, next) {
   const vatsimOauthTokenEndpoint =
     process.env.VATSIM_AUTH_ENDPOINT + "/oauth/token";
 
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "beta") {
+    redirectUrl = "https://beta.zabartcc.org" + redirectUrl;
+  } else if (process.env.NODE_ENV === "production") {
     redirectUrl = "https://zabartcc.org" + redirectUrl;
   } else {
     redirectUrl = "http://localhost:8080" + redirectUrl;
@@ -34,7 +36,6 @@ export default function (req, res, next) {
     })
     .catch((e) => {
       req.app.Sentry.captureException(e);
-
-      res.status(500);
+      res.status(500).send();
     });
 }
