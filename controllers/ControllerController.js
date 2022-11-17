@@ -145,7 +145,13 @@ router.get('/staff', async (req, res) => {
 				code: "instructors",
 				users: []
 			},
+			dta: {
+				title: "Deputy Training Administrator",
+				code: "dta",
+				users: []
+			},
 		};
+
 		users.forEach(user => user.roleCodes.forEach(role => staff[role].users.push(user)));
 
 		res.stdRes.data = staff;
