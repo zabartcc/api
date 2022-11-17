@@ -102,9 +102,15 @@ router.post("/login", oAuth, async (req, res) => {
     const { access_token } = req.oauth;
 
     // Use access token to attempt to get user data.
-    const vatsimUserData = await vatsimApiHelper.getUserInformation(
-      access_token
-    );
+    let vatsimUserData = await vatsimApiHelper.getUserInformation(access_token);
+
+    // VATSIM API returns 200 codes on some errors, use CID as a check to see if there was an error.
+    if (vatsimUserData?.data?.cid == null) {
+      let error = vatsimUserData;
+      throw error;
+    } else {
+      vatsimUserData = vatsimUserData.data;
+    }
 
     const userData = {
       email: vatsimUserData.personal.email,
@@ -183,6 +189,7 @@ router.post("/login", oAuth, async (req, res) => {
   } catch (e) {
     req.app.Sentry.captureException(e);
     res.stdRes.ret_det = e;
+    res.status(500);
   }
 
   return res.json(res.stdRes);
