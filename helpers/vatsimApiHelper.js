@@ -11,7 +11,7 @@ export default {
       .get(getUserEndpoint, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
-      .then((response) => response?.data?.data)
+      .then((response) => response?.data)
       .catch(function (error) {
         let errorToThrow = {};
 
