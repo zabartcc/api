@@ -106,6 +106,12 @@ router.post("/login", oAuth, async (req, res) => {
       access_token
     );
 
+    // VATSIM API returns 200 codes on some errors, use CID as a check to see if there was an error.
+    if (vatsimUserData?.cid == null) {
+      let error = vatsimUserData;
+      throw error;
+    }
+
     const userData = {
       email: vatsimUserData.personal.email,
       firstName: vatsimUserData.personal.name_first,
@@ -183,6 +189,7 @@ router.post("/login", oAuth, async (req, res) => {
   } catch (e) {
     req.app.Sentry.captureException(e);
     res.stdRes.ret_det = e;
+    res.status(500);
   }
 
   return res.json(res.stdRes);
