@@ -19,7 +19,6 @@ The following people have contributed to this project. If you have contributed, 
 - Jeremy Werderman  
 - Evan Bradley
 - Cole Connelly (@cdconn00)
-- Giovanni Fatelli (@frafire)
 
 Thank you to all contributors, past and present.
 
