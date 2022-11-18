@@ -2,16 +2,14 @@ name: Build and Deploy
 
 on:
   push:
-    branches: "DD_hf-login-issue"
+    branches: [master]
 
-jobs:
+jobs: 
   build-docker-image:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout master
         uses: actions/checkout@v2
-        with:
-          ref: "DD_hf-login-issue"
       - name: Log in to container registry
         uses: docker/login-action@v1
         with:
