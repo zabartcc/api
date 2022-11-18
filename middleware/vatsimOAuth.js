@@ -11,7 +11,7 @@ export default function (req, res, next) {
 
   if (process.env.NODE_ENV === "beta") {
     redirectUrl = "https://beta.zabartcc.org" + redirectUrl;
-  } else if (process.env.NODE_ENV === "production") {
+  } else if (process.env.NODE_ENV === "prod") {
     redirectUrl = "https://zabartcc.org" + redirectUrl;
   } else {
     redirectUrl = "http://localhost:8080" + redirectUrl;
