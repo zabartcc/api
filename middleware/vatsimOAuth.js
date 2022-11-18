@@ -35,7 +35,7 @@ export default function (req, res, next) {
       next();
     })
     .catch((e) => {
-      console.log(e);
-      res.status(500).json(e);
+      console.error(e);
+      res.status(500).send();
     });
 }
