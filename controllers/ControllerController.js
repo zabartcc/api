@@ -731,7 +731,7 @@ router.put('/:cid/visit', microAuth, async (req, res) => {
 	return res.json(res.stdRes);
 })
 
-router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm', 'ins', 'mtr']), async (req, res) => {
+router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'wm', 'ins']), async (req, res) => {
 	try {
 		if(!req.body.form) {
 			throw {
