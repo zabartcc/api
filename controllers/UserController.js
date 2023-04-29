@@ -183,9 +183,9 @@ router.post("/login", oAuth, async (req, res) => {
 
     res.cookie("token", apiToken, {
       httpOnly: true,
-      maxAge: 2592000000,
+      maxAge: 432000000,
       sameSite: true,
-    }); // Expires in 30 days
+    }); // Expires in 5 days
   } catch (e) {
     req.app.Sentry.captureException(e);
     res.stdRes.ret_det = e;
