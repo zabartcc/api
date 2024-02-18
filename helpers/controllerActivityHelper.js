@@ -17,14 +17,25 @@ function checkControllerActivity(){
     const usersNeedingActivityReminder = User.find({lastDateCheckedForActivity: {$lte: daysBeforeActivityReminder}})
 }
 
-async function getControllerActivity(cid){
+async function registerSendControllerActivityReminders(){
     const today = L.utc();
-    const chkDate = today.minus({days: 10001});
+    const chkDate = today.minus({days: 60});
 
+    let usersNeedingActivityCheck = await User.find(
+        { 
+            deleted: false, 
+            $or: [ {vis: true}, {member: true} ],
+            $or: [{lastDateCheckedForActivity: {$lte: today}}, {lastDateCheckedForActivity: null}]
+        }).exec();
 
-    var hours = await ControllerHours.aggregate( [
+    let userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u => u.cid);
+
+    let usersHoursControlledInTimeFrame = await ControllerHours.aggregate( [
         {
-           $match: { cid: cid} 
+            $match: {
+                timeStart: {$gt: chkDate},
+                cid: { $in: userCidsNeedingActivityCheck } 
+            },
         },
         {$project: {
             "difference": {
@@ -41,13 +52,21 @@ async function getControllerActivity(cid){
         }}
      ] ).exec();
 
-     console.log(hours[0]);
+    let controllersCidsUnderTwoHours = usersHoursControlledInTimeFrame.filter(h => h.totalDifference <= 2).map(u => u._id);
+    console.log(controllersCidsUnderTwoHours)
 
-    const totalTime = Math.round(hours[0].total / 1000) || 0;
+    let controllerCidsWithNoHours = userCidsNeedingActivityCheck.filter(u => !controllersCidsUnderTwoHours.includes(u.cid));
+    console.log(controllerCidsWithNoHours)
+
+    let controllerCidsNeedReminder = controllerCidsWithNoHours.concat(controllersCidsUnderTwoHours);
+
+    console.log(controllerCidsNeedReminder);
+
+    const totalTime = Math.round(usersHoursControlledInTimeFrame[0].total / 1000) || 0;
 
     return totalTime;
 }
 
 export default {
-    getControllerActivity
+    registerSendControllerActivityReminders: registerSendControllerActivityReminders
 }
