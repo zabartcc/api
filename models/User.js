@@ -6,6 +6,7 @@ import './Certification.js';
 import './Role.js';
 import './Absence.js';
 import './TrainingMilestone.js';
+import { DateTime as luxon } from 'luxon';
 
 import zab from '../config/zab.js';
 
@@ -36,10 +37,19 @@ const userSchema = new m.Schema({
 	roleCodes: [],
 	trainingMilestones: [{
 		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
-	}]
+	}],
+	lastActivityCheckDate: {
+		type: Date,
+		default: luxon.utc()
+	},
+	removalWarningDeliveryDate: {
+		type: Date,
+		default: null
+	},
 }, {
 	timestamps: true,
 });
+
 userSchema.plugin(softDelete, {
 	deletedAt: true
 });
