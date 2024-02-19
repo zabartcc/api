@@ -13,24 +13,21 @@ function checkControllerActivity(){
 
     minDateForActivityReminder = minDateForActivityReminder.setDate(minDateForActivityReminder.getDate() - daysBeforeActivityReminder);
     minDateForInactivityWarning = minDateForInactivityWarning.setDate(minDateForInactivityWarning.getDate() - daysBeforeInactivityWarning);
-
-    const usersNeedingActivityReminder = User.find({lastDateCheckedForActivity: {$lte: daysBeforeActivityReminder}})
 }
 
 async function registerSendControllerActivityReminders(){
     const today = L.utc();
-    const chkDate = today.minus({days: 60});
+    const chkDate = today.minus({days: 61});
 
-    let usersNeedingActivityCheck = await User.find(
-        { 
-            deleted: false, 
-            $or: [ {vis: true}, {member: true} ],
-            $or: [{lastDateCheckedForActivity: {$lte: today}}, {lastDateCheckedForActivity: null}]
-        }).exec();
+    const usersNeedingActivityCheck = await User.find(
+    { 
+        member: true,
+        $or: [{lastDateCheckedForActivity: {$lte: today}}, {lastDateCheckedForActivity: null}]
+    });
 
-    let userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u => u.cid);
+    const userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u => u.cid);
 
-    let usersHoursControlledInTimeFrame = await ControllerHours.aggregate( [
+    const usersHoursControlledInTimeFrame = await ControllerHours.aggregate( [
         {
             $match: {
                 timeStart: {$gt: chkDate},
@@ -52,19 +49,19 @@ async function registerSendControllerActivityReminders(){
         }}
      ] ).exec();
 
-    let controllersCidsUnderTwoHours = usersHoursControlledInTimeFrame.filter(h => h.totalDifference <= 2).map(u => u._id);
-    console.log(controllersCidsUnderTwoHours)
+    const controllersCidsUnderTwoHours = usersHoursControlledInTimeFrame.filter(h => h.totalDifference < 2).map(u => u._id);
+    const controllerCidsWithNoHours = 
+        userCidsNeedingActivityCheck
+            .filter(u => usersHoursControlledInTimeFrame
+            .filter(h => h._id == u).length == 0); // Controllers that had no ControllerHour records (did not control, 0 hours).
+    const controllerCidsNeedReminder = controllerCidsWithNoHours.concat(controllersCidsUnderTwoHours);
 
-    let controllerCidsWithNoHours = userCidsNeedingActivityCheck.filter(u => !controllersCidsUnderTwoHours.includes(u.cid));
-    console.log(controllerCidsWithNoHours)
+    controllerCidsNeedReminder.forEach(c => {
+        const controller = usersNeedingActivityCheck.find(u => u.cid == c);
+        const hours = usersHoursControlledInTimeFrame.find(h => h._id == c)?.totalDifference ?? 0.00
 
-    let controllerCidsNeedReminder = controllerCidsWithNoHours.concat(controllersCidsUnderTwoHours);
-
-    console.log(controllerCidsNeedReminder);
-
-    const totalTime = Math.round(usersHoursControlledInTimeFrame[0].total / 1000) || 0;
-
-    return totalTime;
+        console.log(controller.fname + " " + controller.lname);
+    });
 }
 
 export default {
