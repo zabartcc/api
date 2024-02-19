@@ -2,7 +2,10 @@ import cron from 'node-cron';
 import transporter from '../config/mailer.js';
 import User from '../models/User.js';
 import ControllerHours from '../models/ControllerHours.js';
+import TrainingRequest from '../models/TrainingRequest.js';
 import { DateTime as L } from 'luxon'
+
+const observerRating = 1;
 
 function checkControllerActivity(){
     let minDateForActivityReminder = new Date();
@@ -18,49 +21,61 @@ function checkControllerActivity(){
 async function registerSendControllerActivityReminders(){
     const today = L.utc();
     const chkDate = today.minus({days: 61});
+    const controllerHoursSummary = {};
+    const controllerTrainingSummary = {};
 
     const usersNeedingActivityCheck = await User.find(
-    { 
+    {
         member: true,
         $or: [{lastDateCheckedForActivity: {$lte: today}}, {lastDateCheckedForActivity: null}]
     });
 
-    const userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u => u.cid);
 
-    const usersHoursControlledInTimeFrame = await ControllerHours.aggregate( [
-        {
-            $match: {
-                timeStart: {$gt: chkDate},
-                cid: { $in: userCidsNeedingActivityCheck } 
-            },
-        },
+    console.log(usersNeedingActivityCheck.filter(u => u.cid == 1496714));
+
+    const userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u =>  u.cid);
+
+    (await ControllerHours.aggregate([
+        {$match: {
+            timeStart: {$gt: chkDate},
+            cid: { $in: userCidsNeedingActivityCheck }
+        }},
         {$project: {
-            "difference": {
+            length: {
                 "$divide": [
-                  { "$subtract": ['$timeEnd', '$timeStart'] },
-                  60 * 1000 * 60
+                    {$subtract: ['$timeEnd', '$timeStart']},
+                    60 * 1000 * 60
                 ]
-              },
+            },
             cid: 1
         }},
         {$group: {
             _id: "$cid",
-            "totalDifference": { "$sum": "$difference" }
+            total: { "$sum": "$length" }
         }}
-     ] ).exec();
+    ])).forEach(i => controllerHoursSummary[i._id] = i.total);
 
-    const controllersCidsUnderTwoHours = usersHoursControlledInTimeFrame.filter(h => h.totalDifference < 2).map(u => u._id);
-    const controllerCidsWithNoHours = 
-        userCidsNeedingActivityCheck
-            .filter(u => usersHoursControlledInTimeFrame
-            .filter(h => h._id == u).length == 0); // Controllers that had no ControllerHour records (did not control, 0 hours).
-    const controllerCidsNeedReminder = controllerCidsWithNoHours.concat(controllersCidsUnderTwoHours);
+    (await TrainingRequest.aggregate([
+        {$match: {startTime: {$gt: chkDate}, studentCid: { $in: userCidsNeedingActivityCheck } }},
+        {$group: {
+            _id: "$studentCid",
+            total: {$sum: 1}
+        }}
+    ])).forEach(i => controllerTrainingSummary[i._id] = i.total);
 
-    controllerCidsNeedReminder.forEach(c => {
-        const controller = usersNeedingActivityCheck.find(u => u.cid == c);
-        const hours = usersHoursControlledInTimeFrame.find(h => h._id == c)?.totalDifference ?? 0.00
 
-        console.log(controller.fname + " " + controller.lname);
+    usersNeedingActivityCheck.forEach(user => {
+        const controllerHasLessThanTwoHours = (controllerHoursSummary[user.cid] ?? 0) < 2;
+        const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < chkDate;
+        const controllerIsNotObserverWithTrainingSession = user.rating != observerRating || !controllerTrainingSummary[user.cid];
+        const controllerInactive = controllerHasLessThanTwoHours && controllerJoinedMoreThan60DaysAgo && controllerIsNotObserverWithTrainingSession;
+
+        if (controllerInactive){
+            // Send Email 
+            // Set warning date
+        }
+        
+        // Set next check date
     });
 }
 
