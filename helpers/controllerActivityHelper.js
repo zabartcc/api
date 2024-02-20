@@ -99,7 +99,6 @@ async function checkControllerActivity() {
             }
         ])).forEach(i => controllerTrainingSummary[i._id] = i.total);
 
-
         usersNeedingActivityCheck.forEach(async user => {
             const controllerHasLessThanTwoHours = (controllerHoursSummary[user.cid] ?? 0) < requiredHoursPerPeriod;
             const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
