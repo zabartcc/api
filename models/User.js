@@ -38,7 +38,7 @@ const userSchema = new m.Schema({
 	trainingMilestones: [{
 		type: m.Schema.Types.ObjectId, ref: 'TrainingMilestone'
 	}],
-	lastActivityCheckDate: {
+	nextActivityCheckDate: {
 		type: Date,
 		default: luxon.utc()
 	},

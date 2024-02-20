@@ -27,11 +27,8 @@ async function registerSendControllerActivityReminders(){
     const usersNeedingActivityCheck = await User.find(
     {
         member: true,
-        $or: [{lastDateCheckedForActivity: {$lte: today}}, {lastDateCheckedForActivity: null}]
+        $or: [{nextActivityCheckDate: {$lte: today}}, {nextActivityCheckDate: null}]
     });
-
-
-    console.log(usersNeedingActivityCheck.filter(u => u.cid == 1496714));
 
     const userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u =>  u.cid);
 
@@ -64,21 +61,88 @@ async function registerSendControllerActivityReminders(){
     ])).forEach(i => controllerTrainingSummary[i._id] = i.total);
 
 
-    usersNeedingActivityCheck.forEach(user => {
+    usersNeedingActivityCheck.forEach(async user => {
         const controllerHasLessThanTwoHours = (controllerHoursSummary[user.cid] ?? 0) < 2;
         const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < chkDate;
         const controllerIsNotObserverWithTrainingSession = user.rating != observerRating || !controllerTrainingSummary[user.cid];
         const controllerInactive = controllerHasLessThanTwoHours && controllerJoinedMoreThan60DaysAgo && controllerIsNotObserverWithTrainingSession;
 
+        // Set check dates before emailing to prevent duplicate checks if an exception occurs.
+        await User.updateOne(
+            { "cid": user.cid},
+            { 
+                nextActivityCheckDate: today.plus({days: 60})
+            }
+        )
+
         if (controllerInactive){
-            // Send Email 
-            // Set warning date
+            await User.updateOne(
+                { "cid": user.cid},
+                { 
+                    removalWarningDeliveryDate: today.plus({days: 45})
+                }
+            )
+
+            await transporter.sendMail({
+                //to: user.Email,
+                //cc: 'datm@zabartcc.org,atm@zabartcc.org',
+                from: {
+                    name: "Albuquerque ARTCC",
+                    address: 'noreply@zabartcc.org'
+                },
+                subject: `Controller Activity Warning | Albuquerque ARTCC`,
+                template: 'activityReminder',
+                context: {
+                    name: user.fname,
+                    requiredHours: 2,
+                    activityWindow: 60,
+                    daysRemaining: 15,
+                    currentHours: (controllerHoursSummary[user.cid]?.toFixed(2) ?? 0)
+                }
+            });
         }
-        
-        // Set next check date
     });
 }
 
+async function registerRemovalWarningReminders(){
+    const today = L.utc();
+
+    const usersNeedingRemovalWarning = await User.find(
+    {
+        member: true,
+        removalWarningDeliveryDate: {$lte: today}
+    });
+
+    usersNeedingRemovalWarning.forEach(async user => {
+
+        // FIX ME: date not updating
+        await User.updateOne(
+            { "cid": user.cid},
+            { 
+                removalWarningDeliveryDate: null
+            }
+        )
+
+        await transporter.sendMail({
+            //to: user.Email,
+            //cc: 'datm@zabartcc.org',
+            from: {
+                name: "Albuquerque ARTCC",
+                address: 'noreply@zabartcc.org'
+            },
+            subject: `Controller Inactivity Notice | Albuquerque ARTCC`,
+            template: 'activityWarning',
+            context: {
+                name: user.fname,
+                requiredHours: 2,
+                activityWindow: 60
+            }
+        });
+    });
+
+}
+
 export default {
-    registerSendControllerActivityReminders: registerSendControllerActivityReminders
+    registerSendControllerActivityReminders: registerSendControllerActivityReminders,
+    registerRemovalWarningReminders: registerRemovalWarningReminders
 }
