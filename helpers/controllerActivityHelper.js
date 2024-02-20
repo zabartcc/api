@@ -20,95 +20,108 @@ const gracePeriod = 15;
 const requiredHoursPerPeriod = 2;
 const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
 
-function registerControllerActivityChecking(){
-
+/**
+ * Registers a CRON job that sends controllers reminder emails.
+ */
+function registerControllerActivityChecking() {
     try {
         if (process.env.NODE_ENV === 'production') {
             cron.schedule('0 0 * * *', async () => {
                 // Lock the activity check to avoid multiple app instances trying to simulatenously run the check.
                 const lockRunningActivityCheck = await redisLock(redisActivityCheckKey);
-        
+
                 await checkControllerActivity();
                 await checkControllersNeedingRemoval();
-        
+
                 lockRunningActivityCheck(); // Releases the lock.
             });
-        
+
             console.log("Successfully registered activity CRON checks")
         }
     }
-    catch(e) {
+    catch (e) {
         console.log("Error registering activity CRON checks")
         console.error(e)
     }
 }
 
-async function checkControllerActivity(){
+/**
+ * Checks controllers for activity and sends a reminder email.
+ */
+async function checkControllerActivity() {
     const today = luxon.utc();
-    const minActivityDate = today.minus({days: activityWindow - 1});
+    const minActivityDate = today.minus({ days: activityWindow - 1 });
     const controllerHoursSummary = {};
     const controllerTrainingSummary = {};
 
     try {
         const usersNeedingActivityCheck = await User.find(
-        {
-            member: true,
-            $or: [{nextActivityCheckDate: {$lte: today}}, {nextActivityCheckDate: null}]
-        });
-    
-        const userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u =>  u.cid);
-    
+            {
+                member: true,
+                $or: [{ nextActivityCheckDate: { $lte: today } }, { nextActivityCheckDate: null }]
+            });
+
+        const userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u => u.cid);
+
         (await ControllerHours.aggregate([
-            {$match: {
-                timeStart: {$gt: minActivityDate},
-                cid: { $in: userCidsNeedingActivityCheck }
-            }},
-            {$project: {
-                length: {
-                    "$divide": [
-                        {$subtract: ['$timeEnd', '$timeStart']},
-                        60 * 1000 * 60 // Convert to hours.
-                    ]
-                },
-                cid: 1
-            }},
-            {$group: {
-                _id: "$cid",
-                total: { "$sum": "$length" }
-            }}
+            {
+                $match: {
+                    timeStart: { $gt: minActivityDate },
+                    cid: { $in: userCidsNeedingActivityCheck }
+                }
+            },
+            {
+                $project: {
+                    length: {
+                        "$divide": [
+                            { $subtract: ['$timeEnd', '$timeStart'] },
+                            60 * 1000 * 60 // Convert to hours.
+                        ]
+                    },
+                    cid: 1
+                }
+            },
+            {
+                $group: {
+                    _id: "$cid",
+                    total: { "$sum": "$length" }
+                }
+            }
         ])).forEach(i => controllerHoursSummary[i._id] = i.total);
-    
+
         (await TrainingRequest.aggregate([
-            {$match: {startTime: {$gt: minActivityDate}, studentCid: { $in: userCidsNeedingActivityCheck } }},
-            {$group: {
-                _id: "$studentCid",
-                total: {$sum: 1}
-            }}
+            { $match: { startTime: { $gt: minActivityDate }, studentCid: { $in: userCidsNeedingActivityCheck } } },
+            {
+                $group: {
+                    _id: "$studentCid",
+                    total: { $sum: 1 }
+                }
+            }
         ])).forEach(i => controllerTrainingSummary[i._id] = i.total);
-    
-    
+
+
         usersNeedingActivityCheck.forEach(async user => {
             const controllerHasLessThanTwoHours = (controllerHoursSummary[user.cid] ?? 0) < requiredHoursPerPeriod;
             const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
             const controllerIsNotObserverWithTrainingSession = user.rating != observerRating || !controllerTrainingSummary[user.cid];
             const controllerInactive = controllerHasLessThanTwoHours && controllerJoinedMoreThan60DaysAgo && controllerIsNotObserverWithTrainingSession;
-    
+
             // Set check dates before emailing to prevent duplicate checks if an exception occurs.
             await User.updateOne(
-                { "cid": user.cid},
-                { 
-                    nextActivityCheckDate: today.plus({days: activityWindow})
+                { "cid": user.cid },
+                {
+                    nextActivityCheckDate: today.plus({ days: activityWindow })
                 }
             )
-    
-            if (controllerInactive){
+
+            if (controllerInactive) {
                 await User.updateOne(
-                    { "cid": user.cid},
-                    { 
-                        removalWarningDeliveryDate: today.plus({days: gracePeriod})
+                    { "cid": user.cid },
+                    {
+                        removalWarningDeliveryDate: today.plus({ days: gracePeriod })
                     }
                 )
-    
+
                 transporter.sendMail({
                     //to: user.Email,
                     from: {
@@ -128,29 +141,32 @@ async function checkControllerActivity(){
             }
         });
     }
-    catch(e){
+    catch (e) {
         console.error(e)
     }
 }
 
-async function checkControllersNeedingRemoval(){
+/**
+ * Checks for controllers that did not maintain activity and sends a removal email.
+ */
+async function checkControllersNeedingRemoval() {
     const today = luxon.utc();
 
     try {
         const usersNeedingRemovalWarning = await User.find(
-        {
-            member: true,
-            removalWarningDeliveryDate: {$lte: today}
-        });
-    
+            {
+                member: true,
+                removalWarningDeliveryDate: { $lte: today }
+            });
+
         usersNeedingRemovalWarning.forEach(async user => {
             await User.updateOne(
-                { "cid": user.cid},
-                { 
+                { "cid": user.cid },
+                {
                     removalWarningDeliveryDate: null
                 }
             )
-    
+
             transporter.sendMail({
                 //to: user.Email,
                 //cc: 'datm@zabartcc.org',
@@ -166,9 +182,9 @@ async function checkControllersNeedingRemoval(){
                     activityWindow: activityWindow
                 }
             });
-        });          
+        });
     }
-    catch (e){
+    catch (e) {
         console.error(e);
     }
 }
