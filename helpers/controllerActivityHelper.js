@@ -14,9 +14,9 @@ let redis = Redis.createClient({ url: process.env.REDIS_URI });
 let redisLock = RedisLock(redis);
 await redis.connect();
 
-const observerRating = 1;
-const activityWindow = 60;
-const gracePeriod = 15;
+const observerRatingCode = 1;
+const activityWindowInDays = 60;
+const gracePeriodInDays = 15;
 const requiredHoursPerPeriod = 2;
 const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
 
@@ -50,7 +50,7 @@ function registerControllerActivityChecking() {
  */
 async function checkControllerActivity() {
     const today = luxon.utc();
-    const minActivityDate = today.minus({ days: activityWindow - 1 });
+    const minActivityDate = today.minus({ days: activityWindowInDays - 1 });
     const controllerHoursSummary = {};
     const controllerTrainingSummary = {};
 
@@ -103,14 +103,14 @@ async function checkControllerActivity() {
         usersNeedingActivityCheck.forEach(async user => {
             const controllerHasLessThanTwoHours = (controllerHoursSummary[user.cid] ?? 0) < requiredHoursPerPeriod;
             const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
-            const controllerIsNotObserverWithTrainingSession = user.rating != observerRating || !controllerTrainingSummary[user.cid];
+            const controllerIsNotObserverWithTrainingSession = user.rating != observerRatingCode || !controllerTrainingSummary[user.cid];
             const controllerInactive = controllerHasLessThanTwoHours && controllerJoinedMoreThan60DaysAgo && controllerIsNotObserverWithTrainingSession;
 
             // Set check dates before emailing to prevent duplicate checks if an exception occurs.
             await User.updateOne(
                 { "cid": user.cid },
                 {
-                    nextActivityCheckDate: today.plus({ days: activityWindow })
+                    nextActivityCheckDate: today.plus({ days: activityWindowInDays })
                 }
             )
 
@@ -118,7 +118,7 @@ async function checkControllerActivity() {
                 await User.updateOne(
                     { "cid": user.cid },
                     {
-                        removalWarningDeliveryDate: today.plus({ days: gracePeriod })
+                        removalWarningDeliveryDate: today.plus({ days: gracePeriodInDays })
                     }
                 )
 
@@ -133,8 +133,8 @@ async function checkControllerActivity() {
                     context: {
                         name: user.fname,
                         requiredHours: requiredHoursPerPeriod,
-                        activityWindow: activityWindow,
-                        daysRemaining: gracePeriod,
+                        activityWindow: activityWindowInDays,
+                        daysRemaining: gracePeriodInDays,
                         currentHours: (controllerHoursSummary[user.cid]?.toFixed(2) ?? 0)
                     }
                 });
@@ -179,7 +179,7 @@ async function checkControllersNeedingRemoval() {
                 context: {
                     name: user.fname,
                     requiredHours: requiredHoursPerPeriod,
-                    activityWindow: activityWindow
+                    activityWindow: activityWindowInDays
                 }
             });
         });
