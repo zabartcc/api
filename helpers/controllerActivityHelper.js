@@ -122,7 +122,7 @@ async function checkControllerActivity() {
                 )
 
                 transporter.sendMail({
-                    //to: user.Email,
+                    to: user.Email,
                     from: {
                         name: "Albuquerque ARTCC",
                         address: 'noreply@zabartcc.org'
@@ -167,8 +167,8 @@ async function checkControllersNeedingRemoval() {
             )
 
             transporter.sendMail({
-                //to: user.Email,
-                //cc: 'datm@zabartcc.org',
+                to: user.Email,
+                cc: 'datm@zabartcc.org',
                 from: {
                     name: "Albuquerque ARTCC",
                     address: 'noreply@zabartcc.org'
