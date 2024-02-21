@@ -8,6 +8,7 @@ import env from 'dotenv';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
 import aws from 'aws-sdk';
+import activityHelper from './helpers/controllerActivityHelper.js';
 
 // Route Controllers
 import UserController from './controllers/UserController.js';
@@ -121,6 +122,8 @@ app.use('/ids', IdsController);
 app.use('/training', TrainingController);
 app.use('/discord', DiscordController);
 app.use('/stats', StatsController);
+
+activityHelper.registerControllerActivityChecking();
 
 if(process.env.NODE_ENV === 'production') app.use(Sentry.Handlers.errorHandler());
 
