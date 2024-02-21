@@ -25,7 +25,7 @@ const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
  */
 function registerControllerActivityChecking() {
     try {
-        if (process.env.NODE_ENV === 'production') {
+        if (process.env.NODE_ENV === 'prod') {
             cron.schedule('0 0 * * *', async () => {
                 // Lock the activity check to avoid multiple app instances trying to simulatenously run the check.
                 const lockRunningActivityCheck = await redisLock(redisActivityCheckKey);
