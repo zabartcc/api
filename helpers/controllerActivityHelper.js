@@ -26,7 +26,7 @@ const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
 function registerControllerActivityChecking() {
     try {
         if (process.env.NODE_ENV === 'prod') {
-            cron.schedule('0 0 * * *', async () => {
+            cron.schedule('10 1 * * *', async () => {
                 // Lock the activity check to avoid multiple app instances trying to simulatenously run the check.
                 const lockRunningActivityCheck = await redisLock(redisActivityCheckKey);
 
@@ -122,7 +122,7 @@ async function checkControllerActivity() {
                 )
 
                 transporter.sendMail({
-                    to: user.Email,
+                    to: user.email,
                     from: {
                         name: "Albuquerque ARTCC",
                         address: 'noreply@zabartcc.org'
@@ -167,7 +167,7 @@ async function checkControllersNeedingRemoval() {
             )
 
             transporter.sendMail({
-                to: user.Email,
+                to: user.email,
                 cc: 'datm@zabartcc.org',
                 from: {
                     name: "Albuquerque ARTCC",
