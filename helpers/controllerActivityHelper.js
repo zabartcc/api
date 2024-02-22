@@ -25,16 +25,16 @@ const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
  */
 function registerControllerActivityChecking() {
     try {
-        if (process.env.NODE_ENV === 'prod') {
-            cron.schedule('10 1 * * *', async () => {
-                // Lock the activity check to avoid multiple app instances trying to simulatenously run the check.
-                const lockRunningActivityCheck = await redisLock(redisActivityCheckKey);
+        if (process.env.NODE_ENV !== 'prod') {
+            // cron.schedule('* * * * *', async () => {
+            //     // Lock the activity check to avoid multiple app instances trying to simulatenously run the check.
+            //     const lockRunningActivityCheck = await redisLock(redisActivityCheckKey);
 
-                await checkControllerActivity();
-                await checkControllersNeedingRemoval();
+                //checkControllerActivity();
+                checkControllersNeedingRemoval();
 
-                lockRunningActivityCheck(); // Releases the lock.
-            });
+            //     lockRunningActivityCheck(); // Releases the lock.
+            // });
 
             console.log("Successfully registered activity CRON checks")
         }
@@ -51,8 +51,6 @@ function registerControllerActivityChecking() {
 async function checkControllerActivity() {
     const today = luxon.utc();
     const minActivityDate = today.minus({ days: activityWindowInDays - 1 });
-    const controllerHoursSummary = {};
-    const controllerTrainingSummary = {};
 
     try {
         const usersNeedingActivityCheck = await User.find(
@@ -61,83 +59,45 @@ async function checkControllerActivity() {
                 $or: [{ nextActivityCheckDate: { $lte: today } }, { nextActivityCheckDate: null }]
             });
 
-        const userCidsNeedingActivityCheck = usersNeedingActivityCheck.map(u => u.cid);
+        console.log(usersNeedingActivityCheck.length);
 
-        (await ControllerHours.aggregate([
-            {
-                $match: {
-                    timeStart: { $gt: minActivityDate },
-                    cid: { $in: userCidsNeedingActivityCheck }
-                }
-            },
-            {
-                $project: {
-                    length: {
-                        "$divide": [
-                            { $subtract: ['$timeEnd', '$timeStart'] },
-                            60 * 1000 * 60 // Convert to hours.
-                        ]
-                    },
-                    cid: 1
-                }
-            },
-            {
-                $group: {
-                    _id: "$cid",
-                    total: { "$sum": "$length" }
-                }
-            }
-        ])).forEach(i => controllerHoursSummary[i._id] = i.total);
+        const inactiveUsers = await getInactiveControllersInList(usersNeedingActivityCheck, minActivityDate);
 
-        (await TrainingRequest.aggregate([
-            { $match: { startTime: { $gt: minActivityDate }, studentCid: { $in: userCidsNeedingActivityCheck } } },
-            {
-                $group: {
-                    _id: "$studentCid",
-                    total: { $sum: 1 }
-                }
-            }
-        ])).forEach(i => controllerTrainingSummary[i._id] = i.total);
+        console.log(inactiveUsers.length)
+        
+        inactiveUsers.forEach(async user => {
+            console.log(`[${user.cid}] Inactive`)
+            // // Set check dates before emailing to prevent duplicate checks if an exception occurs.
+            // await User.updateOne(
+            //     { "cid": user.cid },
+            //     {
+            //         nextActivityCheckDate: today.plus({ days: activityWindowInDays })
+            //     }
+            // )
 
-        usersNeedingActivityCheck.forEach(async user => {
-            const controllerHasLessThanTwoHours = (controllerHoursSummary[user.cid] ?? 0) < requiredHoursPerPeriod;
-            const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
-            const controllerIsNotObserverWithTrainingSession = user.rating != observerRatingCode || !controllerTrainingSummary[user.cid];
-            const controllerInactive = controllerHasLessThanTwoHours && controllerJoinedMoreThan60DaysAgo && controllerIsNotObserverWithTrainingSession;
+            // await User.updateOne(
+            //     { "cid": user.cid },
+            //     {
+            //         removalWarningDeliveryDate: today.plus({ days: gracePeriodInDays })
+            //     }
+            // )
 
-            // Set check dates before emailing to prevent duplicate checks if an exception occurs.
-            await User.updateOne(
-                { "cid": user.cid },
-                {
-                    nextActivityCheckDate: today.plus({ days: activityWindowInDays })
-                }
-            )
-
-            if (controllerInactive) {
-                await User.updateOne(
-                    { "cid": user.cid },
-                    {
-                        removalWarningDeliveryDate: today.plus({ days: gracePeriodInDays })
-                    }
-                )
-
-                transporter.sendMail({
-                    to: user.email,
-                    from: {
-                        name: "Albuquerque ARTCC",
-                        address: 'noreply@zabartcc.org'
-                    },
-                    subject: `Controller Activity Warning | Albuquerque ARTCC`,
-                    template: 'activityReminder',
-                    context: {
-                        name: user.fname,
-                        requiredHours: requiredHoursPerPeriod,
-                        activityWindow: activityWindowInDays,
-                        daysRemaining: gracePeriodInDays,
-                        currentHours: (controllerHoursSummary[user.cid]?.toFixed(2) ?? 0)
-                    }
-                });
-            }
+            // transporter.sendMail({
+            //     to: user.email,
+            //     from: {
+            //         name: "Albuquerque ARTCC",
+            //         address: 'noreply@zabartcc.org'
+            //     },
+            //     subject: `Controller Activity Warning | Albuquerque ARTCC`,
+            //     template: 'activityReminder',
+            //     context: {
+            //         name: user.fname,
+            //         requiredHours: requiredHoursPerPeriod,
+            //         activityWindow: activityWindowInDays,
+            //         daysRemaining: gracePeriodInDays,
+            //         currentHours: (controllerHoursSummary[user.cid]?.toFixed(2) ?? 0)
+            //     }
+            // });
         });
     }
     catch (e) {
@@ -152,40 +112,144 @@ async function checkControllersNeedingRemoval() {
     const today = luxon.utc();
 
     try {
-        const usersNeedingRemovalWarning = await User.find(
+        const usersNeedingRemovalWarningCheck = await User.find(
             {
                 member: true,
                 removalWarningDeliveryDate: { $lte: today }
             });
 
-        usersNeedingRemovalWarning.forEach(async user => {
-            await User.updateOne(
-                { "cid": user.cid },
+        usersNeedingRemovalWarningCheck.forEach(async user => {
+            const minActivityDate = luxon.fromJSDate(user.removalWarningDeliveryDate).minus({ days: activityWindowInDays - 1 });
+            const userHourSums =  await ControllerHours.aggregate([
                 {
-                    removalWarningDeliveryDate: null
-                }
-            )
-
-            transporter.sendMail({
-                to: user.email,
-                cc: 'datm@zabartcc.org',
-                from: {
-                    name: "Albuquerque ARTCC",
-                    address: 'noreply@zabartcc.org'
+                    $match: {
+                        timeStart: { $gt: minActivityDate },
+                        cid: user.cid
+                    }
                 },
-                subject: `Controller Inactivity Notice | Albuquerque ARTCC`,
-                template: 'activityWarning',
-                context: {
-                    name: user.fname,
-                    requiredHours: requiredHoursPerPeriod,
-                    activityWindow: activityWindowInDays
+                {
+                    $project: {
+                        length: {
+                            "$divide": [
+                                { $subtract: ['$timeEnd', '$timeStart'] },
+                                60 * 1000 * 60 // Convert to hours.
+                            ]
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$cid",
+                        total: { "$sum": "$length" }
+                    }
                 }
-            });
+            ]);
+            const userTotalHoursInPeriod = (userHourSums && userHourSums.length > 0) ? userHourSums[0].total : 0;
+            const userTrainingRequestCount = await TrainingRequest.count({ studentCid: user.cid, startTime: { $gt: minActivityDate }});
+
+            
+            // await User.updateOne(
+            //     { "cid": user.cid },
+            //     {
+            //         removalWarningDeliveryDate: null
+            //     }
+            // )
+
+
+            if (controllerIsInactive(user, userTotalHoursInPeriod, userTrainingRequestCount, minActivityDate)){
+                // transporter.sendMail({
+                //     to: user.email,
+                //     cc: 'datm@zabartcc.org',
+                //     from: {
+                //         name: "Albuquerque ARTCC",
+                //         address: 'noreply@zabartcc.org'
+                //     },
+                //     subject: `Controller Inactivity Notice | Albuquerque ARTCC`,
+                //     template: 'activityWarning',
+                //     context: {
+                //         name: user.fname,
+                //         requiredHours: requiredHoursPerPeriod,
+                //         activityWindow: activityWindowInDays
+                //     }
+                // });
+
+                console.log(`[${user.cid}] Inactive`)
+            }
         });
     }
     catch (e) {
         console.error(e);
     }
+}
+
+async function getInactiveControllersInList(controllersToGetStatusFor, minActivityDate){
+    const controllerHoursSummary = {};
+    const controllerTrainingSummary = {};
+    const inactiveControllers = [];
+    const controllerCids = controllersToGetStatusFor.map(c => c.cid);
+
+    (await ControllerHours.aggregate([
+        {
+            $match: {
+                timeStart: { $gt: minActivityDate },
+                cid: { $in: controllerCids }
+            }
+        },
+        {
+            $project: {
+                length: {
+                    "$divide": [
+                        { $subtract: ['$timeEnd', '$timeStart'] },
+                        60 * 1000 * 60 // Convert to hours.
+                    ]
+                },
+                cid: 1
+            }
+        },
+        {
+            $group: {
+                _id: "$cid",
+                total: { "$sum": "$length" }
+            }
+        }
+    ])).forEach(i => controllerHoursSummary[i._id] = i.total);
+
+    (await TrainingRequest.aggregate([
+        { $match: { startTime: { $gt: minActivityDate }, studentCid: { $in: controllerCids} } },
+        {
+            $group: {
+                _id: "$studentCid",
+                total: { $sum: 1 }
+            }
+        }
+    ])).forEach(i => controllerTrainingSummary[i._id] = i.total);
+
+    controllersToGetStatusFor.forEach(async user => {
+        let controllerHoursCount = controllerHoursSummary[user.cid] ?? 0;
+        let controllerTrainingSessions = controllerTrainingSummary[user.cid] != null ? controllerTrainingSummary[user.cid].length : 0
+
+        // Set check dates before emailing to prevent duplicate checks if an exception occurs.
+        // await User.updateOne(
+        //     { "cid": user.cid },
+        //     {
+        //         nextActivityCheckDate: today.plus({ days: activityWindowInDays })
+        //     }
+        // )
+
+        if (controllerIsInactive(user, controllerHoursCount, controllerTrainingSessions, minActivityDate)) {
+            inactiveControllers.push(user);
+        }
+    });
+
+    return inactiveControllers;
+}
+
+function controllerIsInactive(user, hoursInPeriod, trainingSessionInPeriod, minActivityDate){
+    const controllerHasLessThanTwoHours = (hoursInPeriod ?? 0) < requiredHoursPerPeriod;
+    const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
+    const controllerIsNotObserverWithTrainingSession = user.rating != observerRatingCode || trainingSessionInPeriod < 1;
+    
+    return controllerHasLessThanTwoHours && controllerJoinedMoreThan60DaysAgo && controllerIsNotObserverWithTrainingSession;
 }
 
 export default {
