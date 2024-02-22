@@ -173,6 +173,12 @@ async function checkControllersNeedingRemoval() {
     }
 }
 
+/**
+ * Determines which controllers are inactive from a list and returns inactivity data of those controllers.
+ * @param controllersToGetStatusFor A list of users to check the activity of.
+ * @param minActivityDate The start date of the activity period.
+ * @return A map of inactive controllers with the amount of hours they've controlled in the current period.
+ */
 async function getControllerInactivityData(controllersToGetStatusFor, minActivityDate) {
     const controllerHoursSummary = {};
     const controllerTrainingSummary = {};
@@ -232,6 +238,14 @@ async function getControllerInactivityData(controllersToGetStatusFor, minActivit
     return inactiveControllers;
 }
 
+/**
+ * Determines if a controller meets activity requirements based on the information provided.
+ * @param user The user to check for inactivity.
+ * @param hoursInPeriod The hours the controller controlled in this activity window.
+ * @param trainingSessionInPeriod The number of training sessions the user scheduled in this period.
+ * @param minActivityDate The start date of the activity period.
+ * @return True if controller is inactive, false otherwise.
+ */
 function controllerIsInactive(user, hoursInPeriod, trainingSessionInPeriod, minActivityDate) {
     const controllerHasLessThanTwoHours = (hoursInPeriod ?? 0) < requiredHoursPerPeriod;
     const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
