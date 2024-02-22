@@ -25,8 +25,8 @@ const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
  */
 function registerControllerActivityChecking() {
     try {
-        if (process.env.NODE_ENV !== 'prod') {
-            cron.schedule('* * * * *', async () => {
+        if (process.env.NODE_ENV === 'prod') {
+            cron.schedule('0 0 * * *', async () => {
                 // Lock the activity check to avoid multiple app instances trying to simulatenously run the check.
                 const lockRunningActivityCheck = await redisLock(redisActivityCheckKey);
 
@@ -72,13 +72,12 @@ async function checkControllerActivity() {
             await User.updateOne(
                 { "cid": record.user.cid },
                 {
-                    removalWarningDeliveryDate: today.plus({ minutes: 2 })
+                    removalWarningDeliveryDate: today.plus({ days: gracePeriodInDays })
                 }
             )
 
             transporter.sendMail({
-                to: "cdconn00@gmail.com",
-                //to: record.user.email,
+                to: record.user.email,
                 from: {
                     name: "Albuquerque ARTCC",
                     address: 'noreply@zabartcc.org'
@@ -152,8 +151,8 @@ async function checkControllersNeedingRemoval() {
 
             if (controllerIsInactive(user, userTotalHoursInPeriod, userTrainingRequestCount, minActivityDate)) {
                 transporter.sendMail({
-                    to: "cdconn00@gmail.com",
-                    //cc: 'datm@zabartcc.org',
+                    to: user.email,
+                    cc: 'datm@zabartcc.org',
                     from: {
                         name: "Albuquerque ARTCC",
                         address: 'noreply@zabartcc.org'
