@@ -316,28 +316,28 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 				computedPositions.push({
 					pos,
 					type: thePos[2],
-					code: 'zab',
+					code: 'enroute',
 				})
 			}
 			if(['APP', 'DEP'].includes(thePos[2])) {
 				computedPositions.push({
 					pos,
 					type: thePos[2],
-					code: (thePos[1] === "PHX") ? 'p50app' : 'app',
+					code: (thePos[1] === "PHX") ? 'p50' : 'app',
 				})
 			}
 			if(['TWR'].includes(thePos[2])) {
 				computedPositions.push({
 					pos,
 					type: thePos[2],
-					code: (thePos[1] === "PHX") ? 'p50twr' : 'twr',
+					code: (thePos[1] === "PHX") ? 'kphxtower' : 'twr',
 				})
 			}
 			if(['GND', 'DEL'].includes(thePos[2])) {
 				computedPositions.push({
 					pos,
 					type: thePos[2],
-					code: (thePos[1] === "PHX") ? 'p50gnd' : 'gnd',
+					code: (thePos[1] === "PHX") ? 'kphxground' : 'gnd',
 				})
 			}
 		}

@@ -1,43 +1,49 @@
-[{
-  "name": "Minor Ground",
-  "code": "gnd",
-  "order": 1,
-  "class": "minor",
-  "facility": "gnd"
-},{
-  "name": "Major Ground",
-  "code": "p50gnd",
-  "order": 2,
-  "class": "major",
-  "facility": "gnd"
-},{
-  "name": "Minor Tower",
-  "code": "twr",
-  "order": 3,
-  "class": "minor",
-  "facility": "twr"
-},{
-  "name": "Major Tower",
-  "code": "p50twr",
+[
+{
+  "name": "KPHX GND",
+  "code": "kphxground",
   "order": 4,
-  "class": "major",
-  "facility": "twr"
-},{
-  "name": "Minor Approach",
-  "code": "app",
-  "order": 5,
-  "class": "minor",
-  "facility": "app"
-},{
-  "name": "Major Approach",
-  "code": "p50app",
-  "order": 6,
-  "class": "major",
-  "facility": "app"
-},{
-  "name": "Albuquerque Center",
-  "code": "zab",
-  "order": 7,
-  "class": "center",
-  "facility": "ctr"
+  "class": "tier-one"
+},
+{
+  "name": "KPHX TWR",
+  "code": "kphxtower",
+  "order": 3,
+  "class": "tier-one"
+},
+{
+  "name": "P50",
+  "code": "p50",
+  "order": 2,
+  "class": "tier-one"
+},
+{
+  "name": "Enroute",
+  "code": "enroute",
+  "order": 1,
+  "class": "tier-one"
+},
+{
+  "name": "KABQ",
+  "code": "kabq",
+  "order": 1,
+  "class": "tier-two"
+},
+{
+  "name": "KFLG",
+  "code": "kflg",
+  "order": 2,
+  "class": "tier-two"
+},
+{
+  "name": "KLUF",
+  "code": "kluf",
+  "order": 3,
+  "class": "tier-two"
+},
+{
+  "name": "KSAF",
+  "code": "ksaf",
+  "order": 4,
+  "class": "tier-two"
 }]
