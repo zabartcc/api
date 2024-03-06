@@ -15,7 +15,7 @@ let redisLock = RedisLock(redis);
 await redis.connect();
 
 const observerRatingCode = 1;
-const activityWindowInDays = 60;
+const activityWindowInDays = 90;
 const gracePeriodInDays = 15;
 const requiredHoursPerPeriod = 2;
 const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
