@@ -264,7 +264,7 @@ router.get('/session/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 	return res.json(res.stdRes);
 });
 
-router.get('/session/picked-up', getUser, auth(['ta', 'dta', 'atm']), async (req, res) => {
+router.get('/session/picked-up', getUser, auth(['ta', 'dta', 'atm', 'datm', 'ins', 'mtr']), async (req, res) => {
 	try {
 		res.stdRes.data = await TrainingSession.find({
 			instructorCid: {$ne: null},
