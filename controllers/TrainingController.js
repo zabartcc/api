@@ -264,6 +264,20 @@ router.get('/session/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), 
 	return res.json(res.stdRes);
 });
 
+router.get('/session/picked-up', getUser, auth(['ta', 'dta', 'atm']), async (req, res) => {
+	try {
+		res.stdRes.data = await TrainingSession.find({
+			instructorCid: {$ne: null},
+			submitted: false
+		}).populate('student', 'fname lname cid').populate('instructor', 'fname lname').populate('milestone', 'name code').lean();
+	} catch(e) {
+		req.app.Sentry.captureException(e);
+		res.stdRes.ret_det = e;
+	}
+
+	return res.json(res.stdRes);
+});
+
 router.get('/session/:id', getUser, async(req, res) => {
 	try {
 		const isIns = ['ta', 'ins', 'mtr', 'atm', 'datm'].some(r => res.user.roleCodes.includes(r));
