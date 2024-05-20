@@ -125,7 +125,7 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 		}
 
 		for(const r of req.body.requests) {
-			if((/^([A-Z]{2,3})(_([A-Z]{1,3}))?_(DEL|GND|TWR|APP|DEP|CTR)$/.test(r) || r.toLowerCase() === "any") === false) {
+			if((/^([A-Z]{2,3})(_[A-Z0-9]{1,3})?_(DEL|GND|TWR|APP|DEP|CTR)$/.test(r) || r.toLowerCase() === "any") === false) {
 				throw {
 					code: 400,
 					message: "Request must be a valid callsign or 'Any'"
