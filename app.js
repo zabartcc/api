@@ -123,7 +123,9 @@ app.use('/training', TrainingController);
 app.use('/discord', DiscordController);
 app.use('/stats', StatsController);
 
-activityHelper.registerControllerActivityChecking();
+// Uncomment to activate activity emails for controllers. Reset DB activity date fields before activating.
+// Disabled per the ATM 9/19/24.
+// activityHelper.registerControllerActivityChecking();
 
 if(process.env.NODE_ENV === 'production') app.use(Sentry.Handlers.errorHandler());
 
