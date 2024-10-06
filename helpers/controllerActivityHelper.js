@@ -1,3 +1,4 @@
+@@ -0,0 +1,259 @@
 import cron from 'node-cron';
 import transporter from '../config/mailer.js';
 import User from '../models/User.js';
@@ -15,9 +16,9 @@ let redisLock = RedisLock(redis);
 await redis.connect();
 
 const observerRatingCode = 1;
-const activityWindowInDays = 90;
+const activityWindowInDays = 90; // Update from 60 to 90 days
 const gracePeriodInDays = 15;
-const requiredHoursPerPeriod = 2;
+const requiredHoursPerPeriod = 3; // Ensure this is set to 3 hours
 const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
 
 /**
@@ -247,13 +248,16 @@ async function getControllerInactivityData(controllersToGetStatusFor, minActivit
  * @return True if controller is inactive, false otherwise.
  */
 function controllerIsInactive(user, hoursInPeriod, trainingSessionInPeriod, minActivityDate) {
-    const controllerHasLessThanTwoHours = (hoursInPeriod ?? 0) < requiredHoursPerPeriod;
-    const controllerJoinedMoreThan60DaysAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
+    const controllerHasLessThanRequiredHours = (hoursInPeriod ?? 0) < requiredHoursPerPeriod;
+    const controllerJoinedMoreThanActivityWindowAgo = (user.joinDate ?? user.createdAt) < minActivityDate;
     const controllerIsNotObserverWithTrainingSession = user.rating != observerRatingCode || trainingSessionInPeriod < 1;
 
-    return controllerHasLessThanTwoHours && controllerJoinedMoreThan60DaysAgo && controllerIsNotObserverWithTrainingSession;
+    return controllerHasLessThanRequiredHours && controllerJoinedMoreThanActivityWindowAgo && controllerIsNotObserverWithTrainingSession;
 }
 
+export default {
+    registerControllerActivityChecking: registerControllerActivityChecking
+}
 export default {
     registerControllerActivityChecking: registerControllerActivityChecking
 }
