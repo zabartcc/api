@@ -121,7 +121,7 @@ router.get("/staff", async (req, res) => {
     const staff = {
       atm: {
         title: "Air Traffic Manager",
-        code: "atm",
+        code: "atm1",
         email: "zab-atm",
         users: [],
       },
@@ -219,7 +219,7 @@ router.get("/oi", async (req, res) => {
   return res.json(res.stdRes);
 });
 
-router.get("/visit", getUser, auth(["atm", "datm"]), async ({ res }) => {
+router.get("/visit", getUser, auth(["atm1", "datm"]), async ({ res }) => {
   try {
     const applications = await VisitApplication.find({
       deletedAt: null,
@@ -234,7 +234,7 @@ router.get("/visit", getUser, auth(["atm", "datm"]), async ({ res }) => {
   return res.json(res.stdRes);
 });
 
-router.get("/absence", getUser, auth(["atm", "datm"]), async (req, res) => {
+router.get("/absence", getUser, auth(["atm1", "datm"]), async (req, res) => {
   try {
     const absences = await Absence.find({
       expirationDate: {
@@ -257,7 +257,7 @@ router.get("/absence", getUser, auth(["atm", "datm"]), async (req, res) => {
   return res.json(res.stdRes);
 });
 
-router.post("/absence", getUser, auth(["atm", "datm"]), async (req, res) => {
+router.post("/absence", getUser, auth(["atm1", "datm"]), async (req, res) => {
   try {
     if (
       !req.body ||
@@ -310,7 +310,7 @@ router.post("/absence", getUser, auth(["atm", "datm"]), async (req, res) => {
 router.delete(
   "/absence/:id",
   getUser,
-  auth(["atm", "datm"]),
+  auth(["atm1", "datm"]),
   async (req, res) => {
     try {
       if (!req.params.id) {
@@ -340,7 +340,7 @@ router.delete(
 router.get(
   "/log",
   getUser,
-  auth(["atm", "datm", "ta", "fe", "ec", "wm"]),
+  auth(["atm1", "datm", "ta", "fe", "ec", "wm"]),
   async (req, res) => {
     const page = +req.query.page || 1;
     const limit = +req.query.limit || 20;
@@ -524,7 +524,7 @@ router.post("/visit", getUser, async (req, res) => {
       },
     });
     await transporter.sendMail({
-      to: "atm@zabartcc.org, datm@zabartcc.org",
+      to: "zab-atm@vatusa.net, zab-datm@vatusa.net",
       from: {
         name: "Albuquerque ARTCC",
         address: "noreply@zabartcc.org",
@@ -564,7 +564,7 @@ router.get("/visit/status", getUser, async (req, res) => {
   return res.json(res.stdRes);
 });
 
-router.put("/visit/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
+router.put("/visit/:cid", getUser, auth(["atm1", "datm"]), async (req, res) => {
   try {
     await VisitApplication.delete({ cid: req.params.cid });
 
@@ -617,7 +617,7 @@ router.put("/visit/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
 router.delete(
   "/visit/:cid",
   getUser,
-  auth(["atm", "datm"]),
+  auth(["atm1", "datm"]),
   async (req, res) => {
     try {
       await VisitApplication.delete({ cid: req.params.cid });
@@ -715,7 +715,7 @@ router.post("/:cid", microAuth, async (req, res) => {
     ];
 
     await transporter.sendMail({
-      to: "atm@zabartcc.org; datm@zabartcc.org; ta@zabartcc.org",
+      to: "zab-atm@vatusa.net; zab-datm@vatusa.net; zab-ta@vatusa.net",
       from: {
         name: "Albuquerque ARTCC",
         address: "noreply@zabartcc.org",
@@ -824,7 +824,7 @@ router.put("/:cid/visit", microAuth, async (req, res) => {
 router.put(
   "/:cid",
   getUser,
-  auth(["atm", "datm", "ta", "wm", "ins"]),
+  auth(["atm1", "datm", "ta", "wm", "ins"]),
   async (req, res) => {
     try {
       if (!req.body.form) {
@@ -895,7 +895,7 @@ router.put(
   }
 );
 
-router.delete("/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
+router.delete("/:cid", getUser, auth(["atm1", "datm"]), async (req, res) => {
   try {
     if (!req.body.reason) {
       throw {

@@ -171,7 +171,7 @@ async function checkControllersNeedingRemoval() {
       ) {
         transporter.sendMail({
           to: user.email,
-          cc: "datm@zabartcc.org",
+          cc: "zab-datm@vatusa.net",
           from: {
             name: "Albuquerque ARTCC",
             address: "noreply@zabartcc.org",
