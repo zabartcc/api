@@ -1,843 +1,953 @@
-import e from 'express';
+import e from "express";
 const router = e.Router();
-import User from '../models/User.js';
-import ControllerHours from '../models/ControllerHours.js';
-import Role from '../models/Role.js';
-import VisitApplication from '../models/VisitApplication.js';
-import Absence from '../models/Absence.js';
-import Notification from '../models/Notification.js';
-import transporter from '../config/mailer.js';
-import getUser from '../middleware/getUser.js';
-import auth from '../middleware/auth.js';
-import microAuth from '../middleware/microAuth.js';
-import axios from 'axios';
-import dotenv from 'dotenv';
-import { DateTime as L } from 'luxon'
+import User from "../models/User.js";
+import ControllerHours from "../models/ControllerHours.js";
+import Role from "../models/Role.js";
+import VisitApplication from "../models/VisitApplication.js";
+import Absence from "../models/Absence.js";
+import Notification from "../models/Notification.js";
+import transporter from "../config/mailer.js";
+import getUser from "../middleware/getUser.js";
+import auth from "../middleware/auth.js";
+import microAuth from "../middleware/microAuth.js";
+import axios from "axios";
+import dotenv from "dotenv";
+import { DateTime as L } from "luxon";
 
 dotenv.config();
 
-router.get('/', async ({res}) => {
-	try {
-		const home = await User.find({vis: false, cid: { "$nin": [995625] }}).select('-email -idsToken -discordInfo').sort({
-			rating: 'desc',
-			lname: 'asc',
-			fname: 'asc'
-		}).populate({
-			path: 'certifications',
-			options: {
-				sort: {order: 'desc'}
-			}
-		}).populate({
+router.get("/", async ({ res }) => {
+  try {
+    const home = await User.find({ vis: false, cid: { $nin: [995625] } })
+      .select("-email -idsToken -discordInfo")
+      .sort({
+        rating: "desc",
+        lname: "asc",
+        fname: "asc",
+      })
+      .populate({
+        path: "certifications",
+        options: {
+          sort: { order: "desc" },
+        },
+      })
+      .populate({
+        path: "roles",
+        options: {
+          sort: { order: "asc" },
+        },
+      })
+      .populate({
+        path: "absence",
+        match: {
+          expirationDate: {
+            $gte: new Date(),
+          },
+          deleted: false,
+        },
+        select: "-reason",
+      })
+      .lean({ virtuals: true });
+
+    const visiting = await User.find({ vis: true })
+      .select("-email -idsToken -discordInfo")
+      .sort({
+        rating: "desc",
+        lname: "asc",
+        fname: "asc",
+      })
+      .populate({
+        path: "certifications",
+        options: {
+          sort: { order: "desc" },
+        },
+      })
+      .populate({
+        path: "roles",
+        options: {
+          sort: { order: "asc" },
+        },
+      })
+      .populate({
+        path: "absence",
+        match: {
+          expirationDate: {
+            $gte: new Date(),
+          },
+          deleted: false,
+        },
+        select: "-reason",
+      })
+      .lean({ virtuals: true });
+
+    if (!home || !visiting) {
+      throw {
+        code: 503,
+        message: "Unable to retrieve controllers",
+      };
+    }
+
+    res.stdRes.data = { home, visiting };
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
+});
+
+router.get("/staff", async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("fname lname cid roleCodes")
+      .sort({
+        lname: "asc",
+        fname: "asc",
+      }) /*.populate({
 			path: 'roles',
 			options: {
 				sort: {order: 'asc'}
 			}
-		}).populate({
-			path: 'absence',
-			match: {
-				expirationDate: {
-					$gte: new Date()
-				},
-				deleted: false
-			},
-			select: '-reason'
-		}).lean({virtuals: true});
-	
-		const visiting = await User.find({vis: true}).select('-email -idsToken -discordInfo').sort({
-			rating: 'desc',
-			lname: 'asc',
-			fname: 'asc'
-		}).populate({
-			path: 'certifications',
-			options: {
-				sort: {order: 'desc'}
-			}
-		}).populate({
-			path: 'roles',
-			options: {
-				sort: {order: 'asc'}
-			}
-		}).populate({
-			path: 'absence',
-			match: {
-				expirationDate: {
-					$gte: new Date()
-				},
-				deleted: false
-			},
-			select: '-reason'
-		}).lean({virtuals: true});
-	
-		if(!home || !visiting) {
-			throw {
-				code: 503,
-				message: "Unable to retrieve controllers"
-			};
-		}
+		})*/
+      .lean();
 
-		res.stdRes.data = {home, visiting};
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+    if (!users) {
+      throw {
+        code: 503,
+        message: "Unable to retrieve staff members",
+      };
+    }
+
+    const staff = {
+      atm: {
+        title: "Air Traffic Manager",
+        code: "atm1",
+        email: "zab-atm",
+        users: [],
+      },
+      datm: {
+        title: "Deputy Air Traffic Manager",
+        code: "datm",
+        email: "zab-datm",
+        users: [],
+      },
+      ta: {
+        title: "Training Administrator",
+        code: "ta",
+        email: "zab-ta",
+        users: [],
+      },
+      ec: {
+        title: "Events Team",
+        code: "ec",
+        users: [],
+      },
+      wm: {
+        title: "Web Team",
+        code: "wm",
+        email: "john.morgan",
+        users: [],
+      },
+      fe: {
+        title: "Facility Engineer",
+        code: "fe",
+        email: "edward.sterling",
+        users: [],
+      },
+      ins: {
+        title: "Instructors",
+        code: "instructors",
+        users: [],
+      },
+      mtr: {
+        title: "Mentors",
+        code: "instructors",
+        users: [],
+      },
+      dta: {
+        title: "Deputy Training Administrator",
+        code: "dta",
+        email: "zab-dta",
+        users: [],
+      },
+    };
+
+    users.forEach((user) =>
+      user.roleCodes.forEach((role) => staff[role].users.push(user))
+    );
+
+    res.stdRes.data = staff;
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.get('/staff', async (req, res) => {
-	try {
-		const users = await User.find().select('fname lname cid roleCodes').sort({
-			lname: 'asc',
-			fname: 'asc'
-		})/*.populate({
-			path: 'roles',
-			options: {
-				sort: {order: 'asc'}
-			}
-		})*/.lean();
+router.get("/role", async (req, res) => {
+  try {
+    const roles = await Role.find().lean();
+    res.stdRes.data = roles;
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
 
-		if(!users) {
-			throw {
-				code: 503,
-				message: "Unable to retrieve staff members"
-			};
-		}
-
-		const staff = {
-			atm: {
-				title: "Air Traffic Manager",
-				code: "atm",
-				users: []
-			},
-			datm: {
-				title: "Deputy Air Traffic Manager",
-				code: "datm",
-				users: []
-			},
-			ta: {
-				title: "Training Administrator",
-				code: "ta",
-				users: []
-			},
-			ec: {
-				title: "Events Team",
-				code: "ec",
-				users: []
-			},
-			wm: {
-				title: "Web Team",
-				code: "wm",
-				users: []
-			},
-			fe: {
-				title: "Facility Engineer",
-				code: "fe",
-				users: []
-			},
-			ins: {
-				title: "Instructors",
-				code: "instructors",
-				users: []
-			},
-			mtr: {
-				title: "Mentors",
-				code: "instructors",
-				users: []
-			},
-			dta: {
-				title: "Deputy Training Administrator",
-				code: "dta",
-				users: []
-			},
-		};
-
-		users.forEach(user => user.roleCodes.forEach(role => staff[role].users.push(user)));
-
-		res.stdRes.data = staff;
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+  return res.json(res.stdRes);
 });
 
-router.get('/role', async (req, res) => {
-	try {
-		const roles = await Role.find().lean();
-		res.stdRes.data = roles;
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+router.get("/oi", async (req, res) => {
+  try {
+    const oi = await User.find({ deletedAt: null, member: true })
+      .select("oi")
+      .lean();
+
+    if (!oi) {
+      throw {
+        code: 503,
+        message: "Unable to retrieve operating initials",
+      };
+    }
+
+    res.stdRes.data = oi.map((oi) => oi.oi);
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.get('/oi', async (req, res) => {
-	try {
-		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
-		
-		if(!oi) {
-			throw {
-				code: 503,
-				message: "Unable to retrieve operating initials"
-			};
-		}
+router.get("/visit", getUser, auth(["atm1", "datm"]), async ({ res }) => {
+  try {
+    const applications = await VisitApplication.find({
+      deletedAt: null,
+      acceptedAt: null,
+    }).lean();
+    res.stdRes.data = applications;
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
 
-		res.stdRes.data = oi.map(oi => oi.oi);
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+  return res.json(res.stdRes);
 });
 
-router.get('/visit', getUser, auth(['atm', 'datm']), async ({res}) => {
-	try {
-		const applications = await VisitApplication.find({deletedAt: null, acceptedAt: null}).lean();
-		res.stdRes.data = applications;
-	} catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);	
+router.get("/absence", getUser, auth(["atm1", "datm"]), async (req, res) => {
+  try {
+    const absences = await Absence.find({
+      expirationDate: {
+        $gte: new Date(),
+      },
+      deleted: false,
+    })
+      .populate("user", "fname lname cid")
+      .sort({
+        expirationDate: "asc",
+      })
+      .lean();
+
+    res.stdRes.data = absences;
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.get('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
-	try {
-		const absences = await Absence.find({
-			expirationDate: {
-				$gte: new Date()
-			},
-			deleted: false
-		}).populate(
-			'user', 'fname lname cid'
-		).sort({
-			expirationDate: 'asc'
-		}).lean();
+router.post("/absence", getUser, auth(["atm1", "datm"]), async (req, res) => {
+  try {
+    if (
+      !req.body ||
+      req.body.controller === "" ||
+      req.body.expirationDate === "T00:00:00.000Z" ||
+      req.body.reason === ""
+    ) {
+      throw {
+        code: 400,
+        message: "You must fill out all required fields",
+      };
+    }
 
-		res.stdRes.data = absences;
-	} catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
+    if (new Date(req.body.expirationDate) < new Date()) {
+      throw {
+        code: 400,
+        message: "Expiration date must be in the future",
+      };
+    }
 
-	return res.json(res.stdRes);
+    await Absence.create(req.body);
+
+    await Notification.create({
+      recipient: req.body.controller,
+      title: "Leave of Absence granted",
+      read: false,
+      content: `You have been granted Leave of Absence until <b>${new Date(
+        req.body.expirationDate
+      ).toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      })}</b>.`,
+    });
+
+    await req.app.dossier.create({
+      by: res.user.cid,
+      affected: req.body.controller,
+      action: `%b added a leave of absence for %a: ${req.body.reason}`,
+    });
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.post('/absence', getUser, auth(['atm', 'datm']), async(req, res) => {
-	try {
-		if(!req.body || req.body.controller === '' || req.body.expirationDate === 'T00:00:00.000Z' || req.body.reason === '') {
-			throw {
-				code: 400,
-				message: "You must fill out all required fields"
-			}
-		} 
+router.delete(
+  "/absence/:id",
+  getUser,
+  auth(["atm1", "datm"]),
+  async (req, res) => {
+    try {
+      if (!req.params.id) {
+        throw {
+          code: 401,
+          message: "Invalid request",
+        };
+      }
 
-		if(new Date(req.body.expirationDate) < new Date()) {
-			throw {
-				code: 400,
-				message: "Expiration date must be in the future"
-			}
-		}
+      const absence = await Absence.findOne({ _id: req.params.id });
+      await absence.delete();
 
-		await Absence.create(req.body);
+      await req.app.dossier.create({
+        by: res.user.cid,
+        affected: absence.controller,
+        action: `%b deleted the leave of absence for %a.`,
+      });
+    } catch (e) {
+      req.app.Sentry.captureException(e);
+      res.stdRes.ret_det = e;
+    }
 
-		await Notification.create({
-			recipient: req.body.controller,
-			title: 'Leave of Absence granted',
-			read: false,
-			content: `You have been granted Leave of Absence until <b>${new Date(req.body.expirationDate).toLocaleString('en-US', {
-				month: 'long', 
-				day: 'numeric',
-				year: 'numeric', 
-				timeZone: 'UTC',
-			})}</b>.`
-		});
+    return res.json(res.stdRes);
+  }
+);
 
-		await req.app.dossier.create({
-			by: res.user.cid,
-			affected: req.body.controller,
-			action: `%b added a leave of absence for %a: ${req.body.reason}`
-		});
+router.get(
+  "/log",
+  getUser,
+  auth(["atm1", "datm", "ta", "fe", "ec", "wm"]),
+  async (req, res) => {
+    const page = +req.query.page || 1;
+    const limit = +req.query.limit || 20;
+    const amount = await req.app.dossier.countDocuments();
 
-	} catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
+    try {
+      const dossier = await req.app.dossier
+        .find()
+        .sort({
+          createdAt: "desc",
+        })
+        .skip(limit * (page - 1))
+        .limit(limit)
+        .populate("userBy", "fname lname cid")
+        .populate("userAffected", "fname lname cid")
+        .lean();
 
-	return res.json(res.stdRes);
+      res.stdRes.data = {
+        dossier,
+        amount,
+      };
+    } catch (e) {
+      req.app.Sentry.captureException(e);
+      res.stdRes.ret_det = e;
+    }
+
+    return res.json(res.stdRes);
+  }
+);
+
+router.get("/:cid", getUser, async (req, res) => {
+  try {
+    const user = await User.findOne({
+      cid: req.params.cid,
+    })
+      .select("-idsToken -discordInfo -trainingMilestones")
+      .populate("roles")
+      .populate("certifications")
+      .populate({
+        path: "absence",
+        match: {
+          expirationDate: {
+            $gte: new Date(),
+          },
+          deleted: false,
+        },
+        select: "-reason",
+      })
+      .lean({ virtuals: true });
+
+    if (!user || [995625].includes(user.cid)) {
+      throw {
+        code: 503,
+        message: "Unable to find controller",
+      };
+    }
+
+    if (!res.user || !res.user.isStaff) {
+      delete user.email;
+    }
+
+    res.stdRes.data = user;
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.delete('/absence/:id', getUser, auth(['atm', 'datm']), async(req, res) => {
-	try {
-		if(!req.params.id) {
-			throw {
-				code: 401,
-				message: "Invalid request"
-			}
-		}
+router.get("/stats/:cid", async (req, res) => {
+  try {
+    const controllerHours = await ControllerHours.find({ cid: req.params.cid });
+    const hours = {
+      gtyear: {
+        del: 0,
+        gnd: 0,
+        twr: 0,
+        app: 0,
+        ctr: 0,
+      },
+      total: {
+        del: 0,
+        gnd: 0,
+        twr: 0,
+        app: 0,
+        ctr: 0,
+      },
+      sessionCount: controllerHours.length,
+      sessionAvg: 0,
+      months: [],
+    };
+    const pos = {
+      del: "del",
+      gnd: "gnd",
+      twr: "twr",
+      dep: "app",
+      app: "app",
+      ctr: "ctr",
+    };
+    const today = L.utc();
 
-		const absence = await Absence.findOne({_id: req.params.id});
-		await absence.delete();
+    const getMonthYearString = (date) => date.toFormat("LLL yyyy");
 
-		await req.app.dossier.create({
-			by: res.user.cid,
-			affected: absence.controller,
-			action: `%b deleted the leave of absence for %a.`
-		});
-	} catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
+    for (let i = 0; i < 13; i++) {
+      const theMonth = today.minus({ months: i });
+      const ms = getMonthYearString(theMonth);
+      hours[ms] = {
+        del: 0,
+        gnd: 0,
+        twr: 0,
+        app: 0,
+        ctr: 0,
+      };
+      hours.months.push(ms);
+    }
 
-	return res.json(res.stdRes);
+    for (const sess of controllerHours) {
+      const thePos = sess.position.toLowerCase().match(/([a-z]{3})$/); // 🤮
+
+      if (thePos) {
+        const start = L.fromJSDate(sess.timeStart).toUTC();
+        const end = L.fromJSDate(sess.timeEnd).toUTC();
+        const type = pos[thePos[1]];
+        const length = end.toFormat("X") - start.toFormat("X");
+        let ms = getMonthYearString(start);
+
+        if (!hours[ms]) {
+          ms = "gtyear";
+        }
+
+        hours[ms][type] += length;
+        hours.total[type] += length;
+      }
+    }
+
+    hours.sessionAvg = Math.round(
+      Object.values(hours.total).reduce((acc, cv) => acc + cv) /
+        hours.sessionCount
+    );
+    res.stdRes.data = hours;
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.get('/log', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
-	const page = +req.query.page || 1;
-	const limit = +req.query.limit || 20;
-	const amount = await req.app.dossier.countDocuments();
+router.post("/visit", getUser, async (req, res) => {
+  try {
+    if (!res.user) {
+      throw {
+        code: 401,
+        message: "Unable to verify user",
+      };
+    }
 
-	try {
-		const dossier = await req.app.dossier
-		.find()
-		.sort({
-			createdAt: 'desc'
-		}).skip(limit * (page - 1)).limit(limit).populate(
-			'userBy', 'fname lname cid'
-		).populate(
-			'userAffected', 'fname lname cid'
-		).lean();
+    const userData = {
+      cid: res.user.cid,
+      fname: res.user.fname,
+      lname: res.user.lname,
+      rating: res.user.ratingLong,
+      email: req.body.email,
+      home: req.body.facility,
+      reason: req.body.reason,
+    };
 
-		res.stdRes.data = {
-			dossier,
-			amount
-		};
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
-})
+    await VisitApplication.create(userData);
 
-router.get('/:cid', getUser, async (req, res) => {
-	try {
-		const user = await User.findOne({
-			cid: req.params.cid
-		}).select(
-			'-idsToken -discordInfo -trainingMilestones'
-		).populate('roles').populate('certifications').populate({
-			path: 'absence',
-			match: {
-				expirationDate: {
-					$gte: new Date()
-				},
-				deleted: false
-			},
-			select: '-reason'
-		}).lean({virtuals: true});
+    await transporter.sendMail({
+      to: req.body.email,
+      from: {
+        name: "Albuquerque ARTCC",
+        address: "noreply@zabartcc.org",
+      },
+      subject: `Visiting Application Received | Albuquerque ARTCC`,
+      template: "visitReceived",
+      context: {
+        name: `${res.user.fname} ${res.user.lname}`,
+      },
+    });
+    await transporter.sendMail({
+      to: "zab-atm@vatusa.net, zab-datm@vatusa.net",
+      from: {
+        name: "Albuquerque ARTCC",
+        address: "noreply@zabartcc.org",
+      },
+      subject: `New Visiting Application: ${res.user.fname} ${res.user.lname} | Albuquerque ARTCC`,
+      template: "staffNewVisit",
+      context: {
+        user: userData,
+      },
+    });
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
 
-		if(!user || [995625].includes(user.cid)) {
-			throw {
-				code: 503,
-				message: "Unable to find controller"
-			};
-		}
-
-		if(!res.user || !res.user.isStaff) {
-			delete user.email;
-		}
-
-		res.stdRes.data = user;
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+  return res.json(res.stdRes);
 });
 
-router.get('/stats/:cid', async (req, res) => {
-	try {
-		const controllerHours = await ControllerHours.find({cid: req.params.cid});
-		const hours = {
-			gtyear: {
-				del: 0,
-				gnd: 0,
-				twr: 0,
-				app: 0,
-				ctr: 0
-			}, 
-			total: {
-				del: 0,
-				gnd: 0,
-				twr: 0,
-				app: 0,
-				ctr: 0
-			},
-			sessionCount: controllerHours.length,
-			sessionAvg: 0,
-			months: [],
-		};
-		const pos = {
-			del: 'del',
-			gnd: 'gnd',
-			twr: 'twr',
-			dep: 'app',
-			app: 'app',
-			ctr: 'ctr'
-		}
-		const today = L.utc();
-	
-		const getMonthYearString = date => date.toFormat('LLL yyyy');
-	
-		for(let i = 0; i < 13; i++) {
-			const theMonth = today.minus({months: i});
-			const ms = getMonthYearString(theMonth)
-			hours[ms] = {
-				del: 0,
-				gnd: 0,
-				twr: 0,
-				app: 0,
-				ctr: 0
-			};
-			hours.months.push(ms);
-		}
-	
-		for(const sess of controllerHours) {
-			const thePos = sess.position.toLowerCase().match(/([a-z]{3})$/); // 🤮
+router.get("/visit/status", getUser, async (req, res) => {
+  try {
+    if (!res.user) {
+      throw {
+        code: 401,
+        message: "Unable to verify user",
+      };
+    }
+    const count = await VisitApplication.countDocuments({
+      cid: res.user.cid,
+      deleted: false,
+    });
+    res.stdRes.data = count;
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
 
-			if(thePos) {
-				const start = L.fromJSDate(sess.timeStart).toUTC();
-				const end = L.fromJSDate(sess.timeEnd).toUTC();
-				const type = pos[thePos[1]];
-				const length = end.toFormat('X') - start.toFormat('X');
-				let ms = getMonthYearString(start);
-	
-				if(!hours[ms]) {
-					ms = 'gtyear';
-				}
-	
-				hours[ms][type] += length;
-				hours.total[type] += length;
-			}
-	
-		}
-
-		hours.sessionAvg = Math.round(Object.values(hours.total).reduce((acc, cv) => acc + cv)/hours.sessionCount);
-		res.stdRes.data = hours;
-	}
-
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-
-	return res.json(res.stdRes);
+  return res.json(res.stdRes);
 });
 
-router.post('/visit', getUser, async (req, res) => {
-	try {
-		if(!res.user) {
-			throw {
-				code: 401,
-				message: "Unable to verify user"
-			};
-		}
+router.put("/visit/:cid", getUser, auth(["atm1", "datm"]), async (req, res) => {
+  try {
+    await VisitApplication.delete({ cid: req.params.cid });
 
-		const userData = {
-			cid: res.user.cid,
-			fname: res.user.fname,
-			lname: res.user.lname,
-			rating: res.user.ratingLong,
-			email: req.body.email,
-			home: req.body.facility,
-			reason: req.body.reason
-		}
+    const user = await User.findOne({ cid: req.params.cid });
+    const oi = await User.find({ deletedAt: null, member: true })
+      .select("oi")
+      .lean();
+    const userOi = generateOperatingInitials(
+      user.fname,
+      user.lname,
+      oi.map((oi) => oi.oi)
+    );
 
-		await VisitApplication.create(userData);
-		
-		await transporter.sendMail({
-			to: req.body.email,
-			from: {
-				name: "Albuquerque ARTCC",
-				address: 'noreply@zabartcc.org'
-			},
-			subject: `Visiting Application Received | Albuquerque ARTCC`,
-			template: 'visitReceived',
-			context: {
-				name: `${res.user.fname} ${res.user.lname}`,
-			}
-		});
-		await transporter.sendMail({
-			to: 'atm@zabartcc.org, datm@zabartcc.org',
-			from: {
-				name: "Albuquerque ARTCC",
-				address: 'noreply@zabartcc.org'
-			},
-			subject: `New Visiting Application: ${res.user.fname} ${res.user.lname} | Albuquerque ARTCC`,
-			template: 'staffNewVisit',
-			context: {
-				user: userData
-			}
-		});
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);	
+    user.member = true;
+    user.vis = true;
+    user.oi = userOi;
+
+    await user.save();
+
+    await transporter.sendMail({
+      to: user.email,
+      from: {
+        name: "Albuquerque ARTCC",
+        address: "noreply@zabartcc.org",
+      },
+      subject: `Visiting Application Accepted | Albuquerque ARTCC`,
+      template: "visitAccepted",
+      context: {
+        name: `${user.fname} ${user.lname}`,
+      },
+    });
+
+    await axios.post(
+      `https://api.vatusa.net/v2/facility/ZAB/roster/manageVisitor/${req.params.cid}?apikey=${process.env.VATUSA_API_KEY}`
+    );
+
+    await req.app.dossier.create({
+      by: res.user.cid,
+      affected: user.cid,
+      action: `%b approved the visiting application for %a.`,
+    });
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.get('/visit/status', getUser, async (req, res) => {
-	try {
-		if(!res.user) {
-			throw {
-				code: 401,
-				message: "Unable to verify user"
-			};
-		}
-		const count = await VisitApplication.countDocuments({cid: res.user.cid, deleted: false});
-		res.stdRes.data = count;
-	} catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
+router.delete(
+  "/visit/:cid",
+  getUser,
+  auth(["atm1", "datm"]),
+  async (req, res) => {
+    try {
+      await VisitApplication.delete({ cid: req.params.cid });
 
-	return res.json(res.stdRes);
+      const user = await User.findOne({ cid: req.params.cid });
+
+      await transporter.sendMail({
+        to: user.email,
+        from: {
+          name: "Albuquerque ARTCC",
+          address: "noreply@zabartcc.org",
+        },
+        subject: `Visiting Application Rejected | Albuquerque ARTCC`,
+        template: "visitRejected",
+        context: {
+          name: `${user.fname} ${user.lname}`,
+          reason: req.body.reason,
+        },
+      });
+      await req.app.dossier.create({
+        by: res.user.cid,
+        affected: user.cid,
+        action: `%b rejected the visiting application for %a: ${req.body.reason}`,
+      });
+    } catch (e) {
+      req.app.Sentry.captureException(e);
+      res.stdRes.ret_det = e;
+    }
+
+    return res.json(res.stdRes);
+  }
+);
+
+router.post("/:cid", microAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({ cid: req.params.cid });
+    if (user) {
+      throw {
+        code: 409,
+        message: "This user already exists",
+      };
+    }
+
+    if (!req.body) {
+      throw {
+        code: 400,
+        message: "No user data provided",
+      };
+    }
+
+    const oi = await User.find({ deletedAt: null, member: true })
+      .select("oi")
+      .lean();
+    const userOi = generateOperatingInitials(
+      req.body.fname,
+      req.body.lname,
+      oi.map((oi) => oi.oi)
+    );
+    const { data } = await axios.get(
+      `https://ui-avatars.com/api/?name=${userOi}&size=256&background=122049&color=ffffff`,
+      { responseType: "arraybuffer" }
+    );
+
+    await req.app.s3
+      .putObject({
+        Bucket: "zabartcc/avatars",
+        Key: `${req.body.cid}-default.png`,
+        Body: data,
+        ContentType: "image/png",
+        ACL: "public-read",
+        ContentDisposition: "inline",
+      })
+      .promise();
+
+    await User.create({
+      ...req.body,
+      oi: userOi,
+      avatar: `${req.body.cid}-default.png`,
+    });
+
+    const ratings = [
+      "Unknown",
+      "OBS",
+      "S1",
+      "S2",
+      "S3",
+      "C1",
+      "C2",
+      "C3",
+      "I1",
+      "I2",
+      "I3",
+      "SUP",
+      "ADM",
+    ];
+
+    await transporter.sendMail({
+      to: "zab-atm@vatusa.net; zab-datm@vatusa.net; zab-ta@vatusa.net",
+      from: {
+        name: "Albuquerque ARTCC",
+        address: "noreply@zabartcc.org",
+      },
+      subject: `New ${req.body.vis ? "Visitor" : "Member"}: ${req.body.fname} ${
+        req.body.lname
+      } | Albuquerque ARTCC`,
+      template: "newController",
+      context: {
+        name: `${req.body.fname} ${req.body.lname}`,
+        email: req.body.email,
+        cid: req.body.cid,
+        rating: ratings[req.body.rating],
+        vis: req.body.vis,
+        type: req.body.vis ? "visitor" : "member",
+        home: req.body.vis ? req.body.homeFacility : "ZAB",
+      },
+    });
+
+    await req.app.dossier.create({
+      by: -1,
+      affected: req.body.cid,
+      action: `%a was created by an external service.`,
+    });
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.put('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
-	try {
-		await VisitApplication.delete({cid: req.params.cid});
+router.put("/:cid/member", microAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({ cid: req.params.cid });
 
-		const user = await User.findOne({cid: req.params.cid});
-		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
-		const userOi = generateOperatingInitials(user.fname, user.lname, oi.map(oi => oi.oi))
+    if (!user) {
+      throw {
+        code: 400,
+        message: "Unable to find user",
+      };
+    }
 
-		user.member = true;
-		user.vis = true;
-		user.oi = userOi;
+    const oi = await User.find({ deletedAt: null, member: true })
+      .select("oi")
+      .lean();
 
-		await user.save();
+    user.member = req.body.member;
+    user.oi = req.body.member
+      ? generateOperatingInitials(
+          user.fname,
+          user.lname,
+          oi.map((oi) => oi.oi)
+        )
+      : null;
+    user.joinDate = req.body.member ? new Date() : null;
 
-		await transporter.sendMail({
-			to: user.email,
-			from: {
-				name: "Albuquerque ARTCC",
-				address: 'noreply@zabartcc.org'
-			},
-			subject: `Visiting Application Accepted | Albuquerque ARTCC`,
-			template: 'visitAccepted',
-			context: {
-				name: `${user.fname} ${user.lname}`,
-			}
-		});
+    await user.save();
 
-		await axios.post(`https://api.vatusa.net/v2/facility/ZAB/roster/manageVisitor/${req.params.cid}?apikey=${process.env.VATUSA_API_KEY}`)
+    await req.app.dossier.create({
+      by: -1,
+      affected: req.params.cid,
+      action: `%a was ${
+        req.body.member ? "added to" : "removed from"
+      } the roster by an external service.`,
+    });
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
 
-		await req.app.dossier.create({
-			by: res.user.cid,
-			affected: user.cid,
-			action: `%b approved the visiting application for %a.`
-		});
-	} 
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+  return res.json(res.stdRes);
 });
 
+router.put("/:cid/visit", microAuth, async (req, res) => {
+  try {
+    const user = await User.findOne({ cid: req.params.cid });
 
-router.delete('/visit/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
-	try {
-		await VisitApplication.delete({cid: req.params.cid});
+    if (!user) {
+      throw {
+        code: 400,
+        message: "Unable to find user",
+      };
+    }
 
-		const user = await User.findOne({cid: req.params.cid});
+    user.vis = req.body.vis;
+    user.joinDate = new Date();
 
-		await transporter.sendMail({
-			to: user.email,
-			from: {
-				name: "Albuquerque ARTCC",
-				address: 'noreply@zabartcc.org'
-			},
-			subject: `Visiting Application Rejected | Albuquerque ARTCC`,
-			template: 'visitRejected',
-			context: {
-				name: `${user.fname} ${user.lname}`,
-				reason: req.body.reason
-			}
-		});
-		await req.app.dossier.create({
-			by: res.user.cid,
-			affected: user.cid,
-			action: `%b rejected the visiting application for %a: ${req.body.reason}`
-		});
-	} 
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+    await user.save();
+
+    await req.app.dossier.create({
+      by: -1,
+      affected: req.params.cid,
+      action: `%a was set as a ${
+        req.body.vis ? "visiting controller" : "home controller"
+      } by an external service.`,
+    });
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
+
+  return res.json(res.stdRes);
 });
 
-router.post('/:cid', microAuth, async (req, res) => {
-	try {
-		const user = await User.findOne({cid: req.params.cid});
-		if(user) {
-			throw {
-				code: 409,
-				message: "This user already exists"
-			};
-		}
-		
-		if(!req.body) {
-			throw {
-				code: 400,
-				message: "No user data provided"
-			};
-		}
+router.put(
+  "/:cid",
+  getUser,
+  auth(["atm1", "datm", "ta", "wm", "ins"]),
+  async (req, res) => {
+    try {
+      if (!req.body.form) {
+        throw {
+          code: 400,
+          message: "No user data included",
+        };
+      }
 
-		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
-		const userOi = generateOperatingInitials(req.body.fname, req.body.lname, oi.map(oi => oi.oi))
-		const {data} = await axios.get(`https://ui-avatars.com/api/?name=${userOi}&size=256&background=122049&color=ffffff`, {responseType: 'arraybuffer'});
+      const { fname, lname, email, oi, roles, certs, vis } = req.body.form;
+      const toApply = {
+        roles: [],
+        certifications: [],
+      };
 
-		await req.app.s3.putObject({
-			Bucket: 'zabartcc/avatars',
-			Key: `${req.body.cid}-default.png`,
-			Body: data,
-			ContentType: 'image/png',
-			ACL: 'public-read',
-			ContentDisposition: 'inline',
-		}).promise();
+      for (const [code, set] of Object.entries(roles)) {
+        if (set) {
+          toApply.roles.push(code);
+        }
+      }
 
-		await User.create({
-			...req.body,
-			oi: userOi,
-			avatar: `${req.body.cid}-default.png`,
-		});
+      for (const [code, set] of Object.entries(certs)) {
+        if (set) {
+          toApply.certifications.push(code);
+        }
+      }
 
-		const ratings = ['Unknown', 'OBS', 'S1', 'S2', 'S3', 'C1', 'C2', 'C3', 'I1', 'I2', 'I3', 'SUP', 'ADM'];
+      const { data } = await axios.get(
+        `https://ui-avatars.com/api/?name=${oi}&size=256&background=122049&color=ffffff`,
+        { responseType: "arraybuffer" }
+      );
 
-		await transporter.sendMail({
-			to: "atm@zabartcc.org; datm@zabartcc.org; ta@zabartcc.org",
-			from: {
-				name: "Albuquerque ARTCC",
-				address: 'noreply@zabartcc.org'
-			},
-			subject: `New ${req.body.vis ? 'Visitor' : 'Member'}: ${req.body.fname} ${req.body.lname} | Albuquerque ARTCC`,
-			template: 'newController',
-			context: {
-				name: `${req.body.fname} ${req.body.lname}`,
-				email: req.body.email,
-				cid: req.body.cid,
-				rating: ratings[req.body.rating],
-				vis: req.body.vis,
-				type: req.body.vis ? 'visitor' : 'member',
-				home: req.body.vis ? req.body.homeFacility : 'ZAB'
-			}
-		});
+      await req.app.s3
+        .putObject({
+          Bucket: "zabartcc/avatars",
+          Key: `${req.params.cid}-default.png`,
+          Body: data,
+          ContentType: "image/png",
+          ACL: "public-read",
+          ContentDisposition: "inline",
+        })
+        .promise();
 
-		await req.app.dossier.create({
-			by: -1,
-			affected: req.body.cid,
-			action: `%a was created by an external service.`
-		});
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-		
-	return res.json(res.stdRes);
-});
+      await User.findOneAndUpdate(
+        { cid: req.params.cid },
+        {
+          fname,
+          lname,
+          email,
+          oi,
+          vis,
+          roleCodes: toApply.roles,
+          certCodes: toApply.certifications,
+        }
+      );
 
-router.put('/:cid/member', microAuth, async (req, res) => {
-	try {
-		const user = await User.findOne({cid: req.params.cid});
+      await req.app.dossier.create({
+        by: res.user.cid,
+        affected: req.params.cid,
+        action: `%a was updated by %b.`,
+      });
+    } catch (e) {
+      req.app.Sentry.captureException(e);
+      res.stdRes.ret_det = e;
+    }
 
-		if(!user) {
-			throw {
-				code: 400,
-				message: "Unable to find user"
-			};
-		}
+    return res.json(res.stdRes);
+  }
+);
 
-		const oi = await User.find({deletedAt: null, member: true}).select('oi').lean();
+router.delete("/:cid", getUser, auth(["atm1", "datm"]), async (req, res) => {
+  try {
+    if (!req.body.reason) {
+      throw {
+        code: 400,
+        message: "You must specify a reason",
+      };
+    }
 
-		user.member = req.body.member;
-		user.oi = (req.body.member) ? generateOperatingInitials(user.fname, user.lname, oi.map(oi => oi.oi)) : null;
-		user.joinDate = req.body.member ? new Date() : null;
+    const user = await User.findOneAndUpdate(
+      { cid: req.params.cid },
+      {
+        member: false,
+      }
+    );
 
-		await user.save();
+    if (user.vis) {
+      await axios.delete(
+        `https://api.vatusa.net/v2/facility/ZAB/roster/manageVisitor/${req.params.cid}`,
+        {
+          params: {
+            apikey: process.env.VATUSA_API_KEY,
+          },
+          data: {
+            reason: req.body.reason,
+          },
+        }
+      );
+    } else {
+      await axios.delete(
+        `https://api.vatusa.net/v2/facility/ZAB/roster/${req.params.cid}`,
+        {
+          params: {
+            apikey: process.env.VATUSA_API_KEY,
+          },
+          data: {
+            reason: req.body.reason,
+          },
+        }
+      );
+    }
 
-		
-		await req.app.dossier.create({
-			by: -1,
-			affected: req.params.cid,
-			action: `%a was ${req.body.member ? 'added to' : 'removed from'} the roster by an external service.`
-		});
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-		
-	return res.json(res.stdRes);
-})
+    await req.app.dossier.create({
+      by: res.user.cid,
+      affected: req.params.cid,
+      action: `%a was removed from the roster by %b: ${req.body.reason}`,
+    });
+  } catch (e) {
+    req.app.Sentry.captureException(e);
+    res.stdRes.ret_det = e;
+  }
 
-router.put('/:cid/visit', microAuth, async (req, res) => {
-	try {
-		const user = await User.findOne({cid: req.params.cid});
-
-		if(!user) {
-			throw {
-				code: 400,
-				message: "Unable to find user"
-			};
-		}
-
-		user.vis = req.body.vis;
-		user.joinDate = new Date();
-
-		await user.save();
-
-		await req.app.dossier.create({
-			by: -1,
-			affected: req.params.cid,
-			action: `%a was set as a ${req.body.vis ? 'visiting controller' : 'home controller'} by an external service.`
-		});
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-		
-	return res.json(res.stdRes);
-})
-
-router.put('/:cid', getUser, auth(['atm', 'datm', 'ta', 'wm', 'ins']), async (req, res) => {
-	try {
-		if(!req.body.form) {
-			throw {
-				code: 400,
-				message: "No user data included"
-			};
-		}
-		
-		const {fname, lname, email, oi, roles, certs, vis} = req.body.form;
-		const toApply = {
-			roles: [],
-			certifications: []
-		};
-
-		for(const [code, set] of Object.entries(roles)) {
-			if(set) {
-				toApply.roles.push(code);
-			}
-		}
-
-		for(const [code, set] of Object.entries(certs)) {
-			if(set) {
-				toApply.certifications.push(code);
-			}
-		}
-
-		const {data} = await axios.get(`https://ui-avatars.com/api/?name=${oi}&size=256&background=122049&color=ffffff`, {responseType: 'arraybuffer'});
-
-		await req.app.s3.putObject({
-			Bucket: 'zabartcc/avatars',
-			Key: `${req.params.cid}-default.png`,
-			Body: data,
-			ContentType: 'image/png',
-			ACL: 'public-read',
-			ContentDisposition: 'inline',
-		}).promise();
-
-		await User.findOneAndUpdate({cid: req.params.cid}, {
-			fname,
-			lname, 
-			email,
-			oi,
-			vis,
-			roleCodes: toApply.roles,
-			certCodes: toApply.certifications,
-		});
-
-		await req.app.dossier.create({
-			by: res.user.cid,
-			affected: req.params.cid,
-			action: `%a was updated by %b.`
-		});
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
-});
-
-router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
-	try {
-		if(!req.body.reason) {
-			throw {
-				code: 400,
-				message: "You must specify a reason"
-			};
-		}
-
-		const user = await User.findOneAndUpdate({cid: req.params.cid}, {
-			member: false
-		});
-
-		if(user.vis) {
-			await axios.delete(`https://api.vatusa.net/v2/facility/ZAB/roster/manageVisitor/${req.params.cid}`, {
-				params: {
-					apikey: process.env.VATUSA_API_KEY,
-				},
-				data: {
-					reason: req.body.reason
-				}
-			});
-		} else {
-			await axios.delete(`https://api.vatusa.net/v2/facility/ZAB/roster/${req.params.cid}`, {
-				params: {
-					apikey: process.env.VATUSA_API_KEY,
-				},
-				data: {
-					reason: req.body.reason
-				}
-			});
-		}
-
-		await req.app.dossier.create({
-			by: res.user.cid,
-			affected: req.params.cid,
-			action: `%a was removed from the roster by %b: ${req.body.reason}`
-		});
-	}
-	catch(e) {
-		req.app.Sentry.captureException(e);
-		res.stdRes.ret_det = e;
-	}
-	
-	return res.json(res.stdRes);
+  return res.json(res.stdRes);
 });
 
 /**
@@ -848,46 +958,50 @@ router.delete('/:cid', getUser, auth(['atm', 'datm']), async (req, res) => {
  * @return A two character set of operating initials (e.g. RA).
  */
 const generateOperatingInitials = (fname, lname, usedOi) => {
-	let operatingInitials;
-	const MAX_TRIES = 10;
+  let operatingInitials;
+  const MAX_TRIES = 10;
 
-	operatingInitials = `${fname.charAt(0).toUpperCase()}${lname.charAt(0).toUpperCase()}`;
-	
-	if(!usedOi.includes(operatingInitials)) {
-		return operatingInitials;
-	}
-	
-	operatingInitials = `${lname.charAt(0).toUpperCase()}${fname.charAt(0).toUpperCase()}`;
-	
-	if(!usedOi.includes(operatingInitials)) {
-		return operatingInitials;
-	}
+  operatingInitials = `${fname.charAt(0).toUpperCase()}${lname
+    .charAt(0)
+    .toUpperCase()}`;
 
-	const chars = `${lname.toUpperCase()}${fname.toUpperCase()}`;
+  if (!usedOi.includes(operatingInitials)) {
+    return operatingInitials;
+  }
 
-	let tries = 0;
+  operatingInitials = `${lname.charAt(0).toUpperCase()}${fname
+    .charAt(0)
+    .toUpperCase()}`;
 
-	do {
-		operatingInitials = random(chars, 2);
-		tries++;
-	} while(usedOi.includes(operatingInitials) || tries > MAX_TRIES);
+  if (!usedOi.includes(operatingInitials)) {
+    return operatingInitials;
+  }
 
-	if(!usedOi.includes(operatingInitials)) {
-		return operatingInitials;
-	}
+  const chars = `${lname.toUpperCase()}${fname.toUpperCase()}`;
 
-	tries = 0;
+  let tries = 0;
 
-	do {
-		operatingInitials = random('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 2);
-		tries++;
-	} while(usedOi.includes(operatingInitials) || tries > MAX_TRIES);
+  do {
+    operatingInitials = random(chars, 2);
+    tries++;
+  } while (usedOi.includes(operatingInitials) || tries > MAX_TRIES);
 
-	if(!usedOi.includes(operatingInitials)) {
-		return operatingInitials;
-	}
+  if (!usedOi.includes(operatingInitials)) {
+    return operatingInitials;
+  }
 
-	return false;
+  tries = 0;
+
+  do {
+    operatingInitials = random("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2);
+    tries++;
+  } while (usedOi.includes(operatingInitials) || tries > MAX_TRIES);
+
+  if (!usedOi.includes(operatingInitials)) {
+    return operatingInitials;
+  }
+
+  return false;
 };
 
 /**
@@ -897,11 +1011,11 @@ const generateOperatingInitials = (fname, lname, usedOi) => {
  * @return String of selected characters.
  */
 const random = (str, len) => {
-	let ret = '';
-	for (let i = 0; i < len; i++) {
-		ret = `${ret}${str.charAt(Math.floor(Math.random() * str.length))}`;
-	}
-	return ret;
+  let ret = "";
+  for (let i = 0; i < len; i++) {
+    ret = `${ret}${str.charAt(Math.floor(Math.random() * str.length))}`;
+  }
+  return ret;
 };
 
 export default router;

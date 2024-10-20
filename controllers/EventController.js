@@ -178,7 +178,7 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), async(req, res) => {
+router.delete('/:slug/mandelete/:cid', getUser, auth(['atm1', 'datm', 'ec', 'wm']), async(req, res) => {
 	try {
 		const signup = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$pull: {
@@ -211,7 +211,7 @@ router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), asy
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/mansignup/:cid', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
+router.put('/:slug/mansignup/:cid', getUser, auth(['atm1', 'datm', 'ec', 'wm']), async (req, res) => {
 	try {
 		const user = await User.findOne({cid: req.params.cid});
 		if(user !== null) {
@@ -242,7 +242,7 @@ router.put('/:slug/mansignup/:cid', getUser, auth(['atm', 'datm', 'ec']), async 
 	return res.json(res.stdRes);
 });
 
-router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), async (req, res) => {
+router.post('/', getUser, auth(['atm1', 'datm', 'ec', 'wm']), upload.single('banner'), async (req, res) => {
 	try {
 		const url = req.body.name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
@@ -296,7 +296,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), async (req, res) => {
+router.put('/:slug', getUser, auth(['atm1', 'datm', 'ec', 'wm']), upload.single('banner'), async (req, res) => {
 	try {
 		const event = await Event.findOne({url: req.params.slug});
 		const {name, description, startTime, endTime, positions} = req.body;
@@ -408,7 +408,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
+router.delete('/:slug', getUser, auth(['atm1', 'datm', 'ec', 'wm']), async (req, res) => {
 	try {
 		const deleteEvent = await Event.findOne({url: req.params.slug});
 		await deleteEvent.delete();
@@ -448,7 +448,7 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 // 	return res.json(res.stdRes);
 // });
 
-router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
+router.put('/:slug/assign', getUser, auth(['atm1', 'datm', 'ec', 'wm']), async (req, res) => {
 	try {
 		const {position, cid} = req.body;
 
@@ -484,7 +484,7 @@ router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
+router.put('/:slug/notify', getUser, auth(['atm1', 'datm', 'ec', 'wm']), async (req, res) => {
 	try {
 		await Event.updateOne({url: req.params.slug}, {
 			$set: {
@@ -524,7 +524,7 @@ router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug/close', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
+router.put('/:slug/close', getUser, auth(['atm1', 'datm', 'ec', 'wm']), async (req, res) => {
 	try {
 		await Event.updateOne({url: req.params.slug}, {
 			$set: {

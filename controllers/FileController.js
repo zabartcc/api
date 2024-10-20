@@ -50,7 +50,7 @@ router.get('/downloads/:id', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
+router.post('/downloads', getUser, auth(['atm1', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
 	try {
 		if(!req.body.category) {
 			throw {
@@ -95,7 +95,7 @@ router.post('/downloads', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 	return res.json(res.stdRes);
 });
 
-router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
+router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm1', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		if(!req.file) { // no updated file provided
 			await Downloads.findByIdAndUpdate(req.params.id, {
@@ -140,7 +140,7 @@ router.put('/downloads/:id', upload.single('download'), getUser, auth(['atm', 'd
 	return res.json(res.stdRes);
 });
 
-router.delete('/downloads/:id', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
+router.delete('/downloads/:id', getUser, auth(['atm1', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		const download = await Downloads.findByIdAndDelete(req.params.id).lean();
 		await req.app.dossier.create({
@@ -181,7 +181,7 @@ router.get('/documents/:slug', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
+router.post('/documents', getUser, auth(['atm1', 'datm', 'ta', 'fe']), upload.single('download'), async (req, res) => {
 	try {
 		const {name, category, description, content, type} = req.body;
 		if(!category) {
@@ -252,7 +252,7 @@ router.post('/documents', getUser, auth(['atm', 'datm', 'ta', 'fe']), upload.sin
 	return res.json(res.stdRes);
 });
 
-router.put('/documents/:slug', upload.single('download'), getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
+router.put('/documents/:slug', upload.single('download'), getUser, auth(['atm1', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		const document = await Document.findOne({slug: req.params.slug});
 		const {name, category, description, content, type} = req.body;
@@ -318,7 +318,7 @@ router.put('/documents/:slug', upload.single('download'), getUser, auth(['atm', 
 	return res.json(res.stdRes);
 })
 
-router.delete('/documents/:id', getUser, auth(['atm', 'datm', 'ta', 'fe']), async (req, res) => {
+router.delete('/documents/:id', getUser, auth(['atm1', 'datm', 'ta', 'fe']), async (req, res) => {
 	try {
 		const doc = await Document.findByIdAndDelete(req.params.id);
 		await req.app.dossier.create({
