@@ -129,7 +129,7 @@ router.get('/milestones', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/request/open', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
+router.get('/request/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		const days = +req.query.period || 21; // days from start of CURRENT week
 		const d = new Date(Date.now()),
@@ -155,7 +155,7 @@ router.get('/request/open', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']),
 	return res.json(res.stdRes);
 });
 
-router.post('/request/take/:id', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
+router.post('/request/take/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		if(new Date(req.body.startTime) >= new Date(req.body.endTime)) {
 			throw {
@@ -206,7 +206,7 @@ router.post('/request/take/:id', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mt
 	return res.json(res.stdRes);
 });
 
-router.delete('/request/:id', getUser, auth(['atm1', 'datm', 'ta']), async (req, res) => {
+router.delete('/request/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => {
 	try {
 		const request = await TrainingRequest.findById(req.params.id);
 		request.delete();
@@ -224,7 +224,7 @@ router.delete('/request/:id', getUser, auth(['atm1', 'datm', 'ta']), async (req,
 	return res.json(res.stdRes);
 });
 
-router.get('/request/:date', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
+router.get('/request/:date', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		const d = new Date(`${req.params.date.slice(0,4)}-${req.params.date.slice(4,6)}-${req.params.date.slice(6,8)}`);
 		const dayAfter = new Date(d);
@@ -248,7 +248,7 @@ router.get('/request/:date', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr'])
 	return res.json(res.stdRes);
 });
 
-router.get('/session/open', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
+router.get('/session/open', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		const sessions = await TrainingSession.find({
 			instructorCid: res.user.cid,
@@ -266,7 +266,7 @@ router.get('/session/open', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']),
 
 router.get('/session/:id', getUser, async(req, res) => {
 	try {
-		const isIns = ['ta', 'ins', 'mtr', 'atm1', 'datm'].some(r => res.user.roleCodes.includes(r));
+		const isIns = ['ta', 'ins', 'mtr', 'atm', 'datm'].some(r => res.user.roleCodes.includes(r));
 
 		if(isIns) {
 			const session = await TrainingSession.findById(
@@ -303,7 +303,7 @@ router.get('/session/:id', getUser, async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/sessions', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
+router.get('/sessions', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
 		const page = +req.query.page || 1;
 		const limit = +req.query.limit || 20;
@@ -404,7 +404,7 @@ router.get('/sessions/past', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/sessions/:cid', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
+router.get('/sessions/:cid', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
 		const controller = await User.findOne({cid: req.params.cid}).select('fname lname').lean();
 		if(!controller) {
@@ -441,7 +441,7 @@ router.get('/sessions/:cid', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr'])
 	return res.json(res.stdRes);
 });
 
-router.put('/session/save/:id', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
+router.put('/session/save/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
 		await TrainingSession.findByIdAndUpdate(req.params.id, req.body);
 	} catch(e) {
@@ -452,7 +452,7 @@ router.put('/session/save/:id', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr
 	return res.json(res.stdRes);
 });
 
-router.put('/session/submit/:id', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
+router.put('/session/submit/:id', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async(req, res) => {
 	try {
 		if(req.body.position === '' || req.body.progress === null || req.body.movements === null || req.body.location === null || req.body.ots === null || req.body.studentNotes === null || (req.body.studentNotes && req.body.studentNotes.length > 3000) || (req.body.insNotes && req.body.insNotes.length > 3000)) {
 			throw {
