@@ -16,7 +16,7 @@ import { DateTime as L } from 'luxon';
 const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const ratings = ["Unknown", "OBS", "S1", "S2", "S3", "C1", "C2", "C3", "I1", "I2", "I3", "SUP", "ADM"];
 
-router.get('/admin', getUser, auth(['atm1', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
+router.get('/admin', getUser, auth(['atm', 'datm', 'ta', 'fe', 'ec', 'wm']), async (req, res) => {
 	try {
 		const d = new Date();
 		const thisMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
@@ -117,7 +117,7 @@ router.get('/admin', getUser, auth(['atm1', 'datm', 'ta', 'fe', 'ec', 'wm']), as
 	return res.json(res.stdRes);
 })
 
-router.get('/ins', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
+router.get('/ins', getUser, auth(['atm', 'datm', 'ta', 'ins', 'mtr']), async (req, res) => {
 	try {
 		let lastTraining = await TrainingSession.aggregate([
 			{$group: {
@@ -170,7 +170,7 @@ router.get('/ins', getUser, auth(['atm1', 'datm', 'ta', 'ins', 'mtr']), async (r
 	return res.json(res.stdRes);
 })
 
-router.get('/activity', getUser, auth(['atm1', 'datm', 'ta', 'wm']), async (req, res) => {
+router.get('/activity', getUser, auth(['atm', 'datm', 'ta', 'wm']), async (req, res) => {
 	try {
 		const today = L.utc();
 		const chkDate = today.minus({days: 91});

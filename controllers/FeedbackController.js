@@ -6,7 +6,7 @@ import Notification from '../models/Notification.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
 
-router.get('/', getUser, auth(['atm1', 'datm', 'ta', 'ec','wm']), async (req, res) => { // All feedback
+router.get('/', getUser, auth(['atm', 'datm', 'ta', 'ec','wm']), async (req, res) => { // All feedback
 	try {
 		const page = +req.query.page || 1;
 		const limit = +req.query.limit || 20;
@@ -85,7 +85,7 @@ router.get('/controllers', async ({res}) => { // Controller list on feedback pag
 	return res.json(res.stdRes);
 });
 
-router.get('/unapproved', getUser, auth(['atm1', 'datm', 'ta', 'ec', 'wm']), async ({res}) => { // Get all unapproved feedback
+router.get('/unapproved', getUser, auth(['atm', 'datm', 'ta', 'ec', 'wm']), async ({res}) => { // Get all unapproved feedback
 	try {
 		const feedback = await Feedback.find({deletedAt: null, approved: false}).populate('controller', 'fname lname cid').sort({createdAt: 'desc'}).lean();
 		res.stdRes.data = feedback;
@@ -96,7 +96,7 @@ router.get('/unapproved', getUser, auth(['atm1', 'datm', 'ta', 'ec', 'wm']), asy
 	return res.json(res.stdRes);
 });
 
-router.put('/approve/:id', getUser, auth(['atm1', 'datm', 'ta']), async (req, res) => { // Approve feedback
+router.put('/approve/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // Approve feedback
 	try {
 		const approved = await Feedback.findOneAndUpdate({_id: req.params.id}, {
 			approved: true
@@ -123,7 +123,7 @@ router.put('/approve/:id', getUser, auth(['atm1', 'datm', 'ta']), async (req, re
 	return res.json(res.stdRes);
 });
 
-router.put('/reject/:id', getUser, auth(['atm1', 'datm', 'ta']), async (req, res) => { // Reject feedback
+router.put('/reject/:id', getUser, auth(['atm', 'datm', 'ta']), async (req, res) => { // Reject feedback
 	try {
 		const feedback = await Feedback.findOne({_id: req.params.id});
 		await feedback.delete();

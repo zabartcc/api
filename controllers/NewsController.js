@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.post('/', getUser, auth(['atm1', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) => {
+router.post('/', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) => {
 	try {
 		if(!req.body || !req.body.title || !req.body.content) {
 			throw {
@@ -74,7 +74,7 @@ router.get('/:slug', async (req, res) =>{
 	return res.json(res.stdRes);
 });
 
-router.put('/:slug', getUser, auth(['atm1', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) => {
+router.put('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) => {
 	try {
 		const {title, content} = req.body;
 		const newsItem = await News.findOne({uriSlug: req.params.slug});
@@ -98,7 +98,7 @@ router.put('/:slug', getUser, auth(['atm1', 'datm', 'ta', 'ec', 'fe', 'wm']), as
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug', getUser, auth(['atm1', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) =>{
+router.delete('/:slug', getUser, auth(['atm', 'datm', 'ta', 'ec', 'fe', 'wm']), async (req, res) =>{
 	try {
 		const newsItem = await News.findOne({uriSlug: req.params.slug});
 		const status = await newsItem.delete();
