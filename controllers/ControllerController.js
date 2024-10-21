@@ -139,7 +139,7 @@ router.get("/staff", async (req, res) => {
       },
       ec: {
         title: "Events Team",
-        code: "ec",
+        code: "zab-ec",
         users: [],
       },
       wm: {
