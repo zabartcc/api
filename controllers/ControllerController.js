@@ -121,32 +121,32 @@ router.get("/staff", async (req, res) => {
     const staff = {
       atm: {
         title: "Air Traffic Manager",
-        code: "atm",
+        code: "zab-atm",
         users: [],
       },
       datm: {
         title: "Deputy Air Traffic Manager",
-        code: "datm",
+        code: "zab-datm",
         users: [],
       },
       ta: {
         title: "Training Administrator",
-        code: "ta",
+        code: "zab-ta",
         users: [],
       },
       ec: {
         title: "Events Team",
-        code: "ec",
+        code: "zab-ec",
         users: [],
       },
       wm: {
         title: "Web Team",
-        code: "wm",
+        code: "john.morgan",
         users: [],
       },
       fe: {
         title: "Facility Engineer",
-        code: "fe",
+        code: "edward.sterling",
         users: [],
       },
       ins: {
@@ -161,7 +161,7 @@ router.get("/staff", async (req, res) => {
       },
       dta: {
         title: "Deputy Training Administrator",
-        code: "dta",
+        code: "zab-dta",
         users: [],
       },
     };
@@ -709,7 +709,7 @@ router.post("/:cid", microAuth, async (req, res) => {
     ];
 
     await transporter.sendMail({
-      to: "atm@zabartcc.org; datm@zabartcc.org; ta@zabartcc.org",
+      to: "zab-atm@vatusa.net; zab-datm@vatusa.net; zab-ta@vatusa.net",
       from: {
         name: "Albuquerque ARTCC",
         address: "noreply@zabartcc.org",
