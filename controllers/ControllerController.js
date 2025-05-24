@@ -161,7 +161,7 @@ router.get("/staff", async (req, res) => {
       },
       dta: {
         title: "Deputy Training Administrator",
-        code: "connor.gibson",
+        code: "zab-dta",
         users: [],
       },
     };
