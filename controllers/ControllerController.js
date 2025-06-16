@@ -901,7 +901,9 @@ router.delete("/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
     const user = await User.findOneAndUpdate(
       { cid: req.params.cid },
       {
-        member: false,
+        member: false,          
+        roleCodes: [],
+        certCodes: [] 
       }
     );
 
@@ -918,14 +920,6 @@ router.delete("/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
         }
       );
     } else {
-      await User.findOneAndUpdate(
-        { cid: req.params.cid },
-        {
-          roleCodes: [],
-          certCodes: [] 
-        }
-      );
-
       await axios.delete(
         `https://api.vatusa.net/v2/facility/ZAB/roster/${req.params.cid}`,
         {
