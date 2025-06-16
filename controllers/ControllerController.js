@@ -121,7 +121,7 @@ router.get("/staff", async (req, res) => {
     const staff = {
       atm: {
         title: "Air Traffic Manager",
-        code: "zab-atm",
+        code: "zab-atm", // These "codes" are really just used for email addresses...
         users: [],
       },
       datm: {
@@ -141,22 +141,22 @@ router.get("/staff", async (req, res) => {
       },
       wm: {
         title: "Web Team",
-        code: "john.morgan",
+        code: "zab-wm",
         users: [],
       },
       fe: {
         title: "Facility Engineer",
-        code: "edward.sterling",
+        code: "zab-fe",
         users: [],
       },
       ins: {
         title: "Instructors",
-        code: "instructors",
+        code: "zab-ta",
         users: [],
       },
       mtr: {
         title: "Mentors",
-        code: "instructors",
+        code: "zab-ta",
         users: [],
       },
       dta: {
