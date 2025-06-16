@@ -902,8 +902,7 @@ router.delete("/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
       { cid: req.params.cid },
       {
         member: false,          
-        roleCodes: [],
-        certCodes: [] 
+        roleCodes: []
       }
     );
 
