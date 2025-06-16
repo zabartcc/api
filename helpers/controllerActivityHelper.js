@@ -16,7 +16,6 @@ await redis.connect();
 
 const observerRatingCode = 1;
 const activityWindowInDays = 90; // Update from 60 to 90 days
-const activityWindowInDays = 90;
 const gracePeriodInDays = 15;
 const requiredHoursPerPeriod = 3; // Ensure this is set to 3 hours
 const redisActivityCheckKey = "ACTIVITYCHECKRUNNING";
