@@ -385,7 +385,7 @@ router.get("/:cid", getUser, async (req, res) => {
       })
       .lean({ virtuals: true });
 
-    if (!user || [995625].includes(user.cid)) {
+    if (!user) {
       throw {
         code: 503,
         message: "Unable to find controller",
