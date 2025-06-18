@@ -110,12 +110,6 @@ router.get('/:slug/positions', async(req, res) => {
 
 router.put('/:slug/signup', getUser, async (req, res) => {
 	try {
-		if(req.body.requests.length > 3) {
-			throw {
-				code: 400,
-				message: "You may only give 3 preferred positions"
-			}
-		}
 
 		if(res.user.member === false) {
 			throw {
@@ -124,20 +118,14 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 			}
 		}
 
-		for(const r of req.body.requests) {
-			if((/^([A-Z]{2,3})(_([A-Z]{1,3}))?_(DEL|GND|TWR|APP|DEP|CTR)$/.test(r) || r.toLowerCase() === "any") === false) {
-				throw {
-					code: 400,
-					message: "Request must be a valid callsign or 'Any'"
-				}
-			}
-		}
+		const eventPositions = (await Event.findOne({url: req.params.slug}))?.positions?.map(obj => obj.pos);
+		const validRequests = eventPositions.filter(element => req.body.requests.includes(element));
 
 		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
 			$push: {
 				signups: {
 					cid: res.user.cid,
-					requests: req.body.requests
+					requests: validRequests
 				} 
 			}
 		});

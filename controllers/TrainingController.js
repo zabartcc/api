@@ -90,7 +90,7 @@ router.post('/request/new', getUser, async (req, res) => {
 		const milestone = await TrainingMilestone.findOne({code: req.body.milestone}).lean();
 
 		transporter.sendMail({
-			to: 'instructors@vatusa.net',
+			to: 'zab-ta@vatusa.net',
 			from: {
 				name: "Albuquerque ARTCC",
 				address: 'noreply@zabartcc.org'
