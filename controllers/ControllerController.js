@@ -473,7 +473,7 @@ router.get("/stats/:cid", async (req, res) => {
 
     hours.sessionAvg = Math.round(
       Object.values(hours.total).reduce((acc, cv) => acc + cv) /
-        hours.sessionCount
+      hours.sessionCount
     );
     res.stdRes.data = hours;
   } catch (e) {
@@ -509,7 +509,7 @@ router.post("/visit", getUser, async (req, res) => {
       to: req.body.email,
       from: {
         name: "Albuquerque ARTCC",
-        address: "noreply@zabartcc.org",
+        address: process.env.DEFAULT_EMAIL_FROM,
       },
       subject: `Visiting Application Received | Albuquerque ARTCC`,
       template: "visitReceived",
@@ -518,10 +518,10 @@ router.post("/visit", getUser, async (req, res) => {
       },
     });
     await transporter.sendMail({
-      to: "atm@zabartcc.org, datm@zabartcc.org",
+      to: "zab-atm@vatusa.net, zab-datm@vatusa.net",
       from: {
         name: "Albuquerque ARTCC",
-        address: "noreply@zabartcc.org",
+        address: process.env.DEFAULT_EMAIL_FROM,
       },
       subject: `New Visiting Application: ${res.user.fname} ${res.user.lname} | Albuquerque ARTCC`,
       template: "staffNewVisit",
@@ -582,7 +582,7 @@ router.put("/visit/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
       to: user.email,
       from: {
         name: "Albuquerque ARTCC",
-        address: "noreply@zabartcc.org",
+        address: process.env.DEFAULT_EMAIL_FROM,
       },
       subject: `Visiting Application Accepted | Albuquerque ARTCC`,
       template: "visitAccepted",
@@ -622,7 +622,7 @@ router.delete(
         to: user.email,
         from: {
           name: "Albuquerque ARTCC",
-          address: "noreply@zabartcc.org",
+          address: process.env.DEFAULT_EMAIL_FROM,
         },
         subject: `Visiting Application Rejected | Albuquerque ARTCC`,
         template: "visitRejected",
@@ -712,11 +712,10 @@ router.post("/:cid", microAuth, async (req, res) => {
       to: "zab-atm@vatusa.net; zab-datm@vatusa.net; zab-ta@vatusa.net",
       from: {
         name: "Albuquerque ARTCC",
-        address: "noreply@zabartcc.org",
+        address: process.env.DEFAULT_EMAIL_FROM,
       },
-      subject: `New ${req.body.vis ? "Visitor" : "Member"}: ${req.body.fname} ${
-        req.body.lname
-      } | Albuquerque ARTCC`,
+      subject: `New ${req.body.vis ? "Visitor" : "Member"}: ${req.body.fname} ${req.body.lname
+        } | Albuquerque ARTCC`,
       template: "newController",
       context: {
         name: `${req.body.fname} ${req.body.lname}`,
@@ -760,10 +759,10 @@ router.put("/:cid/member", microAuth, async (req, res) => {
     user.member = req.body.member;
     user.oi = req.body.member
       ? generateOperatingInitials(
-          user.fname,
-          user.lname,
-          oi.map((oi) => oi.oi)
-        )
+        user.fname,
+        user.lname,
+        oi.map((oi) => oi.oi)
+      )
       : null;
     user.joinDate = req.body.member ? new Date() : null;
 
@@ -772,9 +771,8 @@ router.put("/:cid/member", microAuth, async (req, res) => {
     await req.app.dossier.create({
       by: -1,
       affected: req.params.cid,
-      action: `%a was ${
-        req.body.member ? "added to" : "removed from"
-      } the roster by an external service.`,
+      action: `%a was ${req.body.member ? "added to" : "removed from"
+        } the roster by an external service.`,
     });
   } catch (e) {
     req.app.Sentry.captureException(e);
@@ -803,9 +801,8 @@ router.put("/:cid/visit", microAuth, async (req, res) => {
     await req.app.dossier.create({
       by: -1,
       affected: req.params.cid,
-      action: `%a was set as a ${
-        req.body.vis ? "visiting controller" : "home controller"
-      } by an external service.`,
+      action: `%a was set as a ${req.body.vis ? "visiting controller" : "home controller"
+        } by an external service.`,
     });
   } catch (e) {
     req.app.Sentry.captureException(e);
@@ -901,7 +898,7 @@ router.delete("/:cid", getUser, auth(["atm", "datm"]), async (req, res) => {
     const user = await User.findOneAndUpdate(
       { cid: req.params.cid },
       {
-        member: false,          
+        member: false,
         roleCodes: []
       }
     );

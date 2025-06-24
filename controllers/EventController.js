@@ -9,6 +9,8 @@ import User from '../models/User.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
 
+env.config();
+
 const upload = multer({
 	storage: multer.diskStorage({
 		destination: (req, file, cb) => {
@@ -20,17 +22,17 @@ const upload = multer({
 	})
 })
 
-router.get('/', async ({res}) => {
+router.get('/', async ({ res }) => {
 	try {
 		const events = await Event.find({
 			eventEnd: {
 				$gt: new Date(new Date().toUTCString()) // event starts in the future
 			},
 			deleted: false
-		}).sort({eventStart: "asc"}).lean();
+		}).sort({ eventStart: "asc" }).lean();
 
 		res.stdRes.data = events;
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -38,7 +40,7 @@ router.get('/', async ({res}) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/archive', async(req, res) => {
+router.get('/archive', async (req, res) => {
 	try {
 		const page = +req.query.page || 1;
 		const limit = +req.query.limit || 10;
@@ -54,13 +56,13 @@ router.get('/archive', async(req, res) => {
 				$lt: new Date(new Date().toUTCString())
 			},
 			deleted: false
-		}).skip(limit * (page - 1)).limit(limit).sort({eventStart: "desc"}).lean();
+		}).skip(limit * (page - 1)).limit(limit).sort({ eventStart: "desc" }).lean();
 
 		res.stdRes.data = {
 			amount: count,
 			events: events
 		};
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -68,7 +70,7 @@ router.get('/archive', async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/:slug', async(req, res) => {
+router.get('/:slug', async (req, res) => {
 	try {
 		const event = await Event.findOne({
 			url: req.params.slug,
@@ -76,7 +78,7 @@ router.get('/:slug', async(req, res) => {
 		}).lean();
 
 		res.stdRes.data = event;
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -84,7 +86,7 @@ router.get('/:slug', async(req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.get('/:slug/positions', async(req, res) => {
+router.get('/:slug/positions', async (req, res) => {
 	try {
 		const event = await Event.findOne({
 			url: req.params.slug,
@@ -97,10 +99,10 @@ router.get('/:slug/positions', async(req, res) => {
 			'positions.user', 'cid fname lname roleCodes'
 		).populate(
 			'signups.user', 'fname lname cid vis rating certCodes'
-		).lean({virtuals: true}).catch(console.error)
+		).lean({ virtuals: true }).catch(console.error)
 
 		res.stdRes.data = event;
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -111,22 +113,22 @@ router.get('/:slug/positions', async(req, res) => {
 router.put('/:slug/signup', getUser, async (req, res) => {
 	try {
 
-		if(res.user.member === false) {
+		if (res.user.member === false) {
 			throw {
 				code: 403,
 				message: "You must be a member of ZAB"
 			}
 		}
 
-		const eventPositions = (await Event.findOne({url: req.params.slug}))?.positions?.map(obj => obj.pos);
+		const eventPositions = (await Event.findOne({ url: req.params.slug }))?.positions?.map(obj => obj.pos);
 		const validRequests = eventPositions.filter(element => req.body.requests.includes(element));
 
-		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
+		const event = await Event.findOneAndUpdate({ url: req.params.slug }, {
 			$push: {
 				signups: {
 					cid: res.user.cid,
 					requests: validRequests
-				} 
+				}
 			}
 		});
 
@@ -135,7 +137,7 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 			affected: -1,
 			action: `%b signed up for the event *${event.name}*.`
 		});
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -145,7 +147,7 @@ router.put('/:slug/signup', getUser, async (req, res) => {
 
 router.delete('/:slug/signup', getUser, async (req, res) => {
 	try {
-		const event = await Event.findOneAndUpdate({url: req.params.slug}, {
+		const event = await Event.findOneAndUpdate({ url: req.params.slug }, {
 			$pull: {
 				signups: {
 					cid: res.user.cid
@@ -158,7 +160,7 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 			affected: -1,
 			action: `%b deleted their signup for the event *${event.name}*.`
 		});
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -166,9 +168,9 @@ router.delete('/:slug/signup', getUser, async (req, res) => {
 	return res.json(res.stdRes);
 });
 
-router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), async(req, res) => {
+router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		const signup = await Event.findOneAndUpdate({url: req.params.slug}, {
+		const signup = await Event.findOneAndUpdate({ url: req.params.slug }, {
 			$pull: {
 				signups: {
 					cid: req.params.cid
@@ -176,9 +178,9 @@ router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), asy
 			}
 		});
 
-		for(const position of signup.positions) {
-			if(position.takenBy === res.user.cid) {
-				await Event.findOneAndUpdate({url: req.params.slug, 'positions.takenBy': res.user.cid}, {
+		for (const position of signup.positions) {
+			if (position.takenBy === res.user.cid) {
+				await Event.findOneAndUpdate({ url: req.params.slug, 'positions.takenBy': res.user.cid }, {
 					$set: {
 						'positions.$.takenBy': null
 					}
@@ -191,7 +193,7 @@ router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), asy
 			affected: req.params.cid,
 			action: `%b manually deleted the event signup for %a for the event *${signup.name}*.`
 		});
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -201,16 +203,16 @@ router.delete('/:slug/mandelete/:cid', getUser, auth(['atm', 'datm', 'ec']), asy
 
 router.put('/:slug/mansignup/:cid', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		const user = await User.findOne({cid: req.params.cid});
-		if(user !== null) {
-			const event = await Event.findOneAndUpdate({url: req.params.slug}, {
+		const user = await User.findOne({ cid: req.params.cid });
+		if (user !== null) {
+			const event = await Event.findOneAndUpdate({ url: req.params.slug }, {
 				$push: {
 					signups: {
 						cid: req.params.cid,
-					} 
+					}
 				}
 			});
-			
+
 			await req.app.dossier.create({
 				by: res.user.cid,
 				affected: req.params.cid,
@@ -236,13 +238,13 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 		const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
 		const fileType = await fileTypeFromFile(req.file.path);
 
-		if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
+		if (fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 			throw {
 				code: 400,
 				message: "Banner type not supported"
 			}
 		}
-		if(req.file.size > (6 * 1024 * 1024)) {	// 6MiB
+		if (req.file.size > (6 * 1024 * 1024)) {	// 6MiB
 			throw {
 				code: 400,
 				message: "Banner too large"
@@ -250,7 +252,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 		}
 
 		const tmpFile = await fs.readFile(req.file.path);
-		
+
 		await req.app.s3.putObject({
 			Bucket: 'zabartcc/events',
 			Key: req.file.filename,
@@ -277,7 +279,7 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 			affected: -1,
 			action: `%b created the event *${req.body.name}*.`
 		});
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -286,42 +288,42 @@ router.post('/', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), 
 
 router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner'), async (req, res) => {
 	try {
-		const event = await Event.findOne({url: req.params.slug});
-		const {name, description, startTime, endTime, positions} = req.body;
-		if(event.name !== name) {
+		const event = await Event.findOne({ url: req.params.slug });
+		const { name, description, startTime, endTime, positions } = req.body;
+		if (event.name !== name) {
 			event.name = name;
 			event.url = name.replace(/\s+/g, '-').toLowerCase().replace(/^-+|-+(?=-|$)/g, '').replace(/[^a-zA-Z0-9-_]/g, '') + '-' + Date.now().toString().slice(-5);
 		}
 		event.description = description;
 		event.eventStart = startTime;
 		event.eventEnd = endTime;
-		
+
 		const computedPositions = [];
 
-		for(const pos of JSON.parse(positions)) {
+		for (const pos of JSON.parse(positions)) {
 			const thePos = pos.match(/^([A-Z]{3})_(?:[A-Z0-9]{1,3}_)?([A-Z]{3})$/); // 🤮 so basically this extracts the first part and last part of a callsign.
-			if(['CTR'].includes(thePos[2])) {
+			if (['CTR'].includes(thePos[2])) {
 				computedPositions.push({
 					pos,
 					type: thePos[2],
 					code: 'enroute',
 				})
 			}
-			if(['APP', 'DEP'].includes(thePos[2])) {
+			if (['APP', 'DEP'].includes(thePos[2])) {
 				computedPositions.push({
 					pos,
 					type: thePos[2],
 					code: (thePos[1] === "PHX") ? 'p50' : 'app',
 				})
 			}
-			if(['TWR'].includes(thePos[2])) {
+			if (['TWR'].includes(thePos[2])) {
 				computedPositions.push({
 					pos,
 					type: thePos[2],
 					code: (thePos[1] === "PHX") ? 'kphxtower' : 'twr',
 				})
 			}
-			if(['GND', 'DEL'].includes(thePos[2])) {
+			if (['GND', 'DEL'].includes(thePos[2])) {
 				computedPositions.push({
 					pos,
 					type: thePos[2],
@@ -330,16 +332,16 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 			}
 		}
 
-		if(event.positions.length > 0) {
+		if (event.positions.length > 0) {
 
 			const newPositions = [];
 
-			for(let position of computedPositions) {
+			for (let position of computedPositions) {
 				newPositions.push(position);
-				for(let i = 0; i < event.positions.length; i++) {
-					if(event.positions[i].pos === position.pos) {
+				for (let i = 0; i < event.positions.length; i++) {
+					if (event.positions[i].pos === position.pos) {
 
-						if(event.positions[i].takenBy) {
+						if (event.positions[i].takenBy) {
 							console.log(event.positions[i].takenBy);
 							const j = newPositions.indexOf(position);
 							newPositions[j].takenBy = event.positions[i].takenBy;
@@ -353,16 +355,16 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 			event.positions = computedPositions;
 		}
 
-		if(req.file) {
+		if (req.file) {
 			const allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
 			const fileType = await fileTypeFromFile(req.file.path);
-			if(fileType === undefined || !allowedTypes.includes(fileType.mime)) {
+			if (fileType === undefined || !allowedTypes.includes(fileType.mime)) {
 				throw {
 					code: 400,
 					message: "File type not supported"
 				}
 			}
-			if(req.file.size > (6 * 1024 * 1024)) {	// 6MiB
+			if (req.file.size > (6 * 1024 * 1024)) {	// 6MiB
 				throw {
 					code: 400,
 					message: "File too large"
@@ -377,7 +379,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 				ACL: 'public-read',
 				ContentDisposition: 'inline',
 			}).promise();
-			
+
 			event.bannerUrl = req.file.filename;
 		}
 
@@ -388,7 +390,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 			affected: -1,
 			action: `%b updated the event *${event.name}*.`
 		});
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -398,7 +400,7 @@ router.put('/:slug', getUser, auth(['atm', 'datm', 'ec']), upload.single('banner
 
 router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		const deleteEvent = await Event.findOne({url: req.params.slug});
+		const deleteEvent = await Event.findOne({ url: req.params.slug });
 		await deleteEvent.delete();
 
 		await req.app.dossier.create({
@@ -407,7 +409,7 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 			action: `%b deleted the event *${deleteEvent.name}*.`
 		});
 
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -422,7 +424,7 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 // 				positions: req.body.assignment
 // 			}
 // 		});
-		
+
 // 		await req.app.dossier.create({
 // 			by: res.user.cid,
 // 			affected: -1,
@@ -438,9 +440,9 @@ router.delete('/:slug', getUser, auth(['atm', 'datm', 'ec']), async (req, res) =
 
 router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		const {position, cid} = req.body;
+		const { position, cid } = req.body;
 
-		const event = await Event.findOneAndUpdate({url: req.params.slug, "positions._id": position}, {
+		const event = await Event.findOneAndUpdate({ url: req.params.slug, "positions._id": position }, {
 			$set: {
 				'positions.$.takenBy': cid || null
 			}
@@ -448,7 +450,7 @@ router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 
 		const [assignedPosition] = event.positions.filter(pos => pos._id == position);
 
-		if(cid) {
+		if (cid) {
 			await req.app.dossier.create({
 				by: res.user.cid,
 				affected: cid,
@@ -461,7 +463,7 @@ router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 				action: `%b unassigned *${assignedPosition.pos}* for *${event.name}*.`
 			});
 		}
-		
+
 		res.stdRes.data = assignedPosition;
 
 	} catch (e) {
@@ -474,20 +476,20 @@ router.put('/:slug/assign', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 
 router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		await Event.updateOne({url: req.params.slug}, {
+		await Event.updateOne({ url: req.params.slug }, {
 			$set: {
 				positions: req.body.assignment,
 				submitted: true
 			}
 		});
 
-		const getSignups = await Event.findOne({url: req.params.slug }, 'name url signups').populate('signups.user', 'fname lname email').lean();
+		const getSignups = await Event.findOne({ url: req.params.slug }, 'name url signups').populate('signups.user', 'fname lname email').lean();
 		getSignups.signups.forEach(async (signup) => {
 			await transporter.sendMail({
 				to: signup.user.email,
 				from: {
 					name: "Albuquerque ARTCC",
-					address: 'noreply@zabartcc.org'
+					address: process.env.DEFAULT_EMAIL_FROM
 				},
 				subject: `Position Assignments for ${getSignups.name} | Albuquerque ARTCC`,
 				template: 'event',
@@ -504,7 +506,7 @@ router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 			affected: -1,
 			action: `%b notified controllers of positions for the event *${getSignups.name}*.`
 		});
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
@@ -514,12 +516,12 @@ router.put('/:slug/notify', getUser, auth(['atm', 'datm', 'ec']), async (req, re
 
 router.put('/:slug/close', getUser, auth(['atm', 'datm', 'ec']), async (req, res) => {
 	try {
-		await Event.updateOne({url: req.params.slug}, {
+		await Event.updateOne({ url: req.params.slug }, {
 			$set: {
 				open: false
 			}
 		});
-	} catch(e) {
+	} catch (e) {
 		req.app.Sentry.captureException(e);
 		res.stdRes.ret_det = e;
 	}
