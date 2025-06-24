@@ -9,8 +9,9 @@ import User from '../models/User.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
 import microAuth from '../middleware/microAuth.js';
+import dotenv from "dotenv";
 
-env.config();
+dotenv.config();
 
 router.get('/request/upcoming', getUser, async (req, res) => {
 	try {
