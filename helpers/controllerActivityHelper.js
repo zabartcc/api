@@ -92,7 +92,7 @@ async function checkControllerActivity() {
         to: record.user.email,
         from: {
           name: "Albuquerque ARTCC",
-          address: "noreply@zabartcc.org",
+          address: process.env.DEFAULT_EMAIL_FROM,
         },
         subject: `Controller Activity Warning | Albuquerque ARTCC`,
         template: "activityReminder",
@@ -174,7 +174,7 @@ async function checkControllersNeedingRemoval() {
           cc: "zab-datm@vatusa.net",
           from: {
             name: "Albuquerque ARTCC",
-            address: "noreply@zabartcc.org",
+            address: process.env.DEFAULT_EMAIL_FROM,
           },
           subject: `Controller Inactivity Notice | Albuquerque ARTCC`,
           template: "activityWarning",
