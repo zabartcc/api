@@ -8,6 +8,9 @@ import Event from '../models/Event.js';
 import User from '../models/User.js';
 import getUser from '../middleware/getUser.js';
 import auth from '../middleware/auth.js';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 env.config();
 
