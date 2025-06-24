@@ -12,8 +12,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-env.config();
-
 const upload = multer({
 	storage: multer.diskStorage({
 		destination: (req, file, cb) => {

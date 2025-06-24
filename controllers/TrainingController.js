@@ -13,8 +13,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-env.config();
-
 router.get('/request/upcoming', getUser, async (req, res) => {
 	try {
 		const upcoming = await TrainingRequest.find({
