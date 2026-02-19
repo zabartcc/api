@@ -1,0 +1,44 @@
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+import Certification from "../models/Certification.js";
+import Role from "../models/Role.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, "../.env") });
+
+const certsPath = path.join(__dirname, "../seeds/certifications.json");
+const rolesPath = path.join(__dirname, "../seeds/roles.json");
+
+const certs = JSON.parse(fs.readFileSync(certsPath, "utf8"));
+const roles = JSON.parse(fs.readFileSync(rolesPath, "utf8"));
+
+await mongoose.connect(process.env.MONGO_URI);
+
+const certOps = certs.map((c) => ({
+    updateOne: {
+        filter: { code: c.code },
+        update: { $set: c },
+        upsert: true,
+    },
+}));
+
+const roleOps = roles.map((r) => ({
+    updateOne: {
+        filter: { code: r.code },
+        update: { $set: r },
+        upsert: true,
+    },
+}));
+
+await Certification.bulkWrite(certOps);
+await Role.bulkWrite(roleOps);
+
+console.log("Upsert complete");
+
+await mongoose.disconnect();

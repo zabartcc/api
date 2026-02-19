@@ -56,46 +56,47 @@ userSchema.plugin(softDelete, {
 
 userSchema.plugin(mlv);
 
-userSchema.virtual('isMem').get(function() {
+userSchema.virtual('isMem').get(function () {
 	return !!this.member;
 });
 
-userSchema.virtual('isMgt').get(function() {
-	if(!this.roleCodes) return false;
+userSchema.virtual('isMgt').get(function () {
+	if (!this.roleCodes) return false;
 	const search = ['atm', 'datm'];
 	return this.roleCodes.some(r => search.includes(r));
 });
 
-userSchema.virtual('isSenior').get(function() {
-	if(!this.roleCodes) return false;
+userSchema.virtual('isSenior').get(function () {
+	if (!this.roleCodes) return false;
 	const search = ['atm', 'datm', 'ta'];
 	return this.roleCodes.some(r => search.includes(r));
 });
 
-userSchema.virtual('isStaff').get(function() {
-	if(!this.roleCodes) return false;
-	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe'];
+userSchema.virtual('isStaff').get(function () {
+	if (!this.roleCodes) return false;
+	const search = ['atm', 'datm', 'ta', 'ec', 'wm', 'fe',];
 	return this.roleCodes.some(r => search.includes(r));
 });
 
-userSchema.virtual('isIns').get(function() {
-	if(!this.roleCodes) return false;
+userSchema.virtual('isIns').get(function () {
+	if (!this.roleCodes) return false;
 	const search = ['atm', 'datm', 'ta', 'ins', 'mtr'];
 	return this.roleCodes.some(r => search.includes(r));
 });
 
-userSchema.virtual('ratingShort').get(function() {
+userSchema.virtual('ratingShort').get(function () {
 	return zab.ratings[this.rating];
 });
 
-userSchema.virtual('ratingLong').get(function() {
+userSchema.virtual('ratingLong').get(function () {
 	return zab.ratingsLong[this.rating];
 });
 
-userSchema.virtual('roles', {
-	ref: 'Role',
-	localField: 'roleCodes',
-	foreignField: 'code'
+userSchema.virtual("roles", {
+	ref: "Role",
+	localField: "roleCodes",
+	foreignField: "code",
+	justOne: false,
 });
 
 userSchema.virtual('certifications', {

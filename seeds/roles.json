@@ -1,41 +1,56 @@
-[{
-  "name": "Air Traffic Manager",
-  "code": "atm",
-  "order": 1,
-  "class": "senior"
-},{
-  "name": "Deputy Air Traffic Manager",
-  "code": "datm",
-  "order": 2,
-  "class": "senior"
-},{
-  "name": "Training Administrator",
-  "code": "ta",
-  "order": 3,
-  "class": "senior"
-},{
-  "name": "Events Coordinator",
-  "code": "ec",
-  "order": 4,
-  "class": "junior"
-},{
-  "name": "Webmaster",
-  "code": "wm",
-  "order": 5,
-  "class": "junior"
-},{
-  "name": "Facilities Engineer",
-  "code": "fe",
-  "order": 6,
-  "class": "junior"
-},{
-  "name": "Instructor",
-  "code": "ins",
-  "order": 7,
-  "class": "training"
-},{
-  "name": "Mentor",
-  "code": "mtr",
-  "order": 8,
-  "class": "training"
-}]
+[
+  {
+    "name": "Air Traffic Manager",
+    "code": "atm",
+    "order": 1,
+    "class": "senior"
+  },
+  {
+    "name": "Deputy Air Traffic Manager",
+    "code": "datm",
+    "order": 2,
+    "class": "senior"
+  },
+  {
+    "name": "Training Administrator",
+    "code": "ta",
+    "order": 3,
+    "class": "senior"
+  },
+  {
+    "name": "Events Coordinator",
+    "code": "ec",
+    "order": 4,
+    "class": "junior"
+  },
+  {
+    "name": "Webmaster",
+    "code": "wm",
+    "order": 5,
+    "class": "junior"
+  },
+  {
+    "name": "Facilities Engineer",
+    "code": "fe",
+    "order": 6,
+    "class": "junior"
+  },
+  {
+    "name": "Instructor",
+    "code": "ins",
+    "order": 7,
+    "class": "training"
+  },
+  {
+    "name": "Mentor",
+    "code": "mtr",
+    "order": 8,
+    "class": "training"
+  },
+  {
+    "name": "Combined Monitor",
+    "code": "cm",
+    "order": 10,
+    "class": "training"
+  }
+]
