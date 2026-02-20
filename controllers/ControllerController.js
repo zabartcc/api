@@ -675,22 +675,22 @@ router.post("/:cid", microAuth, async (req, res) => {
       { responseType: "arraybuffer" }
     );
 
-    // await req.app.s3
-    //   .putObject({
-    //     Bucket: "zabartcc/avatars",
-    //     Key: `${req.body.cid}-default.png`,
-    //     Body: data,
-    //     ContentType: "image/png",
-    //     ACL: "public-read",
-    //     ContentDisposition: "inline",
-    //   })
-    //   .promise();
+    await req.app.s3
+      .putObject({
+        Bucket: "zabartcc/avatars",
+        Key: `${req.body.cid}-default.png`,
+        Body: data,
+        ContentType: "image/png",
+        ACL: "public-read",
+        ContentDisposition: "inline",
+      })
+      .promise();
 
-    // await User.create({
-    //   ...req.body,
-    //   oi: userOi,
-    //   avatar: `${req.body.cid}-default.png`,
-    // });
+    await User.create({
+      ...req.body,
+      oi: userOi,
+      avatar: `${req.body.cid}-default.png`,
+    });
 
     const ratings = [
       "Unknown",
@@ -848,30 +848,30 @@ router.put(
         { responseType: "arraybuffer" }
       );
 
-      // await req.app.s3
-      //   .putObject({
-      //     Bucket: "zabartcc/avatars",
-      //     Key: `${req.params.cid}-default.png`,
-      //     Body: data,
-      //     ContentType: "image/png",
-      //     ACL: "public-read",
-      //     ContentDisposition: "inline",
-      //   })
-      //   .promise();
+      await req.app.s3
+        .putObject({
+          Bucket: "zabartcc/avatars",
+          Key: `${req.params.cid}-default.png`,
+          Body: data,
+          ContentType: "image/png",
+          ACL: "public-read",
+          ContentDisposition: "inline",
+        })
+        .promise();
 
 
-      // await User.findOneAndUpdate(
-      //   { cid: req.params.cid },
-      //   {
-      //     fname,
-      //     lname,
-      //     email,
-      //     oi,
-      //     vis,
-      //     roleCodes: toApply.roles,
-      //     certCodes: toApply.certifications,
-      //   }
-      // );
+      await User.findOneAndUpdate(
+        { cid: req.params.cid },
+        {
+          fname,
+          lname,
+          email,
+          oi,
+          vis,
+          roleCodes: toApply.roles,
+          certCodes: toApply.certifications,
+        }
+      );
 
       const updated = await User.findOneAndUpdate(
         { cid: req.params.cid },

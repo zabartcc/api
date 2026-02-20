@@ -50,7 +50,7 @@
   {
     "name": "Combined Monitor",
     "code": "cm",
-    "order": 10,
+    "order": 9,
     "class": "training"
   }
 ]

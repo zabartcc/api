@@ -97,10 +97,89 @@ router.post("/idsToken", getUser, async (req, res) => {
 });
 
 
+
+// Endpoint to preform user login, uses oAuth middleware to retrieve an access token
 router.post("/login", oAuth, async (req, res) => {
   try {
+    const { access_token } = req.oauth;
 
-    const apiToken = jwt.sign({ cid: 1597373 }, process.env.JWT_SECRET, {
+    // Use access token to attempt to get user data.
+    let vatsimUserData = await vatsimApiHelper.getUserInformation(access_token);
+
+    // VATSIM API returns 200 codes on some errors, use CID as a check to see if there was an error.
+    if (vatsimUserData?.data?.cid == null) {
+      let error = vatsimUserData;
+      throw error;
+    } else {
+      vatsimUserData = vatsimUserData.data;
+    }
+
+    const userData = {
+      email: vatsimUserData.personal.email,
+      firstName: vatsimUserData.personal.name_first,
+      lastName: vatsimUserData.personal.name_last,
+      cid: vatsimUserData.cid,
+      ratingId: vatsimUserData.vatsim.rating.id,
+    };
+
+    // If the user did not authorize all requested data from the AUTH login, we may have null parameters
+    // If that is the case throw a BadRequest exception.
+    if (Object.values(userData).some((x) => x == null || x == "")) {
+      throw {
+        code: 400,
+        message:
+          "User must authorize all requested VATSIM data. [Authorize Data]",
+      };
+    }
+
+    let user = await User.findOne({ cid: userData.cid });
+
+    if (!user) {
+      user = await User.create({
+        cid: userData.cid,
+        fname: userData.firstName,
+        lname: userData.lastName,
+        email: userData.email,
+        rating: userData.ratingId,
+        oi: null,
+        broadcast: false,
+        member: false,
+        vis: false,
+      });
+    } else {
+      if (!user.email) {
+        user.email = userData.email;
+      }
+      if (!user.prefName ?? true) {
+        user.fname = userData.firstName;
+        user.lname = userData.lastName;
+      }
+      user.rating = userData.ratingId;
+    }
+
+    if (user.oi && !user.avatar) {
+      const { data } = await axios.get(
+        `https://ui-avatars.com/api/?name=${user.oi}&size=256&background=122049&color=ffffff`,
+        { responseType: "arraybuffer" }
+      );
+
+      await req.app.s3
+        .putObject({
+          Bucket: "zabartcc/avatars",
+          Key: `${user.cid}-default.png`,
+          Body: data,
+          ContentType: "image/png",
+          ACL: "public-read",
+          ContentDisposition: "inline",
+        })
+        .promise();
+
+      user.avatar = `${user.cid}-default.png`;
+    }
+
+    await user.save();
+
+    const apiToken = jwt.sign({ cid: userData.cid }, process.env.JWT_SECRET, {
       expiresIn: "30d",
     });
 
@@ -117,105 +196,6 @@ router.post("/login", oAuth, async (req, res) => {
 
   return res.json(res.stdRes);
 });
-
-// // Endpoint to preform user login, uses oAuth middleware to retrieve an access token
-// router.post("/login", oAuth, async (req, res) => {
-//   try {
-//     const { access_token } = req.oauth;
-
-//     // Use access token to attempt to get user data.
-//     let vatsimUserData = await vatsimApiHelper.getUserInformation(access_token);
-
-//     // VATSIM API returns 200 codes on some errors, use CID as a check to see if there was an error.
-//     if (vatsimUserData?.data?.cid == null) {
-//       let error = vatsimUserData;
-//       throw error;
-//     } else {
-//       vatsimUserData = vatsimUserData.data;
-//     }
-
-//     const userData = {
-//       email: vatsimUserData.personal.email,
-//       firstName: vatsimUserData.personal.name_first,
-//       lastName: vatsimUserData.personal.name_last,
-//       cid: vatsimUserData.cid,
-//       ratingId: vatsimUserData.vatsim.rating.id,
-//     };
-
-//     // If the user did not authorize all requested data from the AUTH login, we may have null parameters
-//     // If that is the case throw a BadRequest exception.
-//     if (Object.values(userData).some((x) => x == null || x == "")) {
-//       throw {
-//         code: 400,
-//         message:
-//           "User must authorize all requested VATSIM data. [Authorize Data]",
-//       };
-//     }
-
-//     let user = await User.findOne({ cid: userData.cid });
-
-//     if (!user) {
-//       user = await User.create({
-//         cid: userData.cid,
-//         fname: userData.firstName,
-//         lname: userData.lastName,
-//         email: userData.email,
-//         rating: userData.ratingId,
-//         oi: null,
-//         broadcast: false,
-//         member: false,
-//         vis: false,
-//       });
-//     } else {
-//       if (!user.email) {
-//         user.email = userData.email;
-//       }
-//       if (!user.prefName ?? true) {
-//         user.fname = userData.firstName;
-//         user.lname = userData.lastName;
-//       }
-//       user.rating = userData.ratingId;
-//     }
-
-//     if (user.oi && !user.avatar) {
-//       const { data } = await axios.get(
-//         `https://ui-avatars.com/api/?name=${user.oi}&size=256&background=122049&color=ffffff`,
-//         { responseType: "arraybuffer" }
-//       );
-
-//       await req.app.s3
-//         .putObject({
-//           Bucket: "zabartcc/avatars",
-//           Key: `${user.cid}-default.png`,
-//           Body: data,
-//           ContentType: "image/png",
-//           ACL: "public-read",
-//           ContentDisposition: "inline",
-//         })
-//         .promise();
-
-//       user.avatar = `${user.cid}-default.png`;
-//     }
-
-//     await user.save();
-
-//     const apiToken = jwt.sign({ cid: userData.cid }, process.env.JWT_SECRET, {
-//       expiresIn: "30d",
-//     });
-
-//     res.cookie("token", apiToken, {
-//       httpOnly: true,
-//       maxAge: 432000000,
-//       sameSite: true,
-//     }); // Expires in 5 days
-//   } catch (e) {
-//     req.app.Sentry.captureException(e);
-//     res.stdRes.ret_det = e;
-//     res.status(500);
-//   }
-
-//   return res.json(res.stdRes);
-// });
 
 router.get("/logout", async (req, res) => {
   try {
